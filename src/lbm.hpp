@@ -1,5 +1,6 @@
 #pragma once
 #include "lbm_types.hpp"
+#include "geometry.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -9,40 +10,19 @@
 // ==========================================================================
 // D2Q9 LATTICE BOLTZMANN METHOD -- Core solver
 // ==========================================================================
-// Schematic of one time step:
-//   1. enforce_inflow()   -- Zou/He velocity inlet (left wall)
-//   2. enforce_outflow()  -- convective outlet (right wall)
-//   3. collide()          -- BGK collision + obstacle bounce-back
-//   4. stream()           -- shift distributions to neighbours
-//   5. extract_forces()   -- momentum exchange on cylinder surface
-//
-// Collision and streaming are fused in a single pass for cache efficiency.
 
 // ------------------------------------------------------------------
-// Zou/He velocity inlet: enforce u = u_inflow, v = 0 at x = 0
-// Only sets unknown distributions (i=1,5,8); preserves streamed-in values for
-// the known ones (i=0,2,3,4,6,7) to allow perturbations to propagate.
+// Zou/He velocity inlet: enforce u = u_inflow, v = 0 at x = 0 (cylinder case)
 // ------------------------------------------------------------------
 inline void enforce_inflow(LBMCapabilities& sys, double u_inflow) {
     for (int y = 0; y < NY; ++y) {
         int idx = node_index(0, y);
         double* f_node = &sys.f[idx * 9];
 
-        // Known distributions at inlet (streamed from interior):
-        //   i=0 (rest), i=2 (north), i=3 (west), i=4 (south),
-        //   i=6 (northwest), i=7 (southwest)
-        // Unknown: i=1 (east), i=5 (northeast), i=8 (southeast)
-        //
-        // Zou/He density: rho = [f0 + f2 + f4 + 2*(f3 + f6 + f7)] / (1 - u_in)
         double rho = (f_node[0] + f_node[2] + f_node[4]
                     + 2.0 * (f_node[3] + f_node[6] + f_node[7]))
                     / (1.0 - u_inflow);
-        double v = 0.0;
 
-        // Set unknown distributions using Zou/He formulas:
-        //   f1 = f3 + (2/3)*rho*u
-        //   f5 = f7 + (1/6)*rho*u
-        //   f8 = f6 + (1/6)*rho*u
         f_node[1] = f_node[3] + (2.0 / 3.0) * rho * u_inflow;
         f_node[5] = f_node[7] + (1.0 / 6.0) * rho * u_inflow;
         f_node[8] = f_node[6] + (1.0 / 6.0) * rho * u_inflow;
@@ -50,7 +30,7 @@ inline void enforce_inflow(LBMCapabilities& sys, double u_inflow) {
 }
 
 // ------------------------------------------------------------------
-// Convective outlet: zero-gradient at x = NX-1
+// Convective outlet: zero-gradient at x = NX-1 (cylinder case)
 // ------------------------------------------------------------------
 inline void enforce_outflow(LBMCapabilities& sys) {
     for (int y = 0; y < NY; ++y) {
@@ -65,46 +45,74 @@ inline void enforce_outflow(LBMCapabilities& sys) {
 }
 
 // ------------------------------------------------------------------
+// Cavity walls: mark bottom, left, right boundaries as obstacles
+// (Top wall is handled by enforce_lid() instead)
+// ------------------------------------------------------------------
+inline void place_walls(LBMCapabilities& sys) {
+    // Bottom wall (y = 0)
+    for (int x = 0; x < NX; ++x) {
+        sys.obstacle[node_index(x, 0)] = true;
+    }
+    // Left and right walls
+    for (int y = 0; y < NY; ++y) {
+        sys.obstacle[node_index(0, y)] = true;
+        sys.obstacle[node_index(NX - 1, y)] = true;
+    }
+}
+
+// ------------------------------------------------------------------
+// Moving lid: enforce u = u_lid, v = 0 at y = NY-1
+// Sets equilibrium distribution at top wall nodes.
+// ------------------------------------------------------------------
+inline void enforce_lid(LBMCapabilities& sys, double u_lid) {
+    for (int x = 0; x < NX; ++x) {
+        int idx = node_index(x, NY - 1);
+        double* f_node = &sys.f[idx * 9];
+        double rho, u, v;
+        compute_macros(f_node, rho, u, v);
+        for (int i = 0; i < 9; ++i) {
+            f_node[i] = compute_equilibrium(i, rho, u_lid, 0.0);
+        }
+    }
+}
+
+// ------------------------------------------------------------------
 // One complete time step: collide + stream + boundaries + forces
 // ------------------------------------------------------------------
 inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow) {
-    // --- Collision + bounce-back fused loop ---
+    int n_nodes = NX * NY;
+
+    // --- Collision ---
     #pragma omp parallel for collapse(2)
     for (int y = 0; y < NY; ++y) {
         for (int x = 0; x < NX; ++x) {
             int node_idx = node_index(x, y);
-            bool is_obstacle = sys.obstacle[node_idx];
+            if (sys.obstacle[node_idx]) continue;
             double* f_node = &sys.f[node_idx * 9];
 
-            if (!is_obstacle) {
-                // --- BGK Collision ---
-                double rho, u, v;
-                compute_macros(f_node, rho, u, v);
-
-                for (int i = 0; i < 9; ++i) {
-                    double feq = compute_equilibrium(i, rho, u, v);
-                    f_node[i] -= (1.0 / tau) * (f_node[i] - feq);
-                }
-            }
-        }
-    }
-
-    // Zero out f_next for obstacle nodes to prevent ghost streaming
-    #pragma omp parallel for
-    for (int n = 0; n < NX * NY; ++n) {
-        if (sys.obstacle[n]) {
+            double rho, u, v;
+            compute_macros(f_node, rho, u, v);
             for (int i = 0; i < 9; ++i) {
-                sys.f_next[n * 9 + i] = 0.0;
+                double feq = compute_equilibrium(i, rho, u, v);
+                f_node[i] -= (1.0 / tau) * (f_node[i] - feq);
             }
         }
     }
 
-    // --- Streaming: only from FLUID nodes ---
+    // Zero out f_next for obstacle nodes
+    #pragma omp parallel for
+    for (int n = 0; n < n_nodes; ++n) {
+        for (int i = 0; i < 9; ++i) {
+            sys.f_next[n * 9 + i] = 0.0;
+        }
+    }
+
+    // --- Streaming ---
     #pragma omp parallel for collapse(2)
     for (int y = 0; y < NY; ++y) {
         for (int x = 0; x < NX; ++x) {
             int node_idx = node_index(x, y);
-            if (sys.obstacle[node_idx]) continue;  // obstacles do NOT stream
+            if (sys.obstacle[node_idx]) continue;
 
             double* f_node = &sys.f[node_idx * 9];
 
@@ -112,18 +120,32 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
                 int next_x = x + cx[i];
                 int next_y = y + cy[i];
 
-                // Periodic boundary in y
-                if (next_y < 0) next_y += NY;
-                if (next_y >= NY) next_y -= NY;
-
-                if (next_x >= 0 && next_x < NX) {
-                    int target_node = node_index(next_x, next_y);
-                    if (sys.obstacle[target_node]) {
-                        // Bounce-back on obstacle
+                if (g_case == CaseType::CAVITY) {
+                    // --- Cavity: bounce-back on walls ---
+                    // Check if streaming would leave the domain
+                    if (next_x < 0 || next_x >= NX || next_y < 0 || next_y >= NY) {
+                        // Out of bounds -- bounce-back
                         sys.f_next[node_idx * 9 + bounce_back[i]] = f_node[i];
                     } else {
-                        // Regular streaming
-                        sys.f_next[target_node * 9 + i] = f_node[i];
+                        int target_node = node_index(next_x, next_y);
+                        if (sys.obstacle[target_node]) {
+                            sys.f_next[node_idx * 9 + bounce_back[i]] = f_node[i];
+                        } else {
+                            sys.f_next[target_node * 9 + i] = f_node[i];
+                        }
+                    }
+                } else {
+                    // --- Cylinder: periodic in y ---
+                    if (next_y < 0) next_y += NY;
+                    if (next_y >= NY) next_y -= NY;
+
+                    if (next_x >= 0 && next_x < NX) {
+                        int target_node = node_index(next_x, next_y);
+                        if (sys.obstacle[target_node]) {
+                            sys.f_next[node_idx * 9 + bounce_back[i]] = f_node[i];
+                        } else {
+                            sys.f_next[target_node * 9 + i] = f_node[i];
+                        }
                     }
                 }
             }
@@ -134,35 +156,34 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
     sys.f.swap(sys.f_next);
 
     // --- Boundary conditions ---
-    enforce_inflow(sys, u_inflow);
-    enforce_outflow(sys);
+    if (g_case == CaseType::CYLINDER) {
+        enforce_inflow(sys, u_inflow);
+        enforce_outflow(sys);
+    } else {
+        enforce_lid(sys, u_inflow);
+    }
 
-    // --- Force extraction (momentum exchange during bounce-back) ---
-    sys.reset_forces();
-    for (int y = 0; y < NY; ++y) {
-        for (int x = 0; x < NX; ++x) {
-            int node_idx = node_index(x, y);
-            if (sys.obstacle[node_idx]) continue;  // iterate over FLUID nodes instead
+    // --- Force extraction (cylinder case only) ---
+    if (g_case == CaseType::CYLINDER) {
+        sys.reset_forces();
+        for (int y = 0; y < NY; ++y) {
+            for (int x = 0; x < NX; ++x) {
+                int node_idx = node_index(x, y);
+                if (sys.obstacle[node_idx]) continue;
 
-            for (int i = 0; i < 9; ++i) {
-                int nx = x + cx[i];
-                int ny = y + cy[i];
-                if (ny < 0) ny += NY;
-                if (ny >= NY) ny -= NY;
-                if (nx < 0 || nx >= NX) continue;
+                for (int i = 0; i < 9; ++i) {
+                    int nx = x + cx[i];
+                    int ny = y + cy[i];
+                    if (ny < 0) ny += NY;
+                    if (ny >= NY) ny -= NY;
+                    if (nx < 0 || nx >= NX) continue;
 
-                int target_idx = node_index(nx, ny);
-                if (sys.obstacle[target_idx]) {
-                    // Standard momentum exchange (Mei, Luo & Shyy 2002):
-                    //   F(x_b) = e_i * [ f_i(x_f, t+) + f_{-i}(x_f, t++) ]
-                    // After streaming + swap, f[node_idx, bounce_back[i]] contains
-                    // the post-collision pre-streaming value f_i(x_f, t+) (bounced
-                    // back from the obstacle). The incident and reflected
-                    // distributions are equal in magnitude (bounce-back is a
-                    // no-slip reflection).
-                    double f_boundary = sys.f[node_idx * 9 + bounce_back[i]];
-                    sys.fx_cyl[node_idx] += cx[i] * 2.0 * f_boundary;
-                    sys.fy_cyl[node_idx] += cy[i] * 2.0 * f_boundary;
+                    int target_idx = node_index(nx, ny);
+                    if (sys.obstacle[target_idx]) {
+                        double f_boundary = sys.f[node_idx * 9 + bounce_back[i]];
+                        sys.fx_cyl[node_idx] += cx[i] * 2.0 * f_boundary;
+                        sys.fy_cyl[node_idx] += cy[i] * 2.0 * f_boundary;
+                    }
                 }
             }
         }
@@ -191,8 +212,7 @@ inline void save_vtk_frame(const LBMCapabilities& sys, int frame, const std::str
             } else {
                 double rho, u, v;
                 compute_macros(&sys.f[idx * 9], rho, u, v);
-                double vel = std::sqrt(u * u + v * v);
-                out << vel << "\n";
+                out << std::sqrt(u * u + v * v) << "\n";
             }
         }
     }
@@ -250,6 +270,23 @@ inline void place_cylinder(LBMCapabilities& sys, int cx_cyl, int cy_cyl, int rad
             double dx = static_cast<double>(x - cx_cyl);
             double dy = static_cast<double>(y - cy_cyl);
             if (std::sqrt(dx * dx + dy * dy) < radius) {
+                sys.obstacle[node_index(x, y)] = true;
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------------
+// Place arbitrary polygon obstacle in the domain
+// poly: closed polygon vertices in grid coordinates
+// ------------------------------------------------------------------
+inline void place_polygon(LBMCapabilities& sys,
+    const std::vector<std::pair<double,double>>& poly)
+{
+    for (int y = 0; y < NY; ++y) {
+        for (int x = 0; x < NX; ++x) {
+            if (point_in_polygon(static_cast<double>(x),
+                                 static_cast<double>(y), poly)) {
                 sys.obstacle[node_index(x, y)] = true;
             }
         }

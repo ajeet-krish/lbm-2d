@@ -21,7 +21,7 @@
 //   With c_s^2 = 1/3, dt = 1, dx = 1:  tau = 0.5 + 3.0 * u_inflow * D / Re_D
 // ==========================================================================
 
-static constexpr double CYL_DIAMETER = 2.0 * (NY / 10);  // D = 30
+static inline double CYL_DIAMETER() { return 2.0 * (NY / 10); }
 
 struct SimParams {
     double tau;
@@ -32,7 +32,7 @@ struct SimParams {
 
 SimParams compute_params(double Re, int steps = -1) {
     double u_inflow = 0.1;               // lattice Mach number (< 0.3 for incompressibility)
-    double nu = u_inflow * CYL_DIAMETER / Re;  // kinematic viscosity (cylinder-diameter based Re)
+    double nu = u_inflow * CYL_DIAMETER() / Re;
     double tau = 0.5 + 3.0 * nu;         // relaxation time from viscosity relation
 
     // Domain transit time = NX / u = 4000 steps at u=0.1
@@ -105,8 +105,8 @@ ForceHistory run_simulation(double Re, int steps = -1) {
 
         // Drag coefficient: Cd = 2 * Fx / (rho * u_inflow^2 * D)
         // Lift coefficient: Cl = 2 * Fy / (rho * u_inflow^2 * D)
-        double cd = 2.0 * fx_total / (CYL_DIAMETER * params.u_inflow * params.u_inflow);
-        double cl = 2.0 * fy_total / (CYL_DIAMETER * params.u_inflow * params.u_inflow);
+        double cd = 2.0 * fx_total / (CYL_DIAMETER() * params.u_inflow * params.u_inflow);
+        double cl = 2.0 * fy_total / (CYL_DIAMETER() * params.u_inflow * params.u_inflow);
 
         history.t.push_back(static_cast<double>(step));
         history.cd.push_back(cd);

@@ -7,10 +7,14 @@
 // D2Q9 LATTICE BOLTZMANN -- Type definitions and lattice constants
 // ==========================================================================
 
-// Grid dimensions
-constexpr int NX = 400;
-constexpr int NY = 150;
+// Grid dimensions (runtime variables, set by entry point)
+inline int NX = 400;
+inline int NY = 150;
 constexpr int NUM_DIRECTIONS = 9;
+
+// Simulation case type
+enum class CaseType { CYLINDER, CAVITY };
+inline CaseType g_case = CaseType::CYLINDER;
 
 // D2Q9 velocity vectors (cx[i], cy[i]) for i = 0..8
 // Index convention:
@@ -57,9 +61,10 @@ struct LBMCapabilities {
     int n_cyl_nodes;                // number of cylinder boundary nodes
 
     LBMCapabilities() {
-        f.resize(NX * NY * NUM_DIRECTIONS, 0.0);
-        f_next.resize(NX * NY * NUM_DIRECTIONS, 0.0);
-        obstacle.resize(NX * NY, false);
+        int n_nodes = NX * NY;
+        f.resize(n_nodes * NUM_DIRECTIONS, 0.0);
+        f_next.resize(n_nodes * NUM_DIRECTIONS, 0.0);
+        obstacle.resize(n_nodes, false);
         reset_forces();
     }
 
@@ -71,7 +76,7 @@ struct LBMCapabilities {
 };
 
 // ------------------------------------------------------------------
-// Equilibrium distribution: f_i^eq = w_i * rho * (1 + 3 e·u + 4.5 (e·u)^2 - 1.5 u·u)
+// Equilibrium distribution: f_i^eq = w_i * rho * (1 + 3 e.u + 4.5 (e.u)^2 - 1.5 u.u)
 // ------------------------------------------------------------------
 inline double compute_equilibrium(int i, double rho, double u, double v) {
     double edotc = cx[i] * u + cy[i] * v;
