@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <fstream>
 
 // ==========================================================================
 // LBM-2D Solver Entry Point
@@ -123,6 +124,14 @@ ForceHistory run_simulation(double Re, int steps = -1) {
                       << "  Cl = " << std::fixed << std::setprecision(4) << cl
                       << std::endl;
         }
+    }
+
+    // Save Cd/Cl history to CSV
+    std::string csv_file = "output/re" + std::to_string(static_cast<int>(Re)) + "/cdcl.csv";
+    std::ofstream csv_out(csv_file);
+    csv_out << "step,cd,cl\n";
+    for (size_t i = 0; i < history.t.size(); ++i) {
+        csv_out << history.t[i] << "," << history.cd[i] << "," << history.cl[i] << "\n";
     }
 
     return history;

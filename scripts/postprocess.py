@@ -25,57 +25,47 @@ def read_vtk_ascii_structured(path):
     with open(path) as f:
         text = f.read()
 
-    # Parse DIMENSIONS
     m = re.search(r'DIMENSIONS\s+(\d+)\s+(\d+)\s+(\d+)', text)
     if not m:
         raise ValueError("Could not find DIMENSIONS")
     nx, ny, nz = int(m.group(1)), int(m.group(2)), int(m.group(3))
     npts = nx * ny * nz
 
-    # Find SCALARS VelocityMagnitude section
-    blocks = text.split('SCALARS')
-    vel_data = None
-    dens_data = None
+    def extract_scalar(label):
+        pat = re.compile(
+            r'SCALARS\s+' + re.escape(label) + r'\s+double\s+1\s*\n'
+            r'LOOKUP_TABLE\s+\S+\s*\n'
+            r'([\s\S]+?)(?=VECTORS\s|\Z|SCALARS\s)'
+        )
+        m2 = pat.search(text)
+        if m2:
+            raw = m2.group(1).strip()
+            nums = np.array([float(v) for v in raw.split()])
+            if len(nums) > npts:
+                nums = nums[:npts]
+            return nums
+        return None
 
-    for block in blocks:
-        if 'VelocityMagnitude' in block:
-            lines = block.strip().split('\n')
-            # Skip header lines (SCALARS + LOOKUP_TABLE)
-            data_lines = []
-            for line in lines[1:]:
-                if 'LOOKUP_TABLE' in line:
-                    continue
-                data_lines.append(line)
-            raw = ' '.join(data_lines).strip()
-            vel_data = np.array([float(v) for v in raw.split()])
-            if len(vel_data) > npts:
-                vel_data = vel_data[:npts]
+    def extract_vectors(label):
+        pat = re.compile(
+            r'VECTORS\s+' + re.escape(label) + r'\s+double\s*\n'
+            r'([\s\S]+?)(?=SCALARS\s|\Z)'
+        )
+        m2 = pat.search(text)
+        if m2:
+            raw = m2.group(1).strip()
+            parts = np.array([float(v) for v in raw.split()])
+            if len(parts) >= npts * 3:
+                u = parts[0::3].reshape((ny, nx))
+                v = parts[1::3].reshape((ny, nx))
+                return u, v
+        return None, None
 
-        if 'Density' in block and 'VelocityMagnitude' not in block:
-            lines = block.strip().split('\n')
-            data_lines = []
-            for line in lines[1:]:
-                if 'LOOKUP_TABLE' in line:
-                    continue
-                data_lines.append(line)
-            raw = ' '.join(data_lines).strip()
-            dens_data = np.array([float(v) for v in raw.split()])
-            if len(dens_data) > npts:
-                dens_data = dens_data[:npts]
+    vel_data = extract_scalar('VelocityMagnitude')
+    dens_data = extract_scalar('Density')
+    u, v = extract_vectors('Velocity')
 
-    # Also try VECTORS
-    m_vec = re.search(r'VECTORS Velocity double\n([\s\S]+?)(?:SCALARS|$)', text)
-    if m_vec:
-        raw_vec = m_vec.group(1).strip()
-        parts = raw_vec.split()
-        vec = np.array([float(v) for v in parts])
-        if len(vec) >= npts * 3:
-            u = vec[0::3].reshape((ny, nx))
-            v = vec[1::3].reshape((ny, nx))
-        else:
-            u = np.zeros((ny, nx))
-            v = np.zeros((ny, nx))
-    else:
+    if u is None:
         u = np.zeros((ny, nx))
         v = np.zeros((ny, nx))
 
@@ -114,8 +104,9 @@ def save_png(data, output_dir, frame):
     plt.colorbar(im1, ax=ax1, shrink=0.8)
 
     # Streamlines
-    y, x = np.mgrid[0:data['ny'], 0:data['nx']]
-    step = max(1, data['nx'] // 50)
+    ny, nx_grid = vel.shape
+    y, x = np.mgrid[0:ny, 0:nx_grid]
+    step = max(1, nx_grid // 50)
     ax2.streamplot(x[::step, ::step], y[::step, ::step],
                     u[::step, ::step], v[::step, ::step],
                     color=np.sqrt(u[::step, ::step]**2 + v[::step, ::step]**2),
@@ -125,7 +116,7 @@ def save_png(data, output_dir, frame):
     ax2.set_facecolor('#0a0e14')
 
     plt.tight_layout()
-    path = os.path.join(output_dir, f'frame_{frame:04d}.png')
+    path = os.path.join(output_dir, f'frame_{int(frame):04d}.png')
     plt.savefig(path, dpi=120, facecolor='#0d1117', edgecolor='none')
     plt.close()
     print(f"  Saved {path}")
@@ -153,7 +144,7 @@ def export_json(vtk_dir, output_path, every=1):
             'frame': frame_num,
             'nx': vel_ds.shape[1],
             'ny': vel_ds.shape[0],
-            'velocity': vel_ds.tolist(),
+            'velocity': vel_ds.flatten().tolist(),
         })
 
     result = {'frames': frames, 'meta': {'nx': frames[0]['nx'], 'ny': frames[0]['ny']}}
@@ -184,7 +175,7 @@ def main():
                 continue
             data = read_vtk_ascii_structured(str(vtk_path))
             frame_match = re.search(r'frame_(\d+)', vtk_path.name)
-            frame_num = frame_match.group(1) if frame_match else str(i)
+            frame_num = int(frame_match.group(1)) if frame_match else i
             save_png(data, args.input_dir, frame_num)
 
 

@@ -1,6 +1,5 @@
 build/
-output/*.vtk
-docs/assets/data/*.json
+output/
 docs/assets/videos/*.mp4
 .DS_Store
 __pycache__/

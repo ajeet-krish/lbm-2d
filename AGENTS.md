@@ -7,7 +7,7 @@
 - **HTML/CSS**: Double quotes for attributes, 2-space indentation, semantic HTML5 elements.
 
 ## Goal
-Build and deploy a cache-optimized D2Q9 Lattice Boltzmann Method CFD solver in C++20 as a portfolio centrepiece for aerospace/defense engineering roles. Deliver a 5-page HTML portfolio with interactive Plotly dashboards, KaTeX theory equations, and a production-grade GitHub repository with CI and unit tests.
+Build and deploy a cache-optimized D2Q9 Lattice Boltzmann Method CFD solver in C++20 as a portfolio centrepiece for aerospace/defense engineering roles. Deliver a 5-page HTML portfolio with an interactive canvas animation player, KaTeX theory equations, and a production-grade GitHub repository with CI and unit tests.
 
 ## Target Audience
 Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Origin, and similar. The site must communicate: HPC competency (C++, OpenMP, cache optimization), CFD fundamentals (validation against known benchmarks), and engineering communication skills (interactive web presentation).
@@ -25,14 +25,14 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 | 7 | VTK export + batch runner | ✅ |
 | 8 | Website CSS theme (CFD Jet) | ✅ |
 | 9 | index.html (home page) | ✅ |
-| 10 | simulation.html (interactive dashboard) | ✅ |
+| 10 | simulation.html (interactive canvas player) | ✅ |
 | 11 | theory.html (LBM equations with KaTeX) | ✅ |
 | 12 | implementation.html (code architecture) | ✅ |
 | 13 | results.html (validation + field galleries) | ✅ |
-| 14 | scripts/postprocess.py (VTK -> JSON/PNG) | ⏳ |
-| 15 | docs/assets/js/viewer.js (interactive viewer) | ⏳ |
-| 16 | Validate Strouhal vs Williamson for Re=20-200 | ⏳ |
-| 17 | Generate simulation video + validation plots | ⏳ |
+| 14 | scripts/postprocess.py (VTK -> JSON/PNG) | ✅ |
+| 15 | docs/assets/js/viewer.js (interactive viewer) | ✅ |
+| 16 | Validate Strouhal vs Williamson for Re=20-200 | ✅ |
+| 17 | Generate simulation frames + validation plots | ✅ |
 | 18 | Final deploy to GitHub Pages | ⏳ |
 
 ## File Layout
@@ -59,7 +59,7 @@ lbm-2d/
 
   docs/
     index.html                 # Home: hero, teaser video, results stats
-    simulation.html            # Interactive dashboard: Re selector, Cd/Cl plots
+    simulation.html            # Interactive canvas player: Re selector, Cd/Cl HUD
     theory.html                # LBM theory with KaTeX equations
     implementation.html        # Code architecture + source blocks
     results.html               # Validation plots + field galleries
@@ -67,9 +67,9 @@ lbm-2d/
       style.css                # CFD Jet theme (dark, cyan/orange accents)
     assets/
       js/
-        viewer.js              # Interactive canvas player (stretch goal)
-      data/                    # Pre-computed JSON (gitignored)
-      images/                  # PNG visualizations (gitignored)
+        viewer.js              # Interactive canvas animation player
+      data/                    # Pre-computed JSON (51 frames per Re, committed)
+      images/                  # Field renders + validation plot PNGs (committed)
       videos/                  # MP4 animations (gitignored)
 
   output/                      # Simulation VTK frames (gitignored)
@@ -107,8 +107,8 @@ f_i^eq = w_i * rho * (1 + 3*(c_i . u) + 4.5*(c_i . u)^2 - 1.5*(u . u))
 nu = c_s^2 * (tau - 0.5) * dt
 With c_s^2 = 1/3, dt = 1, dx = 1:
 nu = (tau - 0.5) / 3
-Re = u_inflow * NX / nu
-tau = 0.5 + 3 * u_inflow * NX / Re
+Re = u_inflow * D / nu
+tau = 0.5 + 3 * u_inflow * D / Re
 
 ### Boundary conditions
 - Zou/He velocity inlet: enforce u = u_inflow at x=0, compute rho from known distributions
@@ -138,10 +138,18 @@ Cl = 2 * Fy / (rho * u^2 * D)
 | 100| 0.164-0.172 | ~1.4 | Fully periodic |
 | 200| 0.180-0.195 | ~1.3 | Periodic, 3D effects begin |
 
+### Actual computed values (stair-step D=30, BGK)
+| Re | Strouhal | Cd_mean | Cl_amplitude | Notes |
+|----|----------|---------|--------------|-------|
+| 20 | --       | 3.108   | 0.000        | Steady, ~55% over literature |
+| 40 | --       | 2.293   | 0.000        | Steady, ~53% over literature |
+| 100| 0.200    | 1.763   | 0.374        | Shedding, St ~16-22% high, Cd ~26% high |
+| 200| 0.240    | 1.600   | 0.785        | Shedding, St ~23-33% high, Cd ~23% high |
+
 ### Grid sizing guide
 - NX = 400, NY = 150 recommended (60K fluid nodes)
 - Cylinder diameter D = NY/5 = 30 (30 grid points across cylinder -- good resolution)
-- Cylinder center at x = NX/4 = 100, y = NY/2 = 75
+- Cylinder center at x = NX/4 = 100, y = NY/2 + 1 = 76 (off-center to break symmetry)
 - Domain extends 300 grid points downstream for wake development
 
 ## Color Scheme: CFD Jet Theme
@@ -206,3 +214,4 @@ rm -rf build output/re*
 2. **Re > 300**: BGK becomes unstable at higher Re due to tau approaching 0.5. Use MRT or Smagorinsky LES for stability.
 3. **Low Re (20, 40)**: Flow is steady. Increase steps to 20,000+ to reach steady state from rest initialization.
 4. **Grid resolution**: 400x150 is moderate. For production CFD, 800x300+ is recommended with grid refinement near walls.
+5. **Systematic Cd/St bias**: Stair-step cylinder boundary and BGK at moderate D=30 cause ~20-55% overprediction vs literature. Documented on results.html.

@@ -66,54 +66,38 @@
         <td>Steady attached</td>
         <td>--</td>
         <td>--</td>
-        <td>2.05</td>
-        <td>2.01</td>
+        <td>3.108</td>
+        <td>~2.0</td>
       </tr>
       <tr>
         <td><strong>40</strong></td>
         <td>Steady recirculating</td>
         <td>--</td>
         <td>--</td>
-        <td>1.52</td>
-        <td>1.50</td>
-      </tr>
-      <tr>
-        <td><strong>60</strong></td>
-        <td>Onset of shedding</td>
-        <td>0.142</td>
-        <td>0.135-0.140</td>
-        <td>1.44</td>
-        <td>1.42</td>
+        <td>2.293</td>
+        <td>~1.5</td>
       </tr>
       <tr>
         <td><strong>100</strong></td>
         <td>Laminar shedding</td>
-        <td>0.168</td>
+        <td>0.200</td>
         <td>0.164-0.172</td>
-        <td>1.41</td>
-        <td>1.39</td>
-      </tr>
-      <tr>
-        <td><strong>150</strong></td>
-        <td>Laminar shedding</td>
-        <td>0.180</td>
-        <td>0.175-0.185</td>
-        <td>1.37</td>
-        <td>1.35</td>
+        <td>1.763</td>
+        <td>~1.4</td>
       </tr>
       <tr>
         <td><strong>200</strong></td>
         <td>Laminar shedding</td>
-        <td>0.189</td>
+        <td>0.240</td>
         <td>0.180-0.195</td>
-        <td>1.35</td>
-        <td>1.30</td>
+        <td>1.600</td>
+        <td>~1.3</td>
       </tr>
     </tbody>
   </table>
 
   <div class="callout">
-    <strong>All computed values match published literature to within 5%</strong> or better across the full Reynolds number range. The Strouhal numbers for Re &ge; 60 fall within the Williamson 1988 experimental scatter band. The drag coefficients agree with Tritton 1959's hot-wire measurements within experimental uncertainty.
+    The solver captures the <strong>correct qualitative trends</strong>: Cd decreases with Re, shedding appears between Re=40 and Re=100, and St increases with Re.     Absolute values are systematically biased ~20-55% higher than published data due to the coarse stair-step cylinder boundary with D2Q9 BGK at moderate grid resolution (30 grid points across the cylinder diameter). See Section 6 for discussion.
   </div>
 
   <hr class="divider">
@@ -140,72 +124,82 @@
 
   <hr class="divider">
 
-  <h2>4. Velocity Field Gallery</h2>
+  <h2>4. Validation Summary Plot</h2>
 
-  <p>Velocity magnitude fields for four Reynolds numbers, showing the transition from steady attached flow (Re = 20) to fully developed vortex shedding (Re = 200). All fields are taken from the steady-state portion of the simulation.</p>
+  <p>The two key validation metrics side by side. Left: drag coefficient compared with Tritton 1959's hot-wire measurements. Right: Strouhal number compared with Williamson 1988's experimental data and empirical correlation. Our D2Q9 BGK solver captures the correct trends with systematic bias from the coarse stair-step cylinder (see Section 6 for discussion).</p>
 
-  <div class="img-row">
-    <figure>
-      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 20 (Steady Attached)</div>
-        <div style="height:80px;background:linear-gradient(90deg, #000033, #0033cc, #00ccff, #33ff33, #ffcc00, #ff3300);border-radius:2px;opacity:0.7;"></div>
-        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Symmetric wake, attached flow</div>
-      </div>
-    </figure>
-    <figure>
-      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 40 (Steady Recirculating)</div>
-        <div style="height:80px;background:linear-gradient(90deg, #000033, #0033cc, #0066ff, #00ccff, #33ff33, #ffcc00);border-radius:2px;opacity:0.7;"></div>
-        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Twin recirculation bubbles, steady wake</div>
-      </div>
-    </figure>
+  <div class="chart-container" style="height:500px;">
+    <div class="chart-title">Validation: Drag Coefficient and Strouhal Number vs Reynolds Number</div>
+    <img src="assets/images/validation.png" alt="Validation plot" style="width:100%;height:90%;object-fit:contain;">
   </div>
-
-  <div class="img-row">
-    <figure>
-      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 100 (Laminar Shedding)</div>
-        <div style="height:80px;background:linear-gradient(90deg, #000033, #0033cc, #00ccff, #33ff33, #ffcc00, #ff6600, #ff3300);border-radius:2px;opacity:0.7;"></div>
-        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Von K&aacute;rm&aacute;n vortex street, St = 0.168</div>
-      </div>
-    </figure>
-    <figure>
-      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 200 (Laminar Shedding)</div>
-        <div style="height:80px;background:linear-gradient(90deg, #000033, #0033cc, #00ccff, #33ff33, #ffcc00, #ff6600, #ff0000);border-radius:2px;opacity:0.7;"></div>
-        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Higher frequency shedding, St = 0.189</div>
-      </div>
-    </template>
-  </div>
-
-  <p class="chart-caption" style="font-size:0.72em;color:var(--fg-muted);margin-top:6px;">
-    Replace these placeholder gradients with actual ParaView renders. Run the simulation and generate velocity field images:
-    <code style="display:inline-block;margin-top:4px;">python3 scripts/postprocess.py output/re100</code>
-  </p>
 
   <hr class="divider">
 
-  <h2>5. Discussion</h2>
+  <h2>5. Velocity Field Gallery</h2>
 
-  <h3>5.1 Agreement with Literature</h3>
+  <p>Velocity magnitude fields (jet colormap, white cylinder outline) for four Reynolds numbers, showing the transition from steady attached flow (Re = 20) to fully developed vortex shedding (Re = 200). All fields are taken from the final frame of each simulation.</p>
 
-  <p>The D2Q9 BGK solver reproduces the key features of laminar cylinder flow with fidelity adequate for a first-order LBM implementation:</p>
+  <div class="img-row">
+    <figure>
+      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
+        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 20 (Steady)</div>
+        <img src="assets/images/re20_field.png" alt="Re=20 velocity field" style="width:100%;border-radius:2px;">
+        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Steady symmetric wake, Cd = 3.11</div>
+      </div>
+    </figure>
+    <figure>
+      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
+        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 40 (Steady)</div>
+        <img src="assets/images/re40_field.png" alt="Re=40 velocity field" style="width:100%;border-radius:2px;">
+        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Recirculating wake, Cd = 2.29</div>
+      </div>
+    </figure>
+  </div>
+
+  <div class="img-row">
+    <figure>
+      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
+        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 100 (Shedding)</div>
+        <img src="assets/images/re100_field.png" alt="Re=100 vortex street" style="width:100%;border-radius:2px;">
+        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Von K&aacute;rm&aacute;n vortex street, St = 0.200</div>
+      </div>
+    </figure>
+    <figure>
+      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
+        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 200 (Shedding)</div>
+        <img src="assets/images/re200_field.png" alt="Re=200 vortex street" style="width:100%;border-radius:2px;">
+        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Strong shedding, Cl = 0.79, St = 0.240</div>
+      </div>
+    </figure>
+  </div>
+
+  <hr class="divider">
+
+  <h2>6. Discussion</h2>
+
+  <h3>6.1 Qualitative Agreement</h3>
+
+  <p>The D2Q9 BGK solver reproduces all key features of laminar cylinder flow:</p>
   <ul>
-    <li><strong>Strouhal frequency</strong> matches Williamson 1988 to within 5% across the shedding regime, confirming that the vortex shedding dynamics are physically correct</li>
-    <li><strong>Drag coefficient</strong> matches Tritton 1959 to within 5%, validating the momentum-exchange force extraction method</li>
-    <li><strong>Transition at Re ~ 60</strong> from steady to unsteady flow is captured, consistent with the known onset of the Hopf bifurcation</li>
+    <li><strong>Steady-to-unsteady transition</strong> occurs between Re=40 and Re=100, consistent with the known Hopf bifurcation at Re~47 on fine grids (delayed slightly on coarse grids)</li>
+    <li><strong>Vortex shedding</strong> produces clear von Kármán vortex streets at Re=100 and Re=200 with Cl amplitudes (0.37 and 0.79) within range of literature values</li>
+    <li><strong>Strouhal trend</strong> increases with Re (0.200 at Re=100, 0.240 at Re=200), matching the expected positive slope</li>
+    <li><strong>Cd trend</strong> decreases with Re (3.108 at Re=20 to 1.600 at Re=200), matching the expected monotonic decrease</li>
   </ul>
 
-  <h3>5.2 Known Limitations</h3>
+  <h3>6.2 Systematic Bias</h3>
 
+  <p>The solver shows a systematic ~20-55% overprediction of drag coefficient and ~20-25% overprediction of Strouhal number. This is consistent with known artifacts of the current configuration:</p>
   <ul>
-    <li><strong>BGK stability limit</strong> at high Re: as \(\tau \to 0.5\), numerical instabilities appear. For Re &gt; 300, MRT or Smagorinsky LES is recommended</li>
-    <li><strong>Grid resolution:</strong> 30 grid points across the cylinder diameter gives adequate resolution for integral quantities (Cd, St) but underresolves boundary layer profiles</li>
-    <li><strong>Low Mach constraint:</strong> \(u_{\text{inflow}} = 0.1\) limits the Reynolds number range accessible before \(\tau\) approaches 0.5</li>
-    <li><strong>2D limitation:</strong> at Re &gt; 200, 3D spanwise instabilities appear in real cylinder flow. A 2D simulation artificially suppresses these, slightly overpredicting Cd and St</li>
+    <li><strong>Stair-step cylinder boundary:</strong> The bounce-back method on a Cartesian grid creates a "rough" cylinder surface with local flow separation at the stair steps, increasing both form drag and effective blockage</li>
+    <li><strong>Coarse grid resolution:</strong> D=30 grid points across the cylinder (400x150 domain) gives ~3 grid points in the boundary layer at Re=100, which underresolves the near-wall velocity gradient</li>
+    <li><strong>BGK collision:</strong> Single-relaxation-time BGK has known numerical dissipation proportional to \(\tau - 0.5\). At low Re (high tau), this adds significant artificial viscosity</li>
+    <li><strong>2D confinement:</strong> Periodic boundaries in y create an effective confinement ratio (D/NY = 30/150 = 0.2), which raises the wake velocity and increases drag above the unbounded-flow value</li>
   </ul>
 
-  <h3>5.3 Extension Path</h3>
+  <p>For production-grade accuracy, a finer grid (NX=800, NY=300), curved boundary treatment (e.g., immersed boundary or interpolated bounce-back), and MRT collision operator would be recommended. The current implementation is intentionally kept at the D2Q9 BGK baseline to demonstrate fundamental LBM competence.</p>
+
+  <h3>6.3 Extension Path</h3>
 
   <ul>
     <li><strong>MRT collision:</strong> improves stability at high Re by allowing independent relaxation rates for different moments</li>
@@ -227,8 +221,8 @@ const CYAN = '#00d4ff';
 const ORANGE = '#ff6b35';
 
 // Strouhal validation data
-const computedRe = [20, 40, 60, 100, 150, 200];
-const computedSt = [0, 0, 0.142, 0.168, 0.180, 0.189];
+const computedRe = [20, 40, 100, 200];
+const computedSt = [0, 0, 0.200, 0.240];
 
 // Williamson 1988 data (digitized from Figure 3)
 const williamsonRe = [47, 50, 55, 60, 65, 70, 75, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
@@ -243,7 +237,7 @@ const stLayout = {
   plot_bgcolor: 'rgba(0,0,0,0)',
   font: { family: 'JetBrains Mono, monospace', size: 10, color: TEXT_COLOR },
   xaxis: { title: { text: 'Reynolds Number' }, gridcolor: GRID_COLOR, zerolinecolor: '#30363d', range: [20, 210] },
-  yaxis: { title: { text: 'Strouhal Number St' }, gridcolor: GRID_COLOR, zerolinecolor: '#30363d', range: [0, 0.22] },
+  yaxis: { title: { text: 'Strouhal Number St' }, gridcolor: GRID_COLOR, zerolinecolor: '#30363d', range: [0, 0.28] },
   margin: { l: 50, r: 20, t: 10, b: 40 },
   legend: { font: { size: 9, color: TEXT_COLOR }, bgcolor: 'rgba(0,0,0,0)' },
   hovermode: 'x',
@@ -274,7 +268,7 @@ const stTraces = [
 Plotly.newPlot('strouhalChart', stTraces, stLayout, { responsive: true, displayModeBar: false });
 
 // Drag coefficient validation
-const computedCd = [2.05, 1.52, 1.44, 1.41, 1.37, 1.35];
+const computedCd = [3.108, 2.293, 1.763, 1.600];
 const trittonRe = [20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200];
 const trittonCd = [2.01, 1.73, 1.50, 1.42, 1.42, 1.38, 1.39, 1.40, 1.39, 1.35, 1.32, 1.31, 1.31, 1.30];
 
@@ -283,7 +277,7 @@ const cdLayout = {
   plot_bgcolor: 'rgba(0,0,0,0)',
   font: { family: 'JetBrains Mono, monospace', size: 10, color: TEXT_COLOR },
   xaxis: { title: { text: 'Reynolds Number' }, gridcolor: GRID_COLOR, zerolinecolor: '#30363d', range: [10, 210] },
-  yaxis: { title: { text: 'Mean Drag Coefficient Cd' }, gridcolor: GRID_COLOR, zerolinecolor: '#30363d', range: [1.0, 2.2] },
+  yaxis: { title: { text: 'Mean Drag Coefficient Cd' }, gridcolor: GRID_COLOR, zerolinecolor: '#30363d', range: [0.5, 3.5] },
   margin: { l: 50, r: 20, t: 10, b: 40 },
   legend: { font: { size: 9, color: TEXT_COLOR }, bgcolor: 'rgba(0,0,0,0)' },
   hovermode: 'x',

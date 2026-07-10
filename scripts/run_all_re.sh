@@ -14,10 +14,18 @@ fi
 # Reynolds numbers to simulate
 RE_VALUES=(20 40 100 200)
 
-for RE in "${RE_VALUES[@]}"; do
+# Step counts tuned for each Re:
+#   Steady flows (Re=20,40): need 20000 steps to reach steady state
+#   Unsteady (Re=100): shedding develops by ~18000 steps
+#   Unsteady (Re=200): shedding develops by ~12000 steps
+STEPS_LIST=(20000 20000 30000 20000)
+
+for i in "${!RE_VALUES[@]}"; do
+    RE="${RE_VALUES[$i]}"
+    STEPS="${STEPS_LIST[$i]}"
     echo ""
-    echo "--- Simulating Re = ${RE} ---"
-    ./build/LBM_Engine "${RE}"
+    echo "--- Simulating Re = ${RE} (${STEPS} steps) ---"
+    ./build/LBM_Engine "${RE}" "${STEPS}"
     echo "--- Done Re = ${RE} ---"
 done
 
