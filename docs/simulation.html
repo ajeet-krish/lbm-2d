@@ -10,77 +10,48 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* Sidebar toggle button inside simulator */
-    .sidebar-toggle {
-      position: fixed; top: 12px; left: 12px; z-index: 100;
-      background: var(--bg-card); color: var(--fg-dim);
-      border: 1px solid var(--border); border-radius: 4px;
-      padding: 6px 10px; font-size: 0.8em; cursor: pointer;
-      transition: all 0.15s;
-    }
-    .sidebar-toggle:hover { border-color: var(--cyan-dim); color: var(--fg); }
-
-    /* When sidebar is open, push canvas */
-    .sim-container { transition: margin-left 0.2s; }
-
     html, body {
       height: 100%; margin: 0; overflow: hidden;
       background: var(--bg-primary);
       font-family: 'JetBrains Mono', monospace;
       color: var(--fg);
     }
+
     .sim-container {
       display: flex; height: 100vh; width: 100vw;
     }
-    .canvas-area {
-      flex: 1; position: relative; overflow: hidden;
-      background: var(--bg-canvas);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .canvas-area canvas {
-      width: 100%; height: 100%; display: block;
-      image-rendering: pixelated;
-    }
-    .hud-overlay {
-      position: absolute; top: 12px; left: 12px;
-      font-size: 0.72em; line-height: 1.6;
-      color: var(--cyan); pointer-events: none;
-      text-shadow: 0 0 4px rgba(0,0,0,0.8);
-    }
-    .hud-overlay span { display: block; }
-    .hud-watermark {
-      position: absolute; bottom: 12px; right: 16px;
-      font-size: 0.6em; color: var(--fg-muted); opacity: 0.4;
-      pointer-events: none;
-    }
+
+    /* --- Controls panel (left) --- */
     .controls-panel {
-      width: 280px; min-width: 280px;
-      background: var(--bg-card); border-left: 1px solid var(--border);
+      width: 260px; min-width: 260px;
+      background: var(--bg-card); border-right: 1px solid var(--border);
       padding: 16px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 16px;
+      display: flex; flex-direction: column; gap: 14px;
+      z-index: 10;
     }
     .controls-panel::-webkit-scrollbar { width: 4px; }
     .controls-panel::-webkit-scrollbar-track { background: transparent; }
     .controls-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
     .panel-title {
       font-size: 0.78em; font-weight: 700; color: var(--cyan);
       letter-spacing: 0.5px; text-transform: uppercase;
       padding-bottom: 8px; border-bottom: 1px solid var(--border);
     }
-    .control-group {
-      display: flex; flex-direction: column; gap: 6px;
-    }
+
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
     .control-group label {
-      font-size: 0.68em; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.3px;
+      font-size: 0.64em; color: var(--fg-dim);
+      text-transform: uppercase; letter-spacing: 0.3px;
     }
     .control-group .value-display {
       font-size: 0.78em; color: var(--fg); font-weight: 500;
+      min-width: 32px; text-align: right;
     }
-    .shape-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
-    }
+
+    .shape-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
     .shape-btn {
-      padding: 6px 4px; font-size: 0.62em; font-family: inherit;
+      padding: 6px 4px; font-size: 0.6em; font-family: inherit;
       background: var(--bg-primary); color: var(--fg-dim);
       border: 1px solid var(--border); border-radius: 4px;
       cursor: pointer; transition: all 0.15s; text-align: center;
@@ -90,6 +61,7 @@
       background: var(--cyan-dim); color: #000; border-color: var(--cyan);
       font-weight: 700;
     }
+
     input[type="range"] {
       width: 100%; height: 4px; -webkit-appearance: none;
       background: var(--border); border-radius: 2px; outline: none;
@@ -99,13 +71,13 @@
       background: var(--cyan); border-radius: 50%; cursor: pointer;
       border: 2px solid var(--bg-primary);
     }
-    .airfoil-controls {
-      display: none; flex-direction: column; gap: 8px;
-    }
+
+    .slider-row { display: flex; align-items: center; gap: 8px; }
+
+    .airfoil-controls { display: none; flex-direction: column; gap: 8px; }
     .airfoil-controls.visible { display: flex; }
-    .playback-row {
-      display: flex; gap: 6px;
-    }
+
+    .playback-row { display: flex; gap: 6px; }
     .playback-btn {
       flex: 1; padding: 8px; font-size: 0.68em; font-family: inherit;
       background: var(--bg-primary); color: var(--fg);
@@ -113,8 +85,57 @@
       cursor: pointer; transition: all 0.15s; text-align: center;
     }
     .playback-btn:hover { border-color: var(--cyan-dim); }
-    .playback-btn.primary { background: var(--cyan-dim); color: #000; border-color: var(--cyan); font-weight: 700; }
+    .playback-btn.primary {
+      background: var(--cyan-dim); color: #000;
+      border-color: var(--cyan); font-weight: 700;
+    }
     .playback-btn.primary:hover { background: var(--cyan); }
+
+    .status-row {
+      margin-top: auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .status-indicator {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.6em; color: var(--fg-dim);
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); animation: pulse 1.5s infinite;
+    }
+    .status-dot.paused { background: var(--orange); animation: none; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* --- Canvas area (center) --- */
+    .canvas-area {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      background: var(--bg-canvas); position: relative;
+    }
+    .canvas-area canvas {
+      image-rendering: pixelated; image-rendering: crisp-edges;
+      border: 1px solid var(--border); border-radius: 2px;
+    }
+
+    .hud-overlay {
+      position: absolute; top: 16px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; gap: 24px;
+      font-size: 0.7em; color: var(--cyan);
+      pointer-events: none;
+      text-shadow: 0 0 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6);
+      background: rgba(13,17,23,0.6);
+      padding: 4px 14px; border-radius: 4px;
+      border: 1px solid rgba(33,38,45,0.5);
+    }
+    .hud-overlay span { white-space: nowrap; }
+
+    .hud-watermark {
+      position: absolute; bottom: 16px; right: 24px;
+      font-size: 0.55em; color: var(--fg-muted); opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* --- Loading --- */
     .loading-overlay {
       position: fixed; inset: 0; z-index: 999;
       background: var(--bg-primary);
@@ -130,24 +151,27 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { font-size: 0.78em; color: var(--fg-dim); }
-    .status-indicator {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.62em; color: var(--fg-dim);
+
+    /* --- Sidebar toggle --- */
+    .sidebar-toggle {
+      position: fixed; top: 12px; left: 276px; z-index: 200;
+      background: var(--bg-card); color: var(--fg-dim);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 4px 8px; font-size: 0.75em; cursor: pointer;
+      transition: all 0.15s;
     }
-    .status-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--green); animation: pulse 1.5s infinite;
-    }
-    .status-dot.paused { background: var(--orange); animation: none; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-    @media (max-width: 700px) {
+    .sidebar-toggle:hover { border-color: var(--cyan-dim); color: var(--fg); }
+
+    /* Responsive */
+    @media (max-width: 800px) {
       .sim-container { flex-direction: column; }
       .controls-panel {
-        width: 100%; min-width: unset; max-height: 40vh;
-        border-left: none; border-top: 1px solid var(--border);
+        width: 100%; min-width: unset; max-height: 35vh;
+        border-right: none; border-bottom: 1px solid var(--border);
       }
-      .canvas-area { height: 60vh; }
-      .shape-grid { grid-template-columns: 1fr 1fr 1fr; }
+      .canvas-area { height: 65vh; }
+      .canvas-area canvas { max-width: 100%; max-height: 100%; }
+      .sidebar-toggle { left: 12px; }
     }
   </style>
 </head>
@@ -179,16 +203,7 @@
 </div>
 
 <div class="sim-container">
-  <div class="canvas-area">
-    <canvas id="simCanvas"></canvas>
-    <div class="hud-overlay" id="hudOverlay">
-      <span id="hudCd">Cd: 0.0000</span>
-      <span id="hudCl">Cl: 0.0000</span>
-      <span id="hudSteps">Steps: 0</span>
-    </div>
-    <div class="hud-watermark">LBM-2D &middot; D2Q9 BGK</div>
-  </div>
-
+  <!-- Controls (left) -->
   <div class="controls-panel">
     <div class="panel-title">Simulation Controls</div>
 
@@ -206,8 +221,8 @@
 
     <div class="control-group">
       <label>Reynolds Number</label>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <input type="range" id="reSlider" min="20" max="200" value="100" step="1">
+      <div class="slider-row">
+        <input type="range" id="reSlider" min="20" max="500" value="100" step="1">
         <span class="value-display" id="reValue">100</span>
       </div>
     </div>
@@ -215,16 +230,16 @@
     <div class="airfoil-controls" id="airfoilControls">
       <div class="control-group">
         <label>Angle of Attack</label>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div class="slider-row">
           <input type="range" id="aoaSlider" min="0" max="16" value="4" step="1">
-          <span class="value-display" id="aoaValue">4&deg;</span>
+          <span class="value-display" id="aoaValue">4&#176;</span>
         </div>
       </div>
     </div>
 
     <div class="control-group">
       <label>Simulation Speed</label>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div class="slider-row">
         <input type="range" id="speedSlider" min="5" max="30" value="10" step="1">
         <span class="value-display" id="speedValue">1.0x</span>
       </div>
@@ -235,7 +250,7 @@
       <button class="playback-btn" id="resetBtn">&#8635; Reset</button>
     </div>
 
-    <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between;">
+    <div class="status-row">
       <div class="status-indicator">
         <div class="status-dot" id="statusDot"></div>
         <span id="statusText">Loading...</span>
@@ -243,10 +258,20 @@
       <span style="font-size:0.55em;color:var(--fg-muted);">WASM &middot; 100 &times; 60</span>
     </div>
   </div>
+
+  <!-- Canvas (center) -->
+  <div class="canvas-area">
+    <canvas id="simCanvas"></canvas>
+    <div class="hud-overlay" id="hudOverlay">
+      <span id="hudCd">Cd: 0.0000</span>
+      <span id="hudCl">Cl: 0.0000</span>
+      <span id="hudSteps">Steps: 0</span>
+    </div>
+    <div class="hud-watermark">LBM-2D &middot; D2Q9 BGK &middot; 100&times;60</div>
+  </div>
 </div>
 
 <script>
-// Define Module config BEFORE loading the WASM glue script
 var Module = {
     locateFile: function(path) {
         if (path.endsWith('.wasm')) return 'assets/wasm/lbm_solver.wasm';
@@ -255,10 +280,7 @@ var Module = {
     onRuntimeInitialized: function() {
         document.getElementById('loadingOverlay').classList.add('hidden');
         document.getElementById('statusText').textContent = 'Live';
-        // Start the simulation
-        if (window.WasmSimReady) {
-            window.WasmSimReady();
-        }
+        if (window.WasmSimReady) window.WasmSimReady();
     },
 };
 </script>
@@ -283,7 +305,6 @@ var Module = {
     const airfoilControls = document.getElementById('airfoilControls');
     const statusDot = document.getElementById('statusDot');
 
-    // Current state
     let currentShapeType = 0;
     let currentSeries = 12;
     let currentShapeParams = { cx: 30, cy: 30, size: 12 };
@@ -303,7 +324,6 @@ var Module = {
         } else {
             sim.setShape(s, p.cx, p.cy, p.size, 0);
         }
-        // Re-apply Re
         const re = parseInt(reSlider.value);
         const refLen = getRefLen(s, p);
         sim.setRe(re, refLen);
@@ -317,7 +337,9 @@ var Module = {
     // Shape buttons
     document.querySelectorAll('.shape-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.shape-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.shape-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             this.classList.add('active');
             currentShapeType = parseInt(this.dataset.shape);
             currentShapeParams = JSON.parse(this.dataset.params);
@@ -347,7 +369,7 @@ var Module = {
     aoaSlider.addEventListener('input', function() {
         if (!sim) return;
         const aoa = parseInt(this.value);
-        aoaValue.innerHTML = aoa + '&deg;';
+        aoaValue.innerHTML = aoa + '&#176;';
         if (currentShapeType === 4) {
             sim.setAoA(currentSeries, aoa);
         }
@@ -372,13 +394,13 @@ var Module = {
 
     // Reset
     resetBtn.addEventListener('click', function() {
-        if (!sim) sim.reset();
+        if (!sim) return;
+        sim.reset();
     });
 
-    // Called when WASM is ready
+    // WASM ready callback
     window.WasmSimReady = function() {
         sim = WasmSim.init(canvas, {
-
             hudCd: hudCd,
             hudCl: hudCl,
             hudSteps: hudSteps,
@@ -387,7 +409,6 @@ var Module = {
         statusDot.className = 'status-dot';
         document.getElementById('statusText').textContent = 'Live';
 
-        // Initial setup
         setTimeout(function() {
             if (!sim) return;
             const refLen = getRefLen(currentShapeType, currentShapeParams);

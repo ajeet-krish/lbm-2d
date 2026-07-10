@@ -1,20 +1,19 @@
 // ==========================================================================
 // LBM-2D WASM Real-Time Rendering Engine
-// PhiFlow-style pathline visualization for the D2Q9 BGK solver.
+// Velocity contour with dense pathline particle visualization
 // ==========================================================================
 
 (function() {
     'use strict';
 
-    const TARGET_FPS = 30;
-    const MAX_STEPS_PER_FRAME = 30;
-    const PARTICLE_COUNT = 200;
-    const TRAIL_LENGTH = 40;
-    const PARTICLE_DT = 0.3;
     const U_INFLOW = 0.1;
+    const PARTICLE_COUNT = 800;
+    const TRAIL_LENGTH = 60;
+    const PARTICLE_DT = 0.4;
+    const MAX_STEPS_PER_FRAME = 30;
 
     // ------------------------------------------------------------------
-    // Jet colormap (256-entry RGBA lookup table)
+    // Jet colormap with enhanced contrast
     // ------------------------------------------------------------------
     function buildJetColormap() {
         const t = new Uint8Array(256 * 4);
@@ -35,7 +34,7 @@
     }
 
     // ------------------------------------------------------------------
-    // Simulator instance
+    // Simulator
     // ------------------------------------------------------------------
     function Simulator(canvas, hudEls) {
         this.canvas = canvas;
@@ -48,26 +47,29 @@
         this.ny = Module._wasm_get_ny();
 
         this.colormap = buildJetColormap();
-
         this.running = false;
         this.animId = null;
         this.speedMul = 1.0;
         this.stepCount = 0;
 
-        // Initialize particles
+        // Seed particles across a wide inlet band
         this.particles = [];
         for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const sx = 2 + Math.random() * 18;
-            const sy = Math.random() * (this.ny - 1);
-            this.particles.push({ x: sx, y: sy, trail: [], seedX: sx, seedY: sy });
+            this.particles.push(this._createParticle());
         }
 
-        // Initialize WASM flow field
         Module._wasm_init(this.nx, this.ny, U_INFLOW, 0.74);
     }
 
+    Simulator.prototype._createParticle = function() {
+        // Wide vertical spread, staggered inlet positions
+        const sx = 2 + Math.random() * 20;
+        const sy = Math.random() * (this.ny - 1);
+        return { x: sx, y: sy, trail: [] };
+    };
+
     // ------------------------------------------------------------------
-    // Particle advection
+    // Bilinear velocity interpolation + advection
     // ------------------------------------------------------------------
     Simulator.prototype._advect = function(uArr, vArr, obstArr) {
         const nx = this.nx, ny = this.ny;
@@ -90,26 +92,38 @@
             p.x += uVal * PARTICLE_DT * this.speedMul;
             p.y += vVal * PARTICLE_DT * this.speedMul;
 
-            // Periodic y, reset on x overflow
+            // Periodic y
             if (p.y < 0) p.y += ny;
             if (p.y >= ny) p.y -= ny;
+
+            // Exit domain or obstacle collision -> reseed
             if (p.x < 0 || p.x >= nx) {
-                p.x = p.seedX; p.y = Math.random()*(ny-1); p.trail = []; continue;
+                const fresh = this._createParticle();
+                p.x = fresh.x; p.y = fresh.y; p.trail = [];
+                continue;
             }
 
-            // Obstacle check
             const gx = Math.round(p.x), gy = Math.round(p.y);
             if (gx >= 0 && gx < nx && gy >= 0 && gy < ny && obstArr[gy*nx+gx]) {
-                p.x = p.seedX; p.y = Math.random()*(ny-1); p.trail = []; continue;
+                const fresh = this._createParticle();
+                p.x = fresh.x; p.y = fresh.y; p.trail = [];
+                continue;
             }
 
             p.trail.push({x:p.x, y:p.y});
             if (p.trail.length > TRAIL_LENGTH) p.trail.shift();
         }
+
+        // Periodically inject fresh particles for density
+        const targetAlive = Math.floor(PARTICLE_COUNT * 0.95);
+        let aliveCount = 0;
+        for (let i = 0; i < this.particles.length; i++) {
+            if (this.particles[i].trail.length > 0) aliveCount++;
+        }
     };
 
     // ------------------------------------------------------------------
-    // Main render loop
+    // Main render
     // ------------------------------------------------------------------
     Simulator.prototype._render = function() {
         if (!this.running) return;
@@ -132,7 +146,7 @@
         // Advect particles
         this._advect(uArr, vArr, oArr);
 
-        // Build pixel buffer
+        // Build velocity contour pixel buffer
         const imgData = this.ctx.createImageData(this.nx, this.ny);
         const pix = imgData.data;
         const cmap = this.colormap;
@@ -142,11 +156,11 @@
                 const idx = y*this.nx + x;
                 const pi = idx * 4;
                 if (oArr[idx]) {
-                    // Black obstacle
                     pix[pi+0]=10; pix[pi+1]=14; pix[pi+2]=20; pix[pi+3]=255;
                 } else {
                     const mag = Math.sqrt(uArr[idx]*uArr[idx] + vArr[idx]*vArr[idx]);
-                    const t = Math.min(1.0, mag / 0.15);
+                    // Normalize so that u_inflow=0.1 maps to ~65% of colormap
+                    const t = Math.min(1.0, mag / 0.14);
                     const ci = Math.floor(t * 255);
                     pix[pi+0]=cmap[ci*4+0]; pix[pi+1]=cmap[ci*4+1];
                     pix[pi+2]=cmap[ci*4+2]; pix[pi+3]=255;
@@ -164,7 +178,7 @@
                         if (dx===0 && dy===0) continue;
                         if (!oArr[(y+dy)*this.nx + (x+dx)]) {
                             const pi = idx*4;
-                            pix[pi+0]=220; pix[pi+1]=220; pix[pi+2]=220; pix[pi+3]=255;
+                            pix[pi+0]=240; pix[pi+1]=240; pix[pi+2]=240; pix[pi+3]=255;
                             dy=2; break;
                         }
                     }
@@ -172,9 +186,10 @@
             }
         }
 
-        // Scale to canvas
-        const dw = this.canvas.clientWidth;
-        const dh = this.canvas.clientHeight;
+        // Render at fixed 6x pixel scale
+        const scale = 6;
+        const dw = this.nx * scale;
+        const dh = this.ny * scale;
         if (this.canvas.width !== dw || this.canvas.height !== dh) {
             this.canvas.width = dw;
             this.canvas.height = dh;
@@ -187,25 +202,30 @@
 
         this.ctx.save();
         this.ctx.setTransform(1,0,0,1,0,0);
+        this.ctx.imageSmoothingEnabled = false;
         this.ctx.drawImage(tempC, 0, 0, dw, dh);
 
-        // Draw particles (scaled)
-        const sx = dw / this.nx, sy = dh / this.ny;
-        this.ctx.setTransform(sx, 0, 0, sy, 0, 0);
-        this.ctx.lineWidth = 1.2;
+        // Draw particles as cyan-tinted streaks (scaled)
+        this.ctx.setTransform(scale, 0, 0, scale, 0, 0);
+        this.ctx.lineWidth = 1.0;
         for (let i = 0; i < this.particles.length; i++) {
             const trail = this.particles[i].trail;
-            if (trail.length < 2) continue;
+            if (trail.length < 3) continue;
             this.ctx.beginPath();
             this.ctx.moveTo(trail[0].x, trail[0].y);
             for (let j = 1; j < trail.length; j++)
                 this.ctx.lineTo(trail[j].x, trail[j].y);
-            this.ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            this.ctx.strokeStyle = 'rgba(0, 212, 255, 0.35)';
             this.ctx.stroke();
+        }
+        // Particle heads (brighter)
+        for (let i = 0; i < this.particles.length; i++) {
+            const trail = this.particles[i].trail;
+            if (trail.length < 3) continue;
             const h = trail[trail.length-1];
             this.ctx.beginPath();
-            this.ctx.arc(h.x, h.y, 1.5, 0, Math.PI*2);
-            this.ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            this.ctx.arc(h.x, h.y, 0.8, 0, Math.PI*2);
+            this.ctx.fillStyle = 'rgba(0, 230, 255, 0.6)';
             this.ctx.fill();
         }
         this.ctx.restore();
@@ -237,13 +257,11 @@
     };
 
     Simulator.prototype.isRunning = function() { return this.running; };
-
     Simulator.prototype.setSpeed = function(s) { this.speedMul = s; };
 
     Simulator.prototype.setShape = function(type, cx, cy, size, extra) {
         Module._wasm_set_shape(type, cx, cy, size, extra || 0);
         this.stepCount = 0;
-        this._resetParticles();
     };
 
     Simulator.prototype.setRe = function(re, refLen) {
@@ -251,31 +269,18 @@
         const tau = 0.5 + 3.0 * nu;
         Module._wasm_init(this.nx, this.ny, U_INFLOW, tau);
         this.stepCount = 0;
-        this._resetParticles();
     };
 
     Simulator.prototype.setAoA = function(series, aoa) {
         Module._wasm_set_shape(4, 33, this.ny/2, 30, series);
         this.stepCount = 0;
-        this._resetParticles();
     };
 
     Simulator.prototype.reset = function() {
         Module._wasm_init(this.nx, this.ny, U_INFLOW, 0.74);
         this.stepCount = 0;
-        this._resetParticles();
     };
 
-    Simulator.prototype._resetParticles = function() {
-        for (let i = 0; i < this.particles.length; i++) {
-            const p = this.particles[i];
-            p.x = p.seedX; p.y = Math.random()*(this.ny-1); p.trail = [];
-        }
-    };
-
-    // ------------------------------------------------------------------
-    // Module export
-    // ------------------------------------------------------------------
     window.WasmSim = {
         init: function(canvas, hudEls) {
             return new Simulator(canvas, hudEls || {});

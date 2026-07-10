@@ -58,8 +58,9 @@ matches thin-airfoil theory within 3%.
 - **NACA 4-digit airfoil** analysis with AoA sweep (lift curve, drag polar)
 - **Polygon obstacle** support (any closed 2D shape via point-in-polygon)
 - **VTK export** for ParaView visualization
-- **WebAssembly real-time simulator**: 100x60 grid, 5 shapes, Re slider,
-  AoA slider, animated pathlines, live Cd/Cl HUD
+- **WebAssembly real-time simulator**: 100x60 grid, 6 shapes (cylinder, square,
+  diamond, star, NACA 0012/2412), Re slider 20-500, AoA slider 0-16deg,
+  800-particle pathline streaks, velocity jet colormap, live Cd/Cl HUD
 - **Production-grade**: 13 Google Tests, GitHub Actions CI
 
 ## Interactive Website
@@ -109,12 +110,12 @@ docs/
 
 ## Roadmap
 
-### Phase 3: WebAssembly Real-Time Solver (Active)
-- [ ] 3A: Emscripten toolchain + build script
-- [ ] 3B: WASM solver port (exported C functions)
-- [ ] 3C: Canvas rendering engine (pathlines, colormap)
-- [ ] 3D: Interactive page (controls, HUD)
-- [ ] 3E: Shape library + polish
+### Phase 3: WebAssembly Real-Time Solver (Complete)
+- [x] 3A: Emscripten toolchain + build script
+- [x] 3B: WASM solver port (exported C functions)
+- [x] 3C: Canvas rendering engine (pathlines, colormap)
+- [x] 3D: Interactive page (controls, HUD)
+- [x] 3E: Shape library + polish
 
 ### Phase 4: Advanced Features (Stretch)
 - [ ] MRT (Multi-Relaxation Time) collision operator

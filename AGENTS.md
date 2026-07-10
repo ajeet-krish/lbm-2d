@@ -37,7 +37,7 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 | 1C | NACA 4-digit airfoil solver + polygon obstacle placement | ✅ |
 | 19 | Expanded cylinder Re values (60, 80, 120, 160, 180) | ❌ Cancelled |
 | 20 | Airfoil results page (Cl/Cd plots, field gallery) | ✅ |
-| 21 | WebAssembly real-time simulation (Emscripten) | ⏳ |
+| 21 | WebAssembly real-time simulation (Emscripten) | ✅ |
 | 22 | Final deploy to GitHub Pages | ⏳ |
 
 ## Roadmap
@@ -70,15 +70,15 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 
 ### Phase 3: WebAssembly Real-Time Solver
 
-Replaces `simulation.html` (pre-computed playback) with a live WASM-powered simulator on a 100x60 coarse grid. User selects shape (cylinder, square, diamond, star, NACA airfoils with AoA slider) and Re (20-200), sees the flow evolve organically with animated PhiFlow-style pathline streaks.
+Replaces `simulation.html` (pre-computed playback) with a live WASM-powered simulator on a 100x60 coarse grid. User selects shape (cylinder, square, diamond, star, NACA airfoils with AoA slider) and Re (20-500), sees the flow evolve organically with animated PhiFlow-style pathline streaks (800 particles, 60-frame trails).
 
 | Item | Description | Effort | Status |
 |------|-------------|--------|--------|
-| 3A | Emscripten toolchain + build script (`build_wasm.sh`) | 15 min | ⏳ |
-| 3B | WASM solver port (`wasm_main.cpp`) -- no OpenMP, no file I/O, exported C functions: `wasm_init`, `wasm_step`, `wasm_set_shape`, `wasm_get_vel_ptr`, `wasm_get_cd/cl` | 2-3h | ⏳ |
-| 3C | Canvas rendering engine (`wasm_sim.js`) -- velocity colormap, 200 particle pathlines with bilinear interpolation, obstacle outline, adaptive steps-per-frame | 3-4h | ⏳ |
-| 3D | Interactive page (`simulation.html`) -- shape selector, Re slider, AoA slider (airfoil only), speed control, play/pause, Cd/Cl HUD | 2-3h | ⏳ |
-| 3E | Shape library + initial state + polish | 1h | ⏳ |
+| 3A | Emscripten toolchain + build script (`build_wasm.sh`) | 15 min | ✅ |
+| 3B | WASM solver port (`wasm_main.cpp`) -- no OpenMP, no file I/O, exported C functions: `wasm_init`, `wasm_step`, `wasm_set_shape`, `wasm_get_u/v_ptr`, `wasm_get_cd/cl` | 2-3h | ✅ |
+| 3C | Canvas rendering engine (`wasm_sim.js`) -- velocity colormap, 800 particle pathlines with bilinear interpolation, obstacle outline, adaptive steps-per-frame | 3-4h | ✅ |
+| 3D | Interactive page (`simulation.html`) -- shape selector, Re slider (20-500), AoA slider (airfoil only), speed control, play/pause, Cd/Cl HUD | 2-3h | ✅ |
+| 3E | Shape library + initial state + polish | 1h | ✅ |
 
 **Architecture:**
 ```
@@ -98,10 +98,11 @@ User Input --> JS Controls --> WASM Solver (100x60 grid)
 **Key design decisions:**
 - 100x60 grid (6K nodes) for interactive rates (~20-30fps on modern hardware)
 - WASM solver runs ~20-30 steps per render frame (adaptive), flow develops over ~15-30s
-- Pathlines: ~200 particles seeded upstream, bilinear velocity interpolation, fading trails
+- Pathlines: 800 particles seeded upstream, bilinear velocity interpolation, 60-frame fading trails with cyan tint
 - All shapes via polygon obstacle: `place_polygon()` with generated vertex lists
-- `simulation.html` replaced with WASM version; pre-computed viewer removed
+- `simulation.html` replaced with WASM version; pre-computed viewer archived as `viewer.js`
 - No initial state pre-computation -- start from rest, let flow develop organically
+- Re range extended to 500 for visible vortex shedding across all shapes
 
 ## File Layout
 
