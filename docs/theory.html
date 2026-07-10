@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LBM-2D Theory and Methodology - From the Boltzmann equation to D2Q9 lattice discretization">
+  <title>Theory &amp; Methodology - LBM-2D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+<div class="sidebar">
+  <div class="sidebar-brand"><a href="index.html">LBM-2D</a></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-heading">Project</div>
+      <a href="index.html" class="nav-item">Home</a>
+      <a href="simulation.html" class="nav-item">Simulation Dashboard</a>
+      <a href="results.html" class="nav-item">Validation &amp; Results</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Reference</div>
+      <a href="theory.html" class="nav-item active">Theory &amp; Methodology</a>
+      <a href="implementation.html" class="nav-item">Implementation</a>
+      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+    </div>
+  </nav>
+</div>
+
+<div class="main-content">
+
+  <h1>Theory &amp; Methodology</h1>
+  <p>A self-contained treatment of the Lattice Boltzmann Method: from the kinetic theory of gases through the D2Q9 discretization, BGK collision operator, boundary conditions, and the Chapman-Enskog connection to the Navier-Stokes equations.</p>
+
+  <!-- ============================================================ -->
+  <h2>1. From Boltzmann to Lattice Boltzmann</h2>
+
+  <p>The Boltzmann equation describes the evolution of a particle distribution function \(f(\mathbf{x}, \mathbf{c}, t)\) in phase space:</p>
+
+  <div class="eq-box">
+    $$ \frac{\partial f}{\partial t} + \mathbf{c} \cdot \nabla f = \Omega(f) $$
+    <div class="label">Eq. 1: Boltzmann Equation</div>
+  </div>
+
+  <p>In the Lattice Boltzmann Method, we discretize this equation in velocity space using a finite set of velocity vectors \(\mathbf{c}_i\), physical space using a regular Cartesian grid, and time using a simple explicit scheme. The collision operator \(\Omega(f)\) is replaced by the Bhatnagar-Gross-Krook (BGK) approximation:</p>
+
+  <div class="eq-box">
+    $$ \Omega_i = -\frac{1}{\tau} \left( f_i - f_i^{\text{eq}} \right) $$
+    <div class="label">Eq. 2: BGK Collision Operator</div>
+  </div>
+
+  <p>where \(\tau\) is the dimensionless relaxation time and \(f_i^{\text{eq}}\) is the equilibrium distribution. This gives the discrete lattice Boltzmann equation:</p>
+
+  <div class="eq-box">
+    $$ f_i(\mathbf{x} + \mathbf{c}_i \Delta t, t + \Delta t) = f_i(\mathbf{x}, t) - \frac{1}{\tau} \left( f_i(\mathbf{x}, t) - f_i^{\text{eq}}(\mathbf{x}, t) \right) $$
+    <div class="label">Eq. 3: Discrete Lattice Boltzmann Equation (BGK)</div>
+  </div>
+
+  <p>This equation forms the heart of the solver. The left side represents the <strong>streaming step</strong> (distributions propagate to neighboring lattice sites), and the right side represents the <strong>collision step</strong> (distributions relax toward equilibrium).</p>
+
+  <div class="callout">
+    <strong>Algorithm Flow.</strong> Each time step executes: (1) Apply boundary conditions, (2) Collide: relax distributions toward equilibrium, (3) Stream: propagate distributions to neighbors, (4) Extract macroscopic properties and forces.
+  </div>
+
+  <!-- ============================================================ -->
+  <h2>2. The D2Q9 Lattice</h2>
+
+  <p>For 2D simulations, the D2Q9 lattice uses 9 discrete velocity vectors: one rest particle, four axial directions, and four diagonal directions.</p>
+
+  <div class="eq-box">
+    $$ \mathbf{c}_i = \begin{cases}
+    (0, 0) & i = 0 \\
+    (\pm 1, 0), (0, \pm 1) & i = 1,2,3,4 \\
+    (\pm 1, \pm 1) & i = 5,6,7,8
+    \end{cases} $$
+    <div class="label">Eq. 4: D2Q9 Velocity Set</div>
+  </div>
+
+  <p>Velocity vector layout on the lattice:</p>
+
+  <pre style="text-align:center;font-size:0.85em;padding:12px;color:var(--fg-dim);background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:6px;">
+    6 ( -1,  1)    2 ( 0,  1)    5 ( 1,  1)
+    3 ( -1,  0)    0 ( 0,  0)    1 ( 1,  0)
+    7 ( -1, -1)    4 ( 0, -1)    8 ( 1, -1)
+  </pre>
+
+  <p>The quadrature weights \(w_i\) are chosen to satisfy the moment isotropy conditions required to recover the Navier-Stokes equations:</p>
+
+  <div class="eq-box">
+    $$ w_i = \begin{cases}
+    4/9  & i = 0 \quad \text{(rest)} \\
+    1/9  & i = 1,2,3,4 \quad \text{(axial)} \\
+    1/36 & i = 5,6,7,8 \quad \text{(diagonal)}
+    \end{cases} $$
+    <div class="label">Eq. 5: D2Q9 Quadrature Weights</div>
+  </div>
+
+  <p>The lattice speed of sound for D2Q9 is \(c_s = 1/\sqrt{3}\) in lattice units, which follows from the velocity moment conditions.</p>
+
+  <!-- ============================================================ -->
+  <h2>3. Equilibrium Distribution</h2>
+
+  <p>The equilibrium distribution is a second-order expansion of the Maxwell-Boltzmann distribution, discretized onto the D2Q9 lattice:</p>
+
+  <div class="eq-box">
+    $$ f_i^{\text{eq}} = w_i \rho \left[ 1 + 3 (\mathbf{c}_i \cdot \mathbf{u}) + \frac{9}{2} (\mathbf{c}_i \cdot \mathbf{u})^2 - \frac{3}{2} (\mathbf{u} \cdot \mathbf{u}) \right] $$
+    <div class="label">Eq. 6: D2Q9 Equilibrium Distribution</div>
+  </div>
+
+  <p>This expansion is valid in the low Mach number limit (\(M = |\mathbf{u}|/c_s \ll 1\)), which constrains the inlet velocity to approximately \(u_{\text{inflow}} \lesssim 0.3\) in lattice units.</p>
+
+  <p>The macroscopic density \(\rho\) and velocity \(\mathbf{u}\) are recovered as moments of the distribution functions:</p>
+
+  <div class="eq-box">
+    $$ \rho = \sum_{i=0}^{8} f_i, \qquad \rho \mathbf{u} = \sum_{i=0}^{8} f_i \mathbf{c}_i $$
+    <div class="label">Eq. 7: Macroscopic Properties from Distribution Moments</div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2>4. Chapman-Enskog: Connecting LBM to Navier-Stokes</h2>
+
+  <p>The macroscopic Navier-Stokes equations emerge from the lattice Boltzmann equation through the Chapman-Enskog multiscale expansion. The kinematic viscosity \(\nu\) is related to the relaxation time \(\tau\):</p>
+
+  <div class="eq-box">
+    $$ \nu = c_s^2 \left( \tau - \frac{1}{2} \right) \Delta t = \frac{1}{3} \left( \tau - \frac{1}{2} \right) $$
+    <div class="label">Eq. 8: Viscosity from Relaxation Time (lattice units with \(\Delta t = 1\), \(\Delta x = 1\))</div>
+  </div>
+
+  <p>The Reynolds number is therefore controlled entirely by \(\tau\):</p>
+
+  <div class="eq-box">
+    $$ \text{Re} = \frac{u_{\text{inflow}} N_x}{\nu} = \frac{3 u_{\text{inflow}} N_x}{\tau - 1/2} $$
+    <div class="label">Eq. 9: Reynolds Number in Lattice Units</div>
+  </div>
+
+  <p>The recovered macroscopic equations are the incompressible Navier-Stokes equations with an error of \(O(M^2)\):</p>
+
+  <div class="eq-box">
+    $$ \nabla \cdot \mathbf{u} = 0 $$
+    $$ \frac{\partial \mathbf{u}}{\partial t} + (\mathbf{u} \cdot \nabla) \mathbf{u} = -\frac{1}{\rho} \nabla p + \nu \nabla^2 \mathbf{u} $$
+    <div class="label">Eq. 10: Recovered Navier-Stokes Equations (low Mach limit)</div>
+  </div>
+
+  <p>The pressure is related to density through the equation of state \(p = \rho c_s^2\), making LBM a weakly compressible solver.</p>
+
+  <!-- ============================================================ -->
+  <h2>5. Boundary Conditions</h2>
+
+  <h3>5.1 Zou/He Velocity Inlet</h3>
+
+  <p>At the left boundary (\(x = 0\)), the velocity is enforced to \((u, v) = (u_{\text{inflow}}, 0)\). The unknown distribution functions are computed from the known ones using the Zou/He method, which applies the bounce-back rule to the non-equilibrium part of the distributions:</p>
+
+  <div class="eq-box">
+    $$ \rho_{\text{inlet}} = \frac{1}{1 - u_{\text{inflow}}} \left[ f_0 + f_2 + f_4 + 2(f_3 + f_6 + f_7) \right] $$
+    <div class="label">Eq. 11: Inlet Density from Zou/He</div>
+  </div>
+
+  <p>All unknown inlet distributions are then set to their equilibrium values using \(\rho_{\text{inlet}}\) and \((u_{\text{inflow}}, 0)\).</p>
+
+  <h3>5.2 Convective Outlet</h3>
+
+  <p>At the right boundary (\(x = N_x - 1\)), a zero-gradient (convective) condition is applied:</p>
+
+  <div class="eq-box">
+    $$ f_i(N_x - 1, y) = f_i(N_x - 2, y) \quad \text{for all } i $$
+    <div class="label">Eq. 12: Zero-Gradient Outlet</div>
+  </div>
+
+  <h3>5.3 Bounce-Back (No-Slip Walls)</h3>
+
+  <p>Solid boundaries (cylinder surface, top/bottom walls) use the bounce-back scheme. Distributions that stream into a solid node are reflected back along their incoming direction:</p>
+
+  <div class="eq-box">
+    $$ f_{\bar{i}}(\mathbf{x}_f, t + \Delta t) = f_i^*(\mathbf{x}_f, t) $$
+    <div class="label">Eq. 13: Bounce-Back where \(\bar{i}\) is the direction opposite to \(i\)</div>
+  </div>
+
+  <p>This enforces the no-slip condition at the wall, located halfway between the fluid and solid nodes.</p>
+
+  <h3>5.4 Periodic Boundaries</h3>
+
+  <p>The top and bottom boundaries (\(y = 0\) and \(y = N_y - 1\)) are periodic, meaning fluid that exits the top re-enters at the bottom and vice versa:</p>
+
+  <div class="eq-box">
+    $$ f_i(x, 0) = f_i(x, N_y - 1), \quad f_i(x, N_y - 1) = f_i(x, 0) $$
+    <div class="label">Eq. 14: Periodic Y-Boundaries</div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2>6. Force Extraction via Momentum Exchange</h2>
+
+  <p>The forces acting on the cylinder are computed using the momentum exchange method. For each boundary link connecting a fluid node \(\mathbf{x}_f\) to an obstacle node \(\mathbf{x}_b\), the momentum transfer is:</p>
+
+  <div class="eq-box">
+    $$ \Delta \mathbf{m} = \mathbf{c}_i \left[ f_i(\mathbf{x}_f, t) - f_{\bar{i}}(\mathbf{x}_b, t) \right] $$
+    <div class="label">Eq. 15: Momentum Exchange on a Boundary Link</div>
+  </div>
+
+  <p>Summing over all boundary links gives the total force on the cylinder. The drag and lift coefficients follow:</p>
+
+  <div class="eq-box">
+    $$ C_d = \frac{2 F_x}{\rho u_{\text{inflow}}^2 D}, \qquad C_l = \frac{2 F_y}{\rho u_{\text{inflow}}^2 D} $$
+    <div class="label">Eq. 16: Drag and Lift Coefficients</div>
+  </div>
+
+  <p>where \(D = 2R\) is the cylinder diameter.</p>
+
+  <!-- ============================================================ -->
+  <h2>7. Memory Architecture</h2>
+
+  <p>High-performance LBM requires careful memory layout. Our solver uses a flat 1D array for the distribution functions, indexed as:</p>
+
+  <div class="eq-box">
+    $$ \text{index} = (y \cdot N_x + x) \cdot 9 + i $$
+    <div class="label">Eq. 17: Flat 1D Array Indexing for \(f_i(x,y)\)</div>
+  </div>
+
+  <p>This layout ensures that the 9 distributions at a single node are stored contiguously in memory, maximizing cache utilization during the collision step. Nested vectors (\(\text{vector}[\text{vector}]\)) would scatter the same data across non-contiguous heap allocations, causing cache misses.</p>
+
+  <!-- ============================================================ -->
+  <h2>8. Parameter Summary</h2>
+
+  <table>
+    <tr><th>Symbol</th><th>Value</th><th>Units</th><th>Description</th></tr>
+    <tr><td>\(N_x\)</td><td>400</td><td>cells</td><td>Grid width (streamwise)</td></tr>
+    <tr><td>\(N_y\)</td><td>150</td><td>cells</td><td>Grid height (wall-normal)</td></tr>
+    <tr><td>\(c_s^2\)</td><td>\(1/3\)</td><td>--</td><td>Lattice speed of sound squared</td></tr>
+    <tr><td>\(u_{\text{inflow}}\)</td><td>0.1</td><td>lu ts\(^{-1}\)</td><td>Inlet velocity (Mach ~ 0.17)</td></tr>
+    <tr><td>\(D\)</td><td>30</td><td>cells</td><td>Cylinder diameter (\(N_y/5\))</td></tr>
+    <tr><td>\(\tau\)</td><td>\(0.5 + 3\nu\)</td><td>ts</td><td>Relaxation time (Re-dependent)</td></tr>
+    <tr><td>\(\nu\)</td><td>\(u_{\text{inflow}} N_x / \text{Re}\)</td><td>lu\(^2\) ts\(^{-1}\)</td><td>Kinematic viscosity</td></tr>
+  </table>
+
+</div>
+
+<footer class="site-footer">
+  <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  renderMathInElement(document.body, {
+    delimiters: [
+      { left: "$$", right: "$$", display: true },
+      { left: "\\(", right: "\\)", display: false },
+      { left: "$", right: "$", display: false }
+    ],
+    throwOnError: false
+  });
+});
+
+document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+});
+</script>
+
+</body>
+</html>

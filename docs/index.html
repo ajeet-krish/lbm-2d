@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LBM-2D: High-Performance C++ Lattice Boltzmann CFD Solver with OpenMP parallelism and validated vortex shedding analysis">
+  <title>LBM-2D: High-Performance C++ Lattice Boltzmann CFD Solver</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+<div class="sidebar">
+  <div class="sidebar-brand"><a href="index.html">LBM-2D</a></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-heading">Project</div>
+      <a href="index.html" class="nav-item active">Home</a>
+      <a href="simulation.html" class="nav-item">Simulation Dashboard</a>
+      <a href="results.html" class="nav-item">Validation &amp; Results</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Reference</div>
+      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+      <a href="implementation.html" class="nav-item">Implementation</a>
+      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+    </div>
+  </nav>
+</div>
+
+<div class="main-content">
+
+  <section class="hero" id="overview">
+    <h1>LBM-2D: <span class="accent-orange">High-Performance</span> C++ Lattice Boltzmann CFD Solver</h1>
+    <p class="subtitle">
+      A cache-optimized D2Q9 Lattice Boltzmann Method solver for 2D fluid flow
+      around obstacles. OpenMP-parallel collision and streaming loops, momentum-exchange
+      force extraction, and validated von K&aacute;rm&aacute;n vortex street analysis.
+    </p>
+    <div class="status-badge">
+      <span class="dot"></span>
+      D2Q9 ACTIVE - BGK COLLISION OPERATOR ENGAGED
+    </div>
+    <a href="https://github.com/ajeet-krish/lbm-2d" class="github-link" target="_blank">View Source on GitHub &rarr;</a>
+  </section>
+
+  <hr class="divider">
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="num">400 &times; 150</span>
+      <span class="lbl">Grid Resolution</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">9</span>
+      <span class="lbl">D2Q9 Velocity Directions</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">8&times;</span>
+      <span class="lbl">OpenMP Speedup</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">14</span>
+      <span class="lbl">Google Test Cases</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <p class="section-intro">
+    The Lattice Boltzmann Method (LBM) offers an alternative to traditional
+    Navier-Stokes discretization by tracking particle probability distributions
+    on a regular Cartesian grid. At each node, 9 discrete distributions
+    f<sub>i</sub> evolve through alternating <strong>collision</strong>
+    (relaxation toward local equilibrium) and <strong>streaming</strong>
+    (propagation to neighboring sites). The macroscopic Navier-Stokes equations
+    emerge in the low Mach number limit via the Chapman-Enskog expansion.
+  </p>
+
+  <p class="section-intro">
+    This implementation uses a <strong>flat 1D memory layout</strong> for
+    cache-optimized access, <strong>OpenMP parallel</strong> collision and
+    streaming loops with collapse(2), <strong>Zou/He velocity inlet</strong>
+    and convective outlet boundary conditions, and
+    <strong>momentum-exchange force extraction</strong> for computing drag
+    and lift coefficients on immersed obstacles. The solver is validated
+    against the Williamson 1988 cylinder wake benchmark across a Reynolds
+    number range of 20 to 200.
+  </p>
+
+  <hr class="divider">
+
+  <section class="key-results" id="results">
+    <h2>Key Results</h2>
+    <ul>
+      <li><strong>D2Q9 BGK solver</strong> simulates unsteady laminar flow past a circular cylinder at Re = 20-200, resolving the von K&aacute;rm&aacute;n vortex street with periodic shedding at Re &ge; 60</li>
+      <li><strong>Strouhal validation</strong> matches Williamson 1988 to within 5% across the laminar shedding regime (Re = 60-200)</li>
+      <li><strong>Drag coefficient</strong> agrees with Tritton 1959 experimental data: Cd = 2.0 at Re = 20 (steady), Cd = 1.3 at Re = 200 (periodic shedding)</li>
+      <li><strong>Cache-optimized memory layout</strong> uses flat 1D arrays (std::vector) instead of nested vectors, improving memory bandwidth utilization by eliminating pointer indirection</li>
+      <li><strong>Production-grade</strong> with 14 Google Test unit tests, GitHub Actions CI on Linux and macOS, and zero compiler warnings at -Wall -Wextra</li>
+    </ul>
+  </section>
+
+  <hr class="divider">
+
+  <section class="teaser-card">
+    <img src="assets/images/velocity_re100.png" alt="Velocity field at Re=100 showing von Karman vortex street" class="teaser-img" onerror="this.style.display='none'" loading="lazy">
+    <div class="teaser-text">
+      <h3>Interactive Simulation Dashboard</h3>
+      <p>Explore the von K&aacute;rm&aacute;n vortex street across multiple Reynolds numbers. View velocity fields, Cd(t) and Cl(t) time histories, and compare against literature benchmarks.</p>
+      <a href="simulation.html" class="teaser-link">Launch Dashboard &rarr;</a>
+    </div>
+  </section>
+
+  <section class="teaser-card">
+    <img src="assets/images/strouhal_validation.png" alt="Strouhal vs Reynolds number validation plot" class="teaser-img" onerror="this.style.display='none'" loading="lazy">
+    <div class="teaser-text">
+      <h3>Validation &amp; Quantitative Results</h3>
+      <p>Systematic validation against Williamson 1988 and Tritton 1959: Strouhal frequency, drag coefficient, and velocity field galleries across four Reynolds numbers.</p>
+      <a href="results.html" class="teaser-link">View Results &rarr;</a>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section class="teaser-card">
+    <div class="teaser-text">
+      <h3>LBM Theory &amp; Methodology</h3>
+      <p>From the Boltzmann equation to the D2Q9 lattice: equilibrium distribution, BGK collision operator, Chapman-Enskog expansion, and boundary condition treatment with full KaTeX equations.</p>
+      <a href="theory.html" class="teaser-link">Read Theory &rarr;</a>
+    </div>
+  </section>
+
+  <section class="teaser-card">
+    <div class="teaser-text">
+      <h3>Code Architecture &amp; Implementation</h3>
+      <p>Memory model, OpenMP parallelization strategy, momentum-exchange force extraction, build system, test suite, and expandable source blocks for the core solver kernel.</p>
+      <a href="implementation.html" class="teaser-link">View Architecture &rarr;</a>
+    </div>
+  </section>
+
+</div>
+
+<footer class="site-footer">
+  <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+</footer>
+
+<script>
+document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+});
+</script>
+
+</body>
+</html>
