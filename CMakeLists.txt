@@ -33,6 +33,41 @@ target_include_directories(LBM_Airfoil PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(LBM_Airfoil PRIVATE OpenMP::OpenMP_CXX)
 
 # ------------------------------------------------------------------
+# Backward-facing step executable
+# ------------------------------------------------------------------
+add_executable(LBM_Step src/step.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_Step PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_Step PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Ribbed channel flow executable
+# ------------------------------------------------------------------
+add_executable(LBM_Ribs src/ribs.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_Ribs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_Ribs PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Urban canyon flow executable
+# ------------------------------------------------------------------
+add_executable(LBM_UrbanCanyon src/urban_canyon.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_UrbanCanyon PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_UrbanCanyon PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Building downwash executable
+# ------------------------------------------------------------------
+add_executable(LBM_Downwash src/downwash.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_Downwash PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_Downwash PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Ahmed body executable
+# ------------------------------------------------------------------
+add_executable(LBM_Ahmed src/ahmed.cpp src/lbm.hpp src/lbm_types.hpp src/geometry.hpp)
+target_include_directories(LBM_Ahmed PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_Ahmed PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
 # Unit tests (Google Test)
 # ------------------------------------------------------------------
 include(FetchContent)
@@ -58,6 +93,31 @@ add_custom_target(sim
 
 add_custom_target(cavity
   COMMAND LBM_Cavity
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(step
+  COMMAND LBM_Step
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(ribs
+  COMMAND LBM_Ribs
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(urban
+  COMMAND LBM_UrbanCanyon
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(downwash
+  COMMAND LBM_Downwash
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(ahmed
+  COMMAND LBM_Ahmed
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 

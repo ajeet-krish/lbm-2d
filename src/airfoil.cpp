@@ -101,9 +101,12 @@ int main(int argc, char* argv[]) {
                        + "_re" + std::to_string(static_cast<int>(Re))
                        + "_aoa" + std::to_string(static_cast<int>(aoa));
     {
-        std::string mkdir_cmd = "mkdir -p " + subdir;
+        std::string mkdir_cmd = "mkdir -p " + subdir + "/frames";
         std::system(mkdir_cmd.c_str());
     }
+
+    save_meta_json(subdir, Re, params.tau, params.u_inflow,
+                   CHORD, "airfoil", NX, NY);
 
     // Force history storage
     std::vector<double> cd_history, cl_history, step_history;
@@ -111,18 +114,22 @@ int main(int argc, char* argv[]) {
     for (int step = 0; step <= params.num_steps; ++step) {
         execute_time_step(system, params.tau, params.u_inflow);
 
+        double fx_total = 0.0, fy_total = 0.0;
+        for (int n = 0; n < NX * NY; ++n) {
+            fx_total += system.fx_cyl[n];
+            fy_total += system.fy_cyl[n];
+        }
+        double cd = 2.0 * fx_total / (CHORD * params.u_inflow * params.u_inflow);
+        double cl = 2.0 * fy_total / (CHORD * params.u_inflow * params.u_inflow);
+
+        save_forces_jsonl(subdir, step, cd, cl);
+
         if (step % params.vtk_interval == 0) {
             save_vtk_frame(system, step, subdir);
+            save_json_frame(system, step, subdir);
         }
 
         if (step % params.report_interval == 0 && step > 0) {
-            double fx_total = 0.0, fy_total = 0.0;
-            for (int n = 0; n < NX * NY; ++n) {
-                fx_total += system.fx_cyl[n];
-                fy_total += system.fy_cyl[n];
-            }
-            double cd = 2.0 * fx_total / (CHORD * params.u_inflow * params.u_inflow);
-            double cl = 2.0 * fy_total / (CHORD * params.u_inflow * params.u_inflow);
             cd_history.push_back(cd);
             cl_history.push_back(cl);
             step_history.push_back(step);

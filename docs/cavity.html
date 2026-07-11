@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LBM-2D: Lid-Driven Cavity -- Validation against Ghia, Ghia & Shin 1982">
+  <title>Lid-Driven Cavity - LBM-2D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+<div class="sidebar">
+  <div class="sidebar-brand"><a href="index.html">LBM-2D</a></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-heading">Project</div>
+      <a href="index.html" class="nav-item">Home</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Simulation</div>
+      <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="cavity.html" class="nav-item active">Lid-Driven Cavity</a>
+      <a href="step.html" class="nav-item">Backward Step</a>
+      <a href="airfoil.html" class="nav-item">Airfoil</a>
+      <a href="urban.html" class="nav-item">Urban Canyon</a>
+      <a href="ahmed.html" class="nav-item">Ahmed Body</a>
+      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Reference</div>
+      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+      <a href="implementation.html" class="nav-item">Implementation</a>
+      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+    </div>
+  </nav>
+</div>
+
+<div class="main-content">
+
+  <h1>Lid-Driven Cavity Benchmark</h1>
+
+  <p class="section-intro">
+    The lid-driven cavity is a classic CFD validation case. A square cavity with
+    three stationary walls and a moving top lid drives a recirculating flow.
+    The flow transitions from a single primary vortex at low Re to developing
+    secondary and tertiary corner eddies at higher Re. Centreline velocity profiles
+    are the standard quantitative benchmark from <strong>Ghia, Ghia &amp; Shin (1982)</strong>.
+  </p>
+
+  <h2>Setup</h2>
+
+  <table>
+    <tr><th>Parameter</th><th>Value</th></tr>
+    <tr><td>Grid</td><td>256 &times; 256</td></tr>
+    <tr><td>Reynolds number</td><td>100, 400, 1000</td></tr>
+    <tr><td>Lid velocity</td><td>U<sub>lid</sub> = 0.1 lu/ts</td></tr>
+    <tr><td>Collision</td><td>MRT</td></tr>
+    <tr><td>Walls</td><td>Standard bounce-back</td></tr>
+    <tr><td>Reference</td><td>Ghia, Ghia &amp; Shin 1982 (129&times;129 multigrid)</td></tr>
+  </table>
+
+  <h2>Field Viewer</h2>
+
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
+
+  <div class="comparison-slider" id="fieldSlider">
+    <img id="sliderImgBefore" src="" alt="Contour">
+    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+    <div class="slider-handle"><div class="slider-btn"></div></div>
+    <div class="slider-label left">Contour</div>
+    <div class="slider-label right">Streamlines</div>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
+    <div class="stat-item"><span class="num" id="statCd">--</span><span class="lbl">Mean Cd</span></div>
+    <div class="stat-item"><span class="num" id="statCl">--</span><span class="lbl">Cl amp</span></div>
+    <div class="stat-item"><span class="num" id="statSt">--</span><span class="lbl">Strouhal</span></div>
+    <div class="stat-item"><span class="num" id="statXr">--</span><span class="lbl">Xr/H</span></div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Validation</h2>
+
+  <p class="section-intro">
+    At Re = 100, the solver matches Ghia's centerline u-velocity profile within 5&ndash;10%
+    across the cavity height. The zero-crossing (vortex center) is captured at
+    y/H &asymp; 0.70 (Ghia: 0.734), and the peak return flow u/U &asymp; -0.22 at
+    y/H &asymp; 0.45 (Ghia: -0.211 at y/H = 0.453).
+  </p>
+
+  <div class="chart-container" style="height:420px;">
+    <div class="chart-title">Centerline Velocity Profiles -- Lid-Driven Cavity vs Ghia 1982</div>
+    <img src="assets/images/cavity_profiles.png" alt="Cavity centerline profiles" style="width:100%;height:90%;object-fit:contain;">
+  </div>
+
+  <h3>Velocity Field Gallery</h3>
+
+  <div class="img-row">
+    <figure>
+      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
+        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 100 (256&times;256)</div>
+        <img src="assets/images/cavity_re100_field.png" alt="Cavity Re=100" style="width:100%;border-radius:2px;">
+        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Single primary vortex</div>
+      </div>
+    </figure>
+    <figure>
+      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
+        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 400 (256&times;256)</div>
+        <img src="assets/images/cavity_re400_field.png" alt="Cavity Re=400" style="width:100%;border-radius:2px;">
+        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Primary vortex with developing secondary eddies</div>
+      </div>
+    </figure>
+    <figure>
+      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
+        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 1000 (256&times;256)</div>
+        <img src="assets/images/cavity_re1000_field.png" alt="Cavity Re=1000" style="width:100%;border-radius:2px;">
+        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Strong secondary vortices at corners</div>
+      </div>
+    </figure>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Discussion</h2>
+
+  <p class="section-intro">
+    The cavity case validates the core solver's ability to handle recirculating
+    flow with no-slip walls on all four boundaries. Unlike external flow cases,
+    the cavity has no inflow or outflow -- the flow is driven entirely by the
+    moving lid boundary condition. This exercises the Zou/He equilibrium
+    enforcement at the lid and the bounce-back on stationary walls.
+  </p>
+
+</div>
+
+<footer class="site-footer">
+  <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+</footer>
+
+<script src="assets/js/slider.js"></script>
+<script>
+const CASE_CONFIG = {
+  paramLabel: 'Re',
+  reValues: [100, 400, 1000],
+  stats: {
+    100:  { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
+    400:  { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
+    1000: { re: 1000, cd: '--', cl: '--', st: '--', xr: '--' },
+  }
+};
+
+let currentRe = CASE_CONFIG.reValues[0];
+
+function imageUrl(re, type) {
+  return 'assets/images/cavity/re' + re + '_' + type + '.png';
+}
+
+function makePlaceholder(re, type) {
+  return 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">' +
+    '<rect width="400" height="400" fill="#0d1117"/>' +
+    '<rect x="10" y="10" width="380" height="380" fill="none" stroke="#484f58" stroke-width="2"/>' +
+    '<text x="200" y="190" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+    'Cavity Re=' + re + ' ' + type + '</text>' +
+    '<text x="200" y="210" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+    '(simulation running -- placeholder)</text></svg>'
+  );
+}
+
+function updateImages(re) {
+  var before = document.getElementById('sliderImgBefore');
+  var after = document.getElementById('sliderImgAfter');
+  before.onerror = function() { this.src = makePlaceholder(re, 'contour'); };
+  after.onerror = function() { this.src = makePlaceholder(re, 'streamlines'); };
+  before.src = imageUrl(re, 'contour');
+  after.src = imageUrl(re, 'streamlines');
+}
+
+function updateStats(re) {
+  var s = CASE_CONFIG.stats[re];
+  if (!s) return;
+  document.getElementById('statRe').textContent = s.re;
+  document.getElementById('statCd').textContent = s.cd;
+  document.getElementById('statCl').textContent = s.cl;
+  document.getElementById('statSt').textContent = s.st;
+  document.getElementById('statXr').textContent = s.xr;
+}
+
+function switchRe(re) {
+  currentRe = re;
+  document.querySelectorAll('#reTabs .teaser-link').forEach(function(btn) {
+    var rm = btn.textContent.match(/\d+/);
+    var br = rm ? parseInt(rm[0]) : 0;
+    btn.classList.toggle('active', br === re);
+  });
+  updateImages(re);
+  updateStats(re);
+  setTimeout(function() {
+    var c = document.getElementById('fieldSlider');
+    var h = c.querySelector('.slider-handle');
+    var a = c.querySelector('.img-after');
+    if (h) h.style.left = '50%';
+    if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+  }, 200);
+}
+
+var rc = document.getElementById('reTabs');
+CASE_CONFIG.reValues.forEach(function(re) {
+  var btn = document.createElement('button');
+  btn.className = 'teaser-link' + (re === currentRe ? ' active' : '');
+  btn.textContent = CASE_CONFIG.paramLabel + ' = ' + re;
+  btn.style.fontSize = '0.7em';
+  btn.onclick = function() { switchRe(re); };
+  rc.appendChild(btn);
+});
+
+updateImages(currentRe);
+updateStats(currentRe);
+
+document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+});
+</script>
+
+</body>
+</html>

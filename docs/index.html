@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="LBM-2D: High-Performance C++ Lattice Boltzmann CFD Solver with OpenMP parallelism and validated vortex shedding analysis">
+  <meta name="description" content="LBM-2D: High-Performance C++ Lattice Boltzmann CFD Solver">
   <title>LBM-2D: High-Performance C++ Lattice Boltzmann CFD Solver</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,8 +20,16 @@
     <div class="nav-section">
       <div class="nav-heading">Project</div>
       <a href="index.html" class="nav-item active">Home</a>
-      <a href="simulation.html" class="nav-item">Simulation Dashboard</a>
-      <a href="results.html" class="nav-item">Validation &amp; Results</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Simulation</div>
+      <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+      <a href="step.html" class="nav-item">Backward Step</a>
+      <a href="airfoil.html" class="nav-item">Airfoil</a>
+      <a href="urban.html" class="nav-item">Urban Canyon</a>
+      <a href="ahmed.html" class="nav-item">Ahmed Body</a>
+      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
     </div>
     <div class="nav-section">
       <div class="nav-heading">Reference</div>
@@ -38,99 +46,149 @@
     <h1>LBM-2D: <span class="accent-orange">High-Performance</span> C++ Lattice Boltzmann CFD Solver</h1>
     <p class="subtitle">
       A cache-optimized D2Q9 Lattice Boltzmann Method solver for 2D fluid flow
-      around obstacles. OpenMP-parallel collision and streaming loops, momentum-exchange
-      force extraction, and validated von K&aacute;rm&aacute;n vortex street analysis.
+      around obstacles. Multi-Relaxation Time (MRT) collision, Bouzidi interpolated
+      bounce-back for curved boundaries, and direct JSON output pipeline.
+      Validated against canonical CFD benchmarks across eight simulation cases.
     </p>
-    <div class="status-badge">
-      <span class="dot"></span>
-      D2Q9 ACTIVE - BGK COLLISION OPERATOR ENGAGED
-    </div>
     <a href="https://github.com/ajeet-krish/lbm-2d" class="github-link" target="_blank">View Source on GitHub &rarr;</a>
   </section>
 
   <hr class="divider">
 
+  <h2>Why Build Another CFD Solver?</h2>
+
+  <p class="section-intro">
+    Existing open-source CFD tools like <strong>SU2</strong> and <strong>OpenFOAM</strong>
+    are production-grade solvers backed by decades of development. They excel at industrial-scale
+    RANS/LES on unstructured meshes. However, they come with steep learning curves, complex
+    build systems, and opaque codebases that obscure the core physics from the engineer.
+  </p>
+
+  <p class="section-intro">
+    LBM-2D takes the opposite approach: <strong>a from-scratch, readable implementation</strong>
+    of the Lattice Boltzmann Method that prioritises clarity, cache efficiency, and rapid
+    iteration. Every line of the solver kernel is visible in a single header. The flat 1D
+    memory model and OpenMP-collapse(2) parallelisation are documented with their performance
+    rationale. The Bouzidi interpolated bounce-back and MRT collision operator match modern
+    research-grade LBM codes.
+  </p>
+
+  <p class="section-intro">
+    This is not a replacement for SU2 or OpenFOAM. It is a <strong>portfolio of CFD competency</strong>:
+    demonstrating that I can implement modern LBM schemes from first principles, validate them
+    against experimental benchmarks, and communicate the results through interactive web
+    visualisation -- all in a production-grade C++20 codebase with CI and unit tests.
+  </p>
+
+  <hr class="divider">
+
   <div class="stats-bar">
     <div class="stat-item">
-      <span class="num">400 &times; 150</span>
-      <span class="lbl">Grid Resolution</span>
+      <span class="num">800 &times; 300</span>
+      <span class="lbl">Max Grid Resolution</span>
     </div>
     <div class="stat-item">
-      <span class="num">9</span>
-      <span class="lbl">D2Q9 Velocity Directions</span>
+      <span class="num">8</span>
+      <span class="lbl">Simulation Cases</span>
     </div>
     <div class="stat-item">
-      <span class="num">8&times;</span>
-      <span class="lbl">OpenMP Speedup</span>
-    </div>
-    <div class="stat-item">
-      <span class="num">14</span>
+      <span class="num">13</span>
       <span class="lbl">Google Test Cases</span>
+    </div>
+    <div class="stat-item">
+      <span class="num">2</span>
+      <span class="lbl">Collision Operators (MRT + BGK)</span>
     </div>
   </div>
 
   <hr class="divider">
 
-  <p class="section-intro">
-    The Lattice Boltzmann Method (LBM) offers an alternative to traditional
-    Navier-Stokes discretization by tracking particle probability distributions
-    on a regular Cartesian grid. At each node, 9 discrete distributions
-    f<sub>i</sub> evolve through alternating <strong>collision</strong>
-    (relaxation toward local equilibrium) and <strong>streaming</strong>
-    (propagation to neighboring sites). The macroscopic Navier-Stokes equations
-    emerge in the low Mach number limit via the Chapman-Enskog expansion.
-  </p>
+  <h2>Simulation Cases</h2>
 
   <p class="section-intro">
-    This implementation uses a <strong>flat 1D memory layout</strong> for
-    cache-optimized access, <strong>OpenMP parallel</strong> collision and
-    streaming loops with collapse(2), <strong>Zou/He velocity inlet</strong>
-    and convective outlet boundary conditions, and
-    <strong>momentum-exchange force extraction</strong> for computing drag
-    and lift coefficients on immersed obstacles. The solver is validated
-    against the Williamson 1988 cylinder wake benchmark across a Reynolds
-    number range of 20 to 200.
+    Eight validation cases spanning external aerodynamics, internal flows,
+    urban microclimate, and automotive aerodynamics. Each case includes
+    a comparison-slider field viewer, quantitative validation against
+    experimental and numerical benchmarks, and discussion of accuracy.
   </p>
-
-  <hr class="divider">
-
-  <section class="key-results" id="results">
-    <h2>Key Results</h2>
-    <ul>
-      <li><strong>D2Q9 BGK solver</strong> simulates unsteady laminar flow past a circular cylinder at Re = 20-200, resolving the von K&aacute;rm&aacute;n vortex street with periodic shedding at Re &ge; 60</li>
-      <li><strong>Strouhal validation</strong> matches Williamson 1988 to within 5% across the laminar shedding regime (Re = 60-200)</li>
-      <li><strong>Drag coefficient</strong> agrees with Tritton 1959 experimental data: Cd = 2.0 at Re = 20 (steady), Cd = 1.3 at Re = 200 (periodic shedding)</li>
-      <li><strong>Cache-optimized memory layout</strong> uses flat 1D arrays (std::vector) instead of nested vectors, improving memory bandwidth utilization by eliminating pointer indirection</li>
-      <li><strong>Production-grade</strong> with 14 Google Test unit tests, GitHub Actions CI on Linux and macOS, and zero compiler warnings at -Wall -Wextra</li>
-    </ul>
-  </section>
-
-  <hr class="divider">
 
   <section class="teaser-card">
-    <img src="assets/images/re100_field.png" alt="Velocity field at Re=100 showing von Karman vortex street" class="teaser-img" loading="lazy">
     <div class="teaser-text">
-      <h3>Interactive Simulation Dashboard</h3>
-      <p>Explore the von K&aacute;rm&aacute;n vortex street across multiple Reynolds numbers. View velocity fields, Cd(t) and Cl(t) time histories, and compare against literature benchmarks.</p>
-      <a href="simulation.html" class="teaser-link">Launch Dashboard &rarr;</a>
+      <h3>Cylinder Wake</h3>
+      <p>Von K&aacute;rm&aacute;n vortex street across Re = 20&ndash;200. Validated against Williamson 1988 (Strouhal) and Tritton 1959 (drag coefficient). Bouzidi interpolated bounce-back for smooth curved boundary representation.</p>
+      <a href="cylinder.html" class="teaser-link">View Case &rarr;</a>
     </div>
   </section>
 
   <section class="teaser-card">
-    <img src="assets/images/validation.png" alt="Strouhal and drag validation plot" class="teaser-img" loading="lazy">
     <div class="teaser-text">
-      <h3>Validation &amp; Quantitative Results</h3>
-      <p>Systematic validation against Williamson 1988 and Tritton 1959: Strouhal frequency, drag coefficient, and velocity field galleries across four Reynolds numbers.</p>
-      <a href="results.html" class="teaser-link">View Results &rarr;</a>
+      <h3>Lid-Driven Cavity</h3>
+      <p>Classic benchmark: square cavity with moving lid at Re = 100, 400, 1000. Centerline velocity profiles validated against Ghia, Ghia &amp; Shin 1982.</p>
+      <a href="cavity.html" class="teaser-link">View Case &rarr;</a>
     </div>
   </section>
+
+  <section class="teaser-card">
+    <div class="teaser-text">
+      <h3>Backward-Facing Step</h3>
+      <p>Internal flow separation and reattachment. Reattachment length Xr/H validated against Armaly et al. 1983 at Re<sub>H</sub> = 100, 200, 400.</p>
+      <a href="step.html" class="teaser-link">View Case &rarr;</a>
+    </div>
+  </section>
+
+  <section class="teaser-card">
+    <div class="teaser-text">
+      <h3>NACA Airfoil</h3>
+      <p>NACA 4-digit airfoil at Re = 1000, AoA = 0&ndash;16 degrees. Lift curve slope matches thin-airfoil theory (2&pi;/rad) within 3%.</p>
+      <a href="airfoil.html" class="teaser-link">View Case &rarr;</a>
+    </div>
+  </section>
+
+  <section class="teaser-card">
+    <div class="teaser-text">
+      <h3>Urban Canyon</h3>
+      <p>Comprehensive microclimate analysis: side-view canyon with Oke 1988 flow regimes (isolated roughness, wake interference, skimming flow), top-down plan view of street-level wind, and tall-building downwash effects.</p>
+      <a href="urban.html" class="teaser-link">View Case &rarr;</a>
+    </div>
+  </section>
+
+  <section class="teaser-card">
+    <div class="teaser-text">
+      <h3>Ahmed Body</h3>
+      <p>Simplified 2D automotive bluff body with slanted rear. Drag coefficient trend vs slant angle, qualitatively matching Ahmed et al. 1984.</p>
+      <a href="ahmed.html" class="teaser-link">View Case &rarr;</a>
+    </div>
+  </section>
+
+  <section class="teaser-card">
+    <div class="teaser-text">
+      <h3>Ribbed Channel</h3>
+      <p>Internal cooling channel with rib turbulators. Friction factor and reattachment length for gas turbine blade cooling applications. Compared to smooth-channel Blasius correlation.</p>
+      <a href="ribs.html" class="teaser-link">View Case &rarr;</a>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <h2>Key Features</h2>
+
+  <ul>
+    <li><strong>MRT collision operator</strong> (default) with independently tuned moment relaxation rates -- d'Humieres 2002 formulation</li>
+    <li><strong>Bouzidi interpolated bounce-back</strong> for smooth curved boundaries -- works for both circles and arbitrary polygons</li>
+    <li><strong>Flat 1D memory layout</strong> -- single std::vector, cache-optimised for M1/M2/Apple Silicon prefetcher</li>
+    <li><strong>OpenMP parallel</strong> collision and streaming with collapse(2) -- ~8&times; speedup on 8 cores</li>
+    <li><strong>Momentum exchange</strong> force extraction -- exact Cd/Cl without body-fitted meshes</li>
+    <li><strong>Direct JSON output</strong> per-frame velocity fields + append-only force history</li>
+    <li><strong>Polygon obstacle support</strong> via point-in-polygon -- any closed 2D shape</li>
+    <li><strong>13 Google Test</strong> unit tests + GitHub Actions CI on ubuntu and macos</li>
+  </ul>
 
   <hr class="divider">
 
   <section class="teaser-card">
     <div class="teaser-text">
       <h3>LBM Theory &amp; Methodology</h3>
-      <p>From the Boltzmann equation to the D2Q9 lattice: equilibrium distribution, BGK collision operator, Chapman-Enskog expansion, and boundary condition treatment with full KaTeX equations.</p>
+      <p>From the Boltzmann equation to the D2Q9 lattice: equilibrium distribution, BGK and MRT collision operators, Chapman-Enskog expansion, and boundary condition treatment with full KaTeX equations.</p>
       <a href="theory.html" class="teaser-link">Read Theory &rarr;</a>
     </div>
   </section>

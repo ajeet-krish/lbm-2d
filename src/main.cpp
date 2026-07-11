@@ -6,61 +6,59 @@
 #include <string>
 #include <random>
 #include <fstream>
+#include <cstdlib>
 
 // ==========================================================================
-// LBM-2D Solver Entry Point
+// LBM-2D Solver Entry Point -- Cylinder Flow
 // ==========================================================================
 // Usage:
-//   ./LBM_Engine                      (default: Re_D=100, 10000 steps)
-//   ./LBM_Engine <Re_D> <steps>       (e.g. ./LBM_Engine 200 15000)
+//   ./build/LBM_Engine                      (default: Re=100, 30000 steps)
+//   ./build/LBM_Engine 200                  (Re=200)
+//   ./build/LBM_Engine 100 20000            (Re=100, 20000 steps)
+//   ./build/LBM_Engine 100 20000 --vtk      (include legacy VTK output)
 //
-// The Reynolds number Re_D = u_inflow * D / nu is based on cylinder
-// diameter D = 2 * radius = NY/5 = 30. The relaxation parameter tau
-// follows from:
-//   nu = c_s^2 * (tau - 0.5) * dt
-//   With c_s^2 = 1/3, dt = 1, dx = 1:  tau = 0.5 + 3.0 * u_inflow * D / Re_D
+// Reynolds: Re = u_inflow * D / nu,  D = 2 * radius = NY/5 = 30
+//   nu = (tau - 0.5) / 3
+//   tau = 0.5 + 3 * u_inflow * D / Re
 // ==========================================================================
-
-static inline double CYL_DIAMETER() { return 2.0 * (NY / 10); }
 
 struct SimParams {
     double tau;
     double u_inflow;
     int num_steps;
-    int vtk_interval;
+    int save_interval;
+    double length_scale;
 };
 
 SimParams compute_params(double Re, int steps = -1) {
-    double u_inflow = 0.1;               // lattice Mach number (< 0.3 for incompressibility)
-    double nu = u_inflow * CYL_DIAMETER() / Re;
-    double tau = 0.5 + 3.0 * nu;         // relaxation time from viscosity relation
+    double u_inflow = 0.1;
+    double length_scale = static_cast<double>(NY) / 5.0;  // D = 2 * NY/10 = NY/5
+    double nu = u_inflow * length_scale / Re;
+    double tau = 0.5 + 3.0 * nu;
 
-    // Domain transit time = NX / u = 4000 steps at u=0.1
-    // Run for 2-3 transit times to reach steady-state shedding
-    int num_steps = (steps > 0) ? steps : std::max(4000, static_cast<int>(10.0 * NX / u_inflow));
-    int vtk_interval = num_steps / 50;   // ~50 snapshots
+    int num_steps = (steps > 0) ? steps
+        : std::max(4000, static_cast<int>(10.0 * NX / u_inflow));
+    int save_interval = num_steps / 50;
 
-    return {tau, u_inflow, num_steps, vtk_interval};
+    return {tau, u_inflow, num_steps, save_interval, length_scale};
 }
 
-// Force accumulation across all timesteps
 struct ForceHistory {
     std::vector<double> t;
     std::vector<double> cd;
     std::vector<double> cl;
 };
 
-ForceHistory run_simulation(double Re, int steps = -1) {
+ForceHistory run_simulation(double Re, int steps, bool save_vtk) {
     auto params = compute_params(Re, steps);
     LBMCapabilities system;
 
-    // Cylinder at x = NX/4, y = NY/2 + 1 (off-center to break symmetry)
     int cx_cyl = NX / 4;
     int cy_cyl = NY / 2 + 1;
     int radius = NY / 10;
     place_cylinder(system, cx_cyl, cy_cyl, radius);
 
-    // Initialize with equilibrium at rho=1, u=u_inflow, v=0
+    // Initialize with equilibrium
     for (int n = 0; n < NX * NY; ++n) {
         double* f_node = &system.f[n * 9];
         for (int i = 0; i < 9; ++i) {
@@ -68,7 +66,7 @@ ForceHistory run_simulation(double Re, int steps = -1) {
         }
     }
 
-    // Small random perturbation to break symmetry and trigger vortex shedding
+    // Perturbation to trigger shedding
     std::mt19937 rng(42);
     std::uniform_real_distribution<double> pert_dist(-1e-4, 1e-4);
     for (int x = cx_cyl + 5; x < std::min(NX, cx_cyl + 60); ++x) {
@@ -85,37 +83,51 @@ ForceHistory run_simulation(double Re, int steps = -1) {
         }
     }
 
+    // Output directory
+    std::string subdir = "output/re" + std::to_string(static_cast<int>(Re));
+    std::string mkdir_cmd = "mkdir -p " + subdir + "/frames";
+    ::system(mkdir_cmd.c_str());
+
+    // Write metadata
+    save_meta_json(subdir, Re, params.tau, params.u_inflow,
+                   params.length_scale, "cylinder", NX, NY);
+
     ForceHistory history;
 
     std::cout << "Re = " << Re
               << "  tau = " << params.tau
               << "  steps = " << params.num_steps
               << "  u_in = " << params.u_inflow
+              << "  collision = " << (g_collision == CollisionType::MRT ? "MRT" : "BGK")
               << std::endl;
 
     for (int step = 0; step <= params.num_steps; ++step) {
         execute_time_step(system, params.tau, params.u_inflow);
 
-        // Compute total forces on cylinder (summed over all boundary links)
         double fx_total = 0.0, fy_total = 0.0;
         for (int n = 0; n < NX * NY; ++n) {
             fx_total += system.fx_cyl[n];
             fy_total += system.fy_cyl[n];
         }
 
-        // Drag coefficient: Cd = 2 * Fx / (rho * u_inflow^2 * D)
-        // Lift coefficient: Cl = 2 * Fy / (rho * u_inflow^2 * D)
-        double cd = 2.0 * fx_total / (CYL_DIAMETER() * params.u_inflow * params.u_inflow);
-        double cl = 2.0 * fy_total / (CYL_DIAMETER() * params.u_inflow * params.u_inflow);
+        double cd = 2.0 * fx_total / (params.length_scale
+                    * params.u_inflow * params.u_inflow);
+        double cl = 2.0 * fy_total / (params.length_scale
+                    * params.u_inflow * params.u_inflow);
 
         history.t.push_back(static_cast<double>(step));
         history.cd.push_back(cd);
         history.cl.push_back(cl);
 
-        // Save VTK frames at intervals
-        if (step % params.vtk_interval == 0) {
-            std::string subdir = "output/re" + std::to_string(static_cast<int>(Re));
-            save_vtk_frame(system, step, subdir);
+        // Save force history (every step)
+        save_forces_jsonl(subdir, step, cd, cl);
+
+        // Save frames at intervals
+        if (step % params.save_interval == 0) {
+            save_json_frame(system, step, subdir);
+            if (save_vtk) {
+                save_vtk_frame(system, step, subdir);
+            }
         }
 
         if (step % 500 == 0) {
@@ -126,39 +138,37 @@ ForceHistory run_simulation(double Re, int steps = -1) {
         }
     }
 
-    // Save Cd/Cl history to CSV
-    std::string csv_file = "output/re" + std::to_string(static_cast<int>(Re)) + "/cdcl.csv";
-    std::ofstream csv_out(csv_file);
-    csv_out << "step,cd,cl\n";
-    for (size_t i = 0; i < history.t.size(); ++i) {
-        csv_out << history.t[i] << "," << history.cd[i] << "," << history.cl[i] << "\n";
-    }
-
     return history;
 }
 
 int main(int argc, char* argv[]) {
     std::cout << "==============================================" << std::endl;
     std::cout << " LBM-2D: High-Performance Lattice Boltzmann CFD" << std::endl;
-    std::cout << " D2Q9 | OpenMP | Cache-Optimized" << std::endl;
+    std::cout << " D2Q9 | MRT | OpenMP | Cache-Optimized" << std::endl;
     std::cout << "==============================================" << std::endl;
 
     double Re = 100.0;
     int steps = -1;
+    bool save_vtk = false;
 
-    if (argc >= 2) Re = std::stod(argv[1]);
-    if (argc >= 3) steps = std::stoi(argv[2]);
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--vtk") {
+            save_vtk = true;
+        } else if (arg != "--vtk") {
+            if (i == 1 || (i == 2 && argc > 2 && std::string(argv[1]).find("--") != 0)) {
+                // Positional: Re or steps
+                if (i == 1) Re = std::stod(arg);
+                else if (i == 2) steps = std::stoi(arg);
+            }
+        }
+    }
 
-    // Create output subdirectory
-    std::string subdir = "output/re" + std::to_string(static_cast<int>(Re));
-    std::string mkdir_cmd = "mkdir -p " + subdir;
-    system(mkdir_cmd.c_str());
+    auto history = run_simulation(Re, steps, save_vtk);
 
-    auto history = run_simulation(Re, steps);
-
-    // Compute mean Cd and Cl amplitude (for shedding cases)
+    // Statistics from latter half
     double cd_sum = 0.0, cl_max = 0.0, cl_min = 0.0;
-    int n_late = history.cd.size() * 0.5;  // use latter half for statistics
+    int n_late = history.cd.size() * 0.5;
     for (int i = n_late; i < static_cast<int>(history.cd.size()); ++i) {
         cd_sum += history.cd[i];
         if (history.cl[i] > cl_max) cl_max = history.cl[i];

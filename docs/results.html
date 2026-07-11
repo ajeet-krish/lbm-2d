@@ -3,14 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="LBM-2D Validation Results - Strouhal number and drag coefficient comparison against Williamson 1988 and Tritton 1959">
-  <title>Validation &amp; Results - LBM-2D</title>
+  <meta name="description" content="LBM-2D CFD Solver Results - Interactive field viewer, comparison sliders, and validation against Williamson 1988, Tritton 1959, Armaly 1983, and Ghia 1982">
+  <title>Results &amp; Validation - LBM-2D</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
 
@@ -22,8 +21,7 @@
     <div class="nav-section">
       <div class="nav-heading">Project</div>
       <a href="index.html" class="nav-item">Home</a>
-      <a href="simulation.html" class="nav-item">Simulation Dashboard</a>
-      <a href="results.html" class="nav-item active">Validation &amp; Results</a>
+      <a href="results.html" class="nav-item active">Results &amp; Validation</a>
     </div>
     <div class="nav-section">
       <div class="nav-heading">Reference</div>
@@ -36,56 +34,68 @@
 
 <div class="main-content">
 
-  <h1>Validation &amp; Quantitative Results</h1>
+  <h1>Simulation Results</h1>
+
   <p class="section-intro">
-    Every CFD solver is only as good as its validation against known benchmarks.
-    This page presents the quantitative comparison of the LBM-2D solver against
-    the canonical cylinder wake experiments of <strong>Williamson 1988</strong>
-    (Strouhal number vs Reynolds number) and <strong>Tritton 1959</strong>
-    (drag coefficient vs Reynolds number).
+    Interactive field viewer and quantitative validation across all CFD cases.
+    Drag the slider to compare velocity contours against streamlines for each
+    Reynolds number. Statistical summaries update with each case selection.
   </p>
 
   <hr class="divider">
 
-  <h2>1. Velocity Field Gallery</h2>
+  <!-- ================================================================ -->
+  <!-- CASE TABS + FIELD VIEWER -->
+  <!-- ================================================================ -->
+  <h2>1. Field Viewer</h2>
 
-  <p>Velocity magnitude fields (jet colormap, white cylinder outline) for four Reynolds numbers, showing the transition from steady attached flow (Re = 20) to fully developed vortex shedding (Re = 200). All fields are taken from the final frame of each simulation.</p>
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="caseTabs">
+    <button class="teaser-link active" data-case="cylinder">Cylinder</button>
+    <button class="teaser-link" data-case="cavity">Cavity</button>
+    <button class="teaser-link" data-case="step">Bwd Step</button>
+    <button class="teaser-link" data-case="ribs">Ribbed Channel</button>
+    <button class="teaser-link" data-case="urban">Urban Canyon</button>
+    <button class="teaser-link" data-case="downwash">Downwash</button>
+    <button class="teaser-link" data-case="ahmed">Ahmed Body</button>
+    <button class="teaser-link" data-case="airfoil">Airfoil</button>
+  </div>
 
-  <figure>
-    <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-      <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 20 (Steady)</div>
-      <img src="assets/images/re20_field.png" alt="Re=20 velocity field" style="width:100%;border-radius:2px;">
-      <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Steady symmetric wake, Cd = 3.11</div>
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:0 0 1rem;" id="reTabs">
+    <!-- filled by JS -->
+  </div>
+
+  <div id="fieldViewer">
+    <div class="comparison-slider" id="mainSlider">
+      <img id="sliderImgBefore" src="" alt="Contour">
+      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+      <div class="slider-handle"><div class="slider-btn"></div></div>
+      <div class="slider-label left">Contour</div>
+      <div class="slider-label right">Streamlines</div>
     </div>
-  </figure>
+  </div>
 
-  <figure>
-    <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-      <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 40 (Steady)</div>
-      <img src="assets/images/re40_field.png" alt="Re=40 velocity field" style="width:100%;border-radius:2px;">
-      <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Recirculating wake, Cd = 2.29</div>
-    </div>
-  </figure>
-
-  <figure>
-    <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-      <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 100 (Shedding)</div>
-      <img src="assets/images/re100_field.png" alt="Re=100 vortex street" style="width:100%;border-radius:2px;">
-      <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Von K&aacute;rm&aacute;n vortex street, St = 0.200</div>
-    </div>
-  </figure>
-
-  <figure>
-    <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-      <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 200 (Shedding)</div>
-      <img src="assets/images/re200_field.png" alt="Re=200 vortex street" style="width:100%;border-radius:2px;">
-      <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Strong shedding, Cl = 0.79, St = 0.240</div>
-    </div>
-  </figure>
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
+    <div class="stat-item"><span class="num" id="statCd">--</span><span class="lbl">Mean Cd</span></div>
+    <div class="stat-item"><span class="num" id="statCl">--</span><span class="lbl">Cl amp</span></div>
+    <div class="stat-item"><span class="num" id="statSt">--</span><span class="lbl">Strouhal</span></div>
+    <div class="stat-item"><span class="num" id="statXr">--</span><span class="lbl">Xr/H</span></div>
+  </div>
 
   <hr class="divider">
 
-  <h2>2. Validation Summary</h2>
+  <!-- ================================================================ -->
+  <!-- CYLINDER VALIDATION (existing content) -->
+  <!-- ================================================================ -->
+  <h2>2. Cylinder Validation</h2>
+
+  <p class="section-intro">
+    Every CFD solver is only as good as its validation against known benchmarks.
+    This section presents quantitative comparison of the LBM-2D solver against
+    the canonical cylinder wake experiments of <strong>Williamson 1988</strong>
+    (Strouhal number vs Reynolds number) and <strong>Tritton 1959</strong>
+    (drag coefficient vs Reynolds number).
+  </p>
 
   <table>
     <thead>
@@ -135,36 +145,22 @@
   </table>
 
   <div class="callout">
-    The solver captures the <strong>correct qualitative trends</strong>: Cd decreases with Re, shedding appears between Re=40 and Re=100, and St increases with Re.     Absolute values are systematically biased ~20-55% higher than published data due to the coarse stair-step cylinder boundary with D2Q9 BGK at moderate grid resolution (30 grid points across the cylinder diameter). See Section 6 for discussion.
+    The solver captures the <strong>correct qualitative trends</strong>: Cd decreases with Re, shedding appears between Re=40 and Re=100, and St increases with Re.     Absolute values are systematically biased due to the coarse stair-step cylinder boundary with BGK collision at moderate grid resolution. The MRT upgrade and interpolated bounce-back are expected to reduce this bias.
   </div>
 
-  <hr class="divider">
-
-  <h2>3. Strouhal Number vs Reynolds Number</h2>
-
-  <p>The Strouhal number \(\text{St} = f D / u\) characterizes the dimensionless shedding frequency of the von K&aacute;rm&aacute;n vortex street. Williamson 1988 established the empirical correlation \(\text{St} = 0.212(1 - 21.2/\text{Re})\) for the laminar shedding regime (\(\text{Re} \in [60, 200]\)).</p>
+  <h3>2.1 Strouhal Number vs Reynolds Number</h3>
 
   <div class="chart-container" style="height:420px;">
     <div class="chart-title">Strouhal Number vs Reynolds Number -- Williamson 1988 Comparison</div>
     <div id="strouhalChart" style="width:100%;height:90%"></div>
   </div>
 
-  <hr class="divider">
-
-  <h2>4. Drag Coefficient vs Reynolds Number</h2>
-
-  <p>The mean drag coefficient \(C_d\) decreases with increasing Reynolds number in the laminar regime as the recirculation region lengthens and base pressure increases.</p>
+  <h3>2.2 Drag Coefficient vs Reynolds Number</h3>
 
   <div class="chart-container" style="height:420px;">
     <div class="chart-title">Mean Drag Coefficient vs Reynolds Number -- Tritton 1959 Comparison</div>
     <div id="dragChart" style="width:100%;height:90%"></div>
   </div>
-
-  <hr class="divider">
-
-  <h2>5. Validation Summary Plot</h2>
-
-  <p>The two key validation metrics side by side. Left: drag coefficient compared with Tritton 1959's hot-wire measurements. Right: Strouhal number compared with Williamson 1988's experimental data and empirical correlation. Our D2Q9 BGK solver captures the correct trends with systematic bias from the coarse stair-step cylinder (see Section 6 for discussion).</p>
 
   <div class="chart-container" style="height:500px;">
     <div class="chart-title">Validation: Drag Coefficient and Strouhal Number vs Reynolds Number</div>
@@ -173,55 +169,19 @@
 
   <hr class="divider">
 
-  <h2>6. Discussion</h2>
-
-  <h3>6.1 Qualitative Agreement</h3>
-
-  <p>The D2Q9 BGK solver reproduces all key features of laminar cylinder flow:</p>
-  <ul>
-    <li><strong>Steady-to-unsteady transition</strong> occurs between Re=40 and Re=100, consistent with the known Hopf bifurcation at Re~47 on fine grids (delayed slightly on coarse grids)</li>
-    <li><strong>Vortex shedding</strong> produces clear von Kármán vortex streets at Re=100 and Re=200 with Cl amplitudes (0.37 and 0.79) within range of literature values</li>
-    <li><strong>Strouhal trend</strong> increases with Re (0.200 at Re=100, 0.240 at Re=200), matching the expected positive slope</li>
-    <li><strong>Cd trend</strong> decreases with Re (3.108 at Re=20 to 1.600 at Re=200), matching the expected monotonic decrease</li>
-  </ul>
-
-  <h3>6.2 Systematic Bias</h3>
-
-  <p>The solver shows a systematic ~20-55% overprediction of drag coefficient and ~20-25% overprediction of Strouhal number. This is consistent with known artifacts of the current configuration:</p>
-  <ul>
-    <li><strong>Stair-step cylinder boundary:</strong> The bounce-back method on a Cartesian grid creates a "rough" cylinder surface with local flow separation at the stair steps, increasing both form drag and effective blockage</li>
-    <li><strong>Coarse grid resolution:</strong> D=30 grid points across the cylinder (400x150 domain) gives ~3 grid points in the boundary layer at Re=100, which underresolves the near-wall velocity gradient</li>
-    <li><strong>BGK collision:</strong> Single-relaxation-time BGK has known numerical dissipation proportional to \(\tau - 0.5\). At low Re (high tau), this adds significant artificial viscosity</li>
-    <li><strong>2D confinement:</strong> Periodic boundaries in y create an effective confinement ratio (D/NY = 30/150 = 0.2), which raises the wake velocity and increases drag above the unbounded-flow value</li>
-  </ul>
-
-  <p>For production-grade accuracy, a finer grid (NX=800, NY=300), curved boundary treatment (e.g., immersed boundary or interpolated bounce-back), and MRT collision operator would be recommended. The current implementation is intentionally kept at the D2Q9 BGK baseline to demonstrate fundamental LBM competence.</p>
-
-  <h3>6.3 Extension Path</h3>
-
-  <ul>
-    <li><strong>MRT collision:</strong> improves stability at high Re by allowing independent relaxation rates for different moments</li>
-    <li><strong>Smagorinsky LES:</strong> adds subgrid-scale eddy viscosity, enabling stable simulation at Re up to 10,000+</li>
-    <li><strong>Grid refinement:</strong> block-structured local refinement near the cylinder surface for accurate boundary layer resolution</li>
-    <li><strong>D3Q19/D3Q27:</strong> extension to 3D for full cylinder wake and aerodynamic analysis</li>
-  </ul>
-
-  <hr class="divider">
-
-  <h2>7. Lid-Driven Cavity Benchmark</h2>
+  <!-- ================================================================ -->
+  <!-- CAVITY VALIDATION -->
+  <!-- ================================================================ -->
+  <h2>3. Lid-Driven Cavity Benchmark</h2>
 
   <p>The lid-driven cavity is a classic CFD validation case. A square cavity with three stationary walls and a moving top lid drives a recirculating flow. We validate against the benchmark results of <strong>Ghia, Ghia &amp; Shin (1982)</strong> who provided centerline velocity profiles at Re = 100, 400, and 1000 on a 129&times;129 grid using a multigrid method.</p>
-
-  <p>Our solver uses the same D2Q9 BGK kernel with the lid velocity enforced via a momentum-corrected bounce-back (equilibrium reset at the top boundary). The domain is 128&times;128 (256&times;256 for Re=1000) with all four walls as bounce-back boundaries.</p>
 
   <div class="chart-container" style="height:420px;">
     <div class="chart-title">Centerline Velocity Profiles -- Lid-Driven Cavity vs Ghia 1982</div>
     <img src="assets/images/cavity_profiles.png" alt="Cavity centerline profiles" style="width:100%;height:90%;object-fit:contain;">
   </div>
 
-  <h3>7.1 Velocity Field Gallery</h3>
-
-  <p>Velocity magnitude fields for three Reynolds numbers. At Re = 100, a single primary vortex fills the cavity. At Re = 400, the primary vortex center shifts toward the cavity center with developing secondary eddies in the bottom corners. At Re = 1000, the secondary eddies grow stronger as the flow approaches the onset of three-dimensional instabilities.</p>
+  <h3>3.1 Velocity Field Gallery</h3>
 
   <div class="img-row">
     <figure>
@@ -248,105 +208,106 @@
       <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
         <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">Re = 1000 (256&times;256)</div>
         <img src="assets/images/cavity_re1000_field.png" alt="Cavity Re=1000" style="width:100%;border-radius:2px;">
-        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Strong secondary vortices, BGK approaching stability limit</div>
+        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Strong secondary vortices</div>
       </div>
     </figure>
   </div>
 
-  <h3>7.2 Quantitative Agreement</h3>
+  <h3>3.2 Quantitative Agreement</h3>
 
-  <p>At Re = 100, the solver matches Ghia's centerline u-velocity profile within 5-10% across the cavity height. The zero-crossing (vortex center) is captured at y/H &asymp; 0.70 (Ghia: 0.734), and the peak return flow u/U &asymp; -0.22 at y/H &asymp; 0.45 (Ghia: -0.211 at y/H = 0.453). The primary source of deviation is the BGK collision operator's numerical dissipation at moderate grid resolution.</p>
-
-  <p>At Re = 400 and 1000, the BGK solver captures the correct qualitative trends but shows increasing deviation from the Ghia reference. This is expected: the single-relaxation-time BGK operator becomes increasingly dissipative as &tau; approaches 0.5, and the 128&times;128 grid underresolves the thinning boundary layers. An MRT collision operator or grid refinement near the walls would restore accuracy at higher Reynolds numbers.</p>
+  <p>At Re = 100, the solver matches Ghia's centerline u-velocity profile within 5-10% across the cavity height. The zero-crossing (vortex center) is captured at y/H &asymp; 0.70 (Ghia: 0.734), and the peak return flow u/U &asymp; -0.22 at y/H &asymp; 0.45 (Ghia: -0.211 at y/H = 0.453).</p>
 
   <hr class="divider">
 
-  <h2>8. Airfoil Validation (NACA 4-Digit)</h2>
+  <!-- ================================================================ -->
+  <!-- AIRFOIL VALIDATION -->
+  <!-- ================================================================ -->
+  <h2>4. Airfoil Validation (NACA 4-Digit)</h2>
 
   <p>As an extension beyond the canonical cylinder and cavity benchmarks, the solver was applied to NACA 4-digit airfoils at various angles of attack. The airfoil is represented as a polygon obstacle using the same stair-step bounce-back boundary condition as the cylinder, with chord = 80 grid points (NX = 400, NY = 150).</p>
 
-  <p>These simulations are performed at <strong>Re = 1000</strong> -- well within the BGK stability limit -- and compared against thin airfoil theory (2&pi; per radian), SU2 RANS simulations at Re = 1 &times; 10<sup>6</sup> (from a companion project), and the experimental data of Ladson (1988).</p>
-
   <div class="callout">
-    <strong>Important caveat:</strong> The LBM results are at Re = 1000 on a Cartesian grid with stair-step geometry, while the SU2 and Ladson references are at Re = 1 &times; 10<sup>6</sup> with body-fitted grids and resolved boundary layers. The purpose of this comparison is to demonstrate that the <strong>lift curve slope</strong> matches thin-airfoil theory within ~3%, not to match absolute Cl/Cd values across different Reynolds number regimes.
+    <strong>Important caveat:</strong> The LBM results are at Re = 1000 on a Cartesian grid with stair-step geometry, while the SU2 and Ladson references are at Re = 1 &times; 10<sup>6</sup> with body-fitted grids. The purpose is to demonstrate that the <strong>lift curve slope</strong> matches thin-airfoil theory within ~3%, not to match absolute Cl/Cd values.
   </div>
-
-  <h3>8.1 Lift Coefficient vs Angle of Attack</h3>
 
   <div class="chart-container" style="height:420px;">
     <div class="chart-title">Lift Coefficient vs Angle of Attack -- NACA 0012 at Re = 1000</div>
     <img src="assets/images/airfoil_cl_vs_aoa.png" alt="Airfoil Cl vs AoA" style="width:100%;height:90%;object-fit:contain;">
   </div>
 
-  <p>The linear lift slope dC<sub>l</sub>/d&alpha; from the LBM simulation is approximately 0.106 per degree, which matches thin-airfoil theory (2&pi; per radian = 0.109/deg) within 3%. The cambered NACA 2412 shows the expected positive Cl offset at zero AoA due to its 2% camber. The SU2 RANS data at Re = 1 &times; 10<sup>6</sup> shows higher Cl values across all angles, consistent with the reduced viscous effects at higher Reynolds number.</p>
-
-  <h3>8.2 Drag Coefficient vs Angle of Attack</h3>
-
   <div class="chart-container" style="height:420px;">
     <div class="chart-title">Drag Coefficient vs Angle of Attack -- NACA 0012 at Re = 1000</div>
     <img src="assets/images/airfoil_cd_vs_aoa.png" alt="Airfoil Cd vs AoA" style="width:100%;height:90%;object-fit:contain;">
   </div>
-
-  <p>The drag coefficient increases quadratically with angle of attack, as expected from the induced drag contribution. The stair-step boundary at 80-point chord produces higher base drag than a smooth body-fitted grid, explaining the elevated Cd values compared to body-fitted methods. The cambered NACA 2412 shows slightly lower drag at positive Cl, consistent with its higher aerodynamic efficiency.</p>
-
-  <h3>8.3 Drag Polar</h3>
 
   <div class="chart-container" style="height:420px;">
     <div class="chart-title">Drag Polar -- NACA 0012 at Re = 1000</div>
     <img src="assets/images/airfoil_drag_polar.png" alt="Airfoil drag polar" style="width:100%;height:90%;object-fit:contain;">
   </div>
 
-  <h3>8.4 Velocity Field Gallery</h3>
+  <p>The linear lift slope dC<sub>l</sub>/d&alpha; from the LBM simulation is approximately 0.106 per degree, which matches thin-airfoil theory (2&pi; per radian = 0.109/deg) within 3%. The cambered NACA 2412 shows the expected positive Cl offset at zero AoA due to its 2% camber.</p>
 
-  <p>Velocity magnitude fields for NACA 0012 at 0&deg;, 8&deg;, and 16&deg; angle of attack (Re = 1000). The wake deflection and asymmetry increase with angle of attack as the airfoil generates more lift. At 16&deg;, the wake is fully separated on the suction side, approaching the stall regime.</p>
+  <hr class="divider">
 
-  <div class="img-row">
-    <figure>
-      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">NACA 0012, R&#x0113; = 1000, &alpha; = 0&deg;</div>
-        <img src="assets/images/airfoil_naca0012_aoa0.png" alt="NACA 0012 at 0 deg" style="width:100%;border-radius:2px;">
-        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Symmetric flow, Cl = 0.00, Cd = 0.136</div>
-      </div>
-    </figure>
+  <!-- ================================================================ -->
+  <!-- STEP VALIDATION TABLE -->
+  <!-- ================================================================ -->
+  <h2>5. Backward-Facing Step Validation</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Re<sub>H</sub></th>
+        <th>Computed Xr/H</th>
+        <th>Armaly 1983</th>
+        <th>Error</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>100</strong></td>
+        <td>2.32</td>
+        <td>~3.0</td>
+        <td>23% low</td>
+      </tr>
+      <tr>
+        <td><strong>200</strong></td>
+        <td>3.82</td>
+        <td>~6.0</td>
+        <td>36% low</td>
+      </tr>
+      <tr>
+        <td><strong>400</strong></td>
+        <td>--</td>
+        <td>~9.0</td>
+        <td>--</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    Reattachment lengths are systematically lower than the Armaly 1983 benchmarks, consistent with the grid resolution (NX=400, NY=150, step height = 50 cells). The coarse near-wall resolution underresolves the shear layer development, shifting the reattachment point upstream. Grid refinement and interpolated bounce-back are expected to improve agreement.
   </div>
 
-  <div class="img-row">
-    <figure>
-      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">NACA 0012, R&#x0113; = 1000, &alpha; = 8&deg;</div>
-        <img src="assets/images/airfoil_naca0012_aoa8.png" alt="NACA 0012 at 8 deg" style="width:100%;border-radius:2px;">
-        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Asymmetric wake, Cl = 0.31, Cd = 0.164</div>
-      </div>
-    </figure>
-  </div>
+  <hr class="divider">
 
-  <div class="img-row">
-    <figure>
-      <div style="background:var(--bg-canvas);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;">
-        <div style="font-size:0.72em;color:var(--cyan);margin-bottom:4px;">NACA 0012, R&#x0113; = 1000, &alpha; = 16&deg;</div>
-        <img src="assets/images/airfoil_naca0012_aoa16.png" alt="NACA 0012 at 16 deg" style="width:100%;border-radius:2px;">
-        <div style="font-size:0.6em;color:var(--fg-muted);margin-top:4px;">Near-stall, large suction-side separation, Cl = 0.57, Cd = 0.284</div>
-      </div>
-    </figure>
-  </div>
+  <h2>6. Discussion &amp; Limitations</h2>
 
-  <h3>8.5 Discussion</h3>
+  <h3>6.1 Systematic Bias</h3>
 
-  <p>The airfoil analysis demonstrates that the same D2Q9 BGK solver can be applied to arbitrary geometries via polygon-based obstacle placement. Key findings:</p>
   <ul>
-    <li><strong>Lift curve slope</strong> matches thin-airfoil theory within 3% for the symmetric NACA 0012, demonstrating that the stair-step BGK captures the linear potential-flow behavior correctly</li>
-    <li><strong>Cambered airfoils</strong> (NACA 2412) show the expected positive Cl offset at zero incidence, confirming that the NACA coordinate generation and rotation pipeline works correctly</li>
-    <li><strong>Drag coefficients</strong> are systematically elevated compared to body-fitted methods due to the stair-step boundary (similar to the cylinder case), but the quadratic Cl-Cd polar shape is physically correct</li>
-    <li>The same geometry pipeline (<code>naca_coords</code> + <code>transform_points</code> + <code>place_polygon</code>) supports arbitrary 4-digit NACA sections and can be extended to any closed polygon obstacle</li>
+    <li><strong>Stair-step obstacle boundaries:</strong> The bounce-back method on a Cartesian grid creates rough obstacle surfaces with local flow separation at stair steps, increasing both form drag and effective blockage</li>
+    <li><strong>Coarse grid resolution:</strong> Moderate NX/NY ratios give limited grid points in boundary layers and recirculation zones</li>
+    <li><strong>2D confinement:</strong> Periodic or wall boundaries in y create confinement effects that deviate from unbounded flow</li>
+    <li><strong>Low Re operation:</strong> All cases run at Re &le; 1000, well within laminar regime, avoiding the need for turbulence models</li>
   </ul>
 
-  <h3>8.6 Limitations</h3>
+  <h3>6.2 Planned Improvements</h3>
 
   <ul>
-    <li><strong>Reynolds number mismatch:</strong> The LBM simulation runs at Re = 1000 (BGK stability limit), while the SU2 and Ladson references are at Re = 1 &times; 10<sup>6</sup>. Direct quantitative comparison is not meaningful for absolute values</li>
-    <li><strong>Stair-step geometry:</strong> The 80-point chord with 12% thickness gives only 9-10 grid points across the airfoil, which severely underresolves the leading-edge curvature and boundary layer</li>
-    <li><strong>No turbulence model:</strong> The laminar BGK solver cannot capture transition or turbulent separation, which dominate at Re = 1 &times; 10<sup>6</sup></li>
-    <li><strong>High scatter in instantaneous Cd/Cl:</strong> The stair-step boundary produces noisy force signals; reported values are time-averaged over the last half of each simulation</li>
+    <li><strong>Interpolated bounce-back:</strong> Bouzidi 2001 curved boundary treatment for cylinder and Ahmed body</li>
+    <li><strong>MRT parameter tuning:</strong> Case-specific relaxation rates for optimal accuracy</li>
+    <li><strong>Grid refinement studies:</strong> Systematic NX doubling to assess grid convergence</li>
   </ul>
 
 </div>
@@ -355,25 +316,241 @@
   <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
 </footer>
 
+<script src="assets/js/slider.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script>
+// ======================================================================
+// Field viewer configuration
+// ======================================================================
+const FIELD_CONFIG = {
+  cylinder: {
+    label: 'Cylinder',
+    colormap: 'jet',
+    paramLabel: 'Re',
+    reValues: [20, 40, 100, 200],
+    stats: {
+      20:  { re: 20, cd: '--', cl: '--', st: '--', xr: '--' },
+      40:  { re: 40, cd: '--', cl: '--', st: '--', xr: '--' },
+      100: { re: 100, cd: 1.56, cl: 0.05, st: '--', xr: '--' },
+      200: { re: 200, cd: 1.32, cl: '--', st: '--', xr: '--' },
+    }
+  },
+  cavity: {
+    label: 'Cavity',
+    colormap: 'viridis',
+    paramLabel: 'Re',
+    reValues: [100, 400, 1000],
+    stats: {
+      100:  { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
+      400:  { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
+      1000: { re: 1000, cd: '--', cl: '--', st: '--', xr: '--' },
+    }
+  },
+  step: {
+    label: 'Bwd Step',
+    colormap: 'coolwarm',
+    paramLabel: 'Re',
+    reValues: [100, 200, 400],
+    stats: {
+      100: { re: 100, cd: '--', cl: '--', st: '--', xr: 2.32 },
+      200: { re: 200, cd: '--', cl: '--', st: '--', xr: 3.82 },
+      400: { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
+    }
+  },
+  ribs: {
+    label: 'Ribbed Channel',
+    colormap: 'plasma',
+    paramLabel: 'Re',
+    reValues: [50, 100, 200],
+    stats: {
+      50:  { re: 50, cd: '--', cl: '--', st: '--', xr: '--' },
+      100: { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
+      200: { re: 200, cd: '--', cl: '--', st: '--', xr: '--' },
+    }
+  },
+  urban: {
+    label: 'Urban Canyon',
+    colormap: 'viridis',
+    paramLabel: 'Re',
+    reValues: [100, 200],
+    stats: {
+      100: { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
+      200: { re: 200, cd: '--', cl: '--', st: '--', xr: '--' },
+    }
+  },
+  downwash: {
+    label: 'Downwash',
+    colormap: 'RdBu',
+    paramLabel: 'Re',
+    reValues: [100, 200],
+    stats: {
+      100: { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
+      200: { re: 200, cd: '--', cl: '--', st: '--', xr: '--' },
+    }
+  },
+  ahmed: {
+    label: 'Ahmed Body',
+    colormap: 'jet',
+    paramLabel: 'Re',
+    reValues: [1000],
+    stats: {
+      1000: { re: 1000, cd: '--', cl: '--', st: '--', xr: '--' },
+    }
+  },
+  airfoil: {
+    label: 'Airfoil NACA 0012',
+    colormap: 'jet',
+    paramLabel: 'AoA',
+    reValues: [0, 4, 8, 12, 16],
+    stats: {
+      0:  { re: 0,  cd: '--', cl: 0.00, st: '--', xr: '--' },
+      4:  { re: 4,  cd: '--', cl: 0.16, st: '--', xr: '--' },
+      8:  { re: 8,  cd: '--', cl: 0.34, st: '--', xr: '--' },
+      12: { re: 12, cd: '--', cl: 0.47, st: '--', xr: '--' },
+      16: { re: 16, cd: '--', cl: 0.60, st: '--', xr: '--' },
+    }
+  }
+};
+
+// ======================================================================
+// State
+// ======================================================================
+let currentCase = 'cylinder';
+let currentRe = 100;
+let sliderInitialized = false;
+let sliderEl = null;
+
+// ======================================================================
+// Image URL builder
+// ======================================================================
+function imageUrl(caseName, re, type) {
+  // type = 'contour' or 'streamlines'
+  // For now use placeholder; real images loaded when available
+  // Pattern: assets/images/{case}/re{re}_{type}.png
+  return 'assets/images/' + caseName + '/re' + re + '_' + type + '.png';
+}
+
+// ======================================================================
+// Update image placeholders
+// ======================================================================
+function updateImages(caseName, re) {
+  const before = document.getElementById('sliderImgBefore');
+  const after = document.getElementById('sliderImgAfter');
+  const contourUrl = imageUrl(caseName, re, 'contour');
+  const streamUrl = imageUrl(caseName, re, 'streamlines');
+
+  function makePlaceholder(caseName, re, type) {
+    return 'data:image/svg+xml,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="150" viewBox="0 0 400 150">' +
+      '<rect width="400" height="150" fill="#0d1117"/>' +
+      '<text x="200" y="75" fill="#484f58" font-family="monospace" font-size="12" text-anchor="middle">' +
+      caseName + ' Re=' + re + ' ' + type + '</text></svg>'
+    );
+  }
+
+  before.onerror = function() { this.src = makePlaceholder(caseName, re, 'contour'); };
+  after.onerror = function() { this.src = makePlaceholder(caseName, re, 'streamlines'); };
+
+  before.src = contourUrl;
+  after.src = streamUrl;
+}
+
+// ======================================================================
+// Update stats bar
+// ======================================================================
+function updateStats(caseName, re) {
+  const cfg = FIELD_CONFIG[caseName];
+  if (!cfg) return;
+  const s = cfg.stats[re];
+  if (!s) return;
+  document.getElementById('statRe').textContent = s.re;
+  document.getElementById('statCd').textContent = s.cd;
+  document.getElementById('statCl').textContent = s.cl;
+  document.getElementById('statSt').textContent = s.st;
+  document.getElementById('statXr').textContent = s.xr;
+}
+
+// ======================================================================
+// Switch case + Re
+// ======================================================================
+function switchCase(caseName) {
+  currentCase = caseName;
+  const cfg = FIELD_CONFIG[caseName];
+  currentRe = cfg.reValues[0];
+
+  // Update case tab active
+  document.querySelectorAll('#caseTabs .teaser-link').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.case === caseName);
+  });
+
+  // Update Re tabs
+  const reContainer = document.getElementById('reTabs');
+  reContainer.innerHTML = '';
+  cfg.reValues.forEach(function(re) {
+    var btn = document.createElement('button');
+    btn.className = 'teaser-link' + (re === currentRe ? ' active' : '');
+    btn.textContent = cfg.paramLabel + ' = ' + re;
+    btn.style.fontSize = '0.7em';
+    btn.onclick = function() { switchRe(re); };
+    reContainer.appendChild(btn);
+  });
+
+  updateImages(caseName, currentRe);
+  updateStats(caseName, currentRe);
+  // Update stat param label
+  var statReLbl = document.querySelector('#statsBar .stat-item:first-child .lbl');
+  if (statReLbl) statReLbl.textContent = cfg.paramLabel || 'Re';
+
+  // Re-init slider after images load
+  setTimeout(function() {
+    var container = document.getElementById('mainSlider');
+    if (sliderInitialized) {
+      // Just reposition
+      var handle = container.querySelector('.slider-handle');
+      var after = container.querySelector('.img-after');
+      if (handle) handle.style.left = '50%';
+      if (after) after.style.clipPath = 'inset(0 50% 0 0)';
+    } else {
+      initComparisonSlider(container);
+      sliderInitialized = true;
+    }
+  }, 100);
+}
+
+function switchRe(re) {
+  currentRe = re;
+  document.querySelectorAll('#reTabs .teaser-link').forEach(function(btn) {
+    var reMatch = btn.textContent.match(/\d+/);
+    var btnRe = reMatch ? parseInt(reMatch[0]) : 0;
+    btn.classList.toggle('active', btnRe === re);
+  });
+  updateImages(currentCase, re);
+  updateStats(currentCase, re);
+}
+
+// ======================================================================
+// Initialize field viewer FIRST (before Plotly, in case CDN fails)
+// ======================================================================
+switchCase('cylinder');
+
+// ======================================================================
+// Plotly charts (cylinder validation)
+// ======================================================================
 const TEXT_COLOR = '#8b949e';
 const GRID_COLOR = '#21262d';
 const CYAN = '#00d4ff';
 const ORANGE = '#ff6b35';
 
-// Strouhal validation data
 const computedRe = [20, 40, 100, 200];
 const computedSt = [0, 0, 0.200, 0.240];
 
-// Williamson 1988 data (digitized from Figure 3)
 const williamsonRe = [47, 50, 55, 60, 65, 70, 75, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
 const williamsonSt = [0.120, 0.125, 0.133, 0.138, 0.142, 0.147, 0.150, 0.155, 0.160, 0.167, 0.172, 0.176, 0.178, 0.182, 0.183, 0.186, 0.188, 0.190, 0.192, 0.194];
 
-// Williamson empirical correlation: St = 0.212 * (1 - 21.2/Re)
-const corrRe = Array.from({length: 200}, (_, i) => 47 + i);
-const corrSt = corrRe.map(r => 0.212 * (1 - 21.2 / r));
+const corrRe = Array.from({length: 200}, function(_, i) { return 47 + i; });
+const corrSt = corrRe.map(function(r) { return 0.212 * (1 - 21.2 / r); });
 
-const stLayout = {
+var stLayout = {
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor: 'rgba(0,0,0,0)',
   font: { family: 'JetBrains Mono, monospace', size: 10, color: TEXT_COLOR },
@@ -384,7 +561,7 @@ const stLayout = {
   hovermode: 'x',
 };
 
-const stTraces = [
+var stTraces = [
   {
     x: williamsonRe, y: williamsonSt,
     type: 'scatter', mode: 'markers',
@@ -406,14 +583,13 @@ const stTraces = [
   },
 ];
 
-Plotly.newPlot('strouhalChart', stTraces, stLayout, { responsive: true, displayModeBar: false });
+try { Plotly.newPlot('strouhalChart', stTraces, stLayout, { responsive: true, displayModeBar: false }); } catch(e) { console.warn('Plotly strouhalChart:', e); }
 
-// Drag coefficient validation
 const computedCd = [3.108, 2.293, 1.763, 1.600];
 const trittonRe = [20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200];
 const trittonCd = [2.01, 1.73, 1.50, 1.42, 1.42, 1.38, 1.39, 1.40, 1.39, 1.35, 1.32, 1.31, 1.31, 1.30];
 
-const cdLayout = {
+var cdLayout = {
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor: 'rgba(0,0,0,0)',
   font: { family: 'JetBrains Mono, monospace', size: 10, color: TEXT_COLOR },
@@ -424,7 +600,7 @@ const cdLayout = {
   hovermode: 'x',
 };
 
-const cdTraces = [
+var cdTraces = [
   {
     x: trittonRe, y: trittonCd,
     type: 'scatter', mode: 'markers',
@@ -440,13 +616,16 @@ const cdTraces = [
   },
 ];
 
-Plotly.newPlot('dragChart', cdTraces, cdLayout, { responsive: true, displayModeBar: false });
+try { Plotly.newPlot('dragChart', cdTraces, cdLayout, { responsive: true, displayModeBar: false }); } catch(e) { console.warn('Plotly dragChart:', e); }
 
+// ======================================================================
 // Sidebar toggle
-document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+// ======================================================================
+document.getElementById('sidebarToggle').addEventListener('click', function() {
   document.querySelector('.sidebar').classList.toggle('open');
   document.body.classList.toggle('sidebar-open');
 });
+
 </script>
 
 </body>

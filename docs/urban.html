@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LBM-2D: Urban Canyon Microclimate -- Oke 1988 flow regimes, top-down street-level wind, and building downwash">
+  <title>Urban Canyon - LBM-2D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+<div class="sidebar">
+  <div class="sidebar-brand"><a href="index.html">LBM-2D</a></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-heading">Project</div>
+      <a href="index.html" class="nav-item">Home</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Simulation</div>
+      <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+      <a href="step.html" class="nav-item">Backward Step</a>
+      <a href="airfoil.html" class="nav-item">Airfoil</a>
+      <a href="urban.html" class="nav-item active">Urban Canyon</a>
+      <a href="ahmed.html" class="nav-item">Ahmed Body</a>
+      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Reference</div>
+      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+      <a href="implementation.html" class="nav-item">Implementation</a>
+      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+    </div>
+  </nav>
+</div>
+
+<div class="main-content">
+
+  <h1>Urban Canyon Microclimate</h1>
+
+  <p class="section-intro">
+    Comprehensive 2D analysis of urban microclimate aerodynamics, covering
+    three canonical configurations that model how wind interacts with buildings
+    at the neighbourhood scale. The analysis reproduces the three flow regimes
+    of <strong>Oke 1988</strong> as a function of building aspect ratio H/W:
+    isolated roughness (H/W &lt; 0.3), wake interference (0.3&ndash;0.65),
+    and skimming flow (&gt; 0.65).
+  </p>
+
+  <hr class="divider">
+
+  <!-- ================================================================ -->
+  <h2>1. Side-View Canyon (Cross-Section)</h2>
+
+  <p class="section-intro">
+    Two buildings of equal height H form a street canyon of width W.
+    The flow approaches from the left, separates over the upstream building,
+    and either reattaches between the buildings or skims over the top
+    depending on H/W.
+  </p>
+
+  <h3>1.1 Oke 1988 Flow Regimes</h3>
+
+  <table>
+    <thead>
+      <tr><th>H/W</th><th>Regime</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>0.3</td><td>Isolated roughness</td><td>Buildings act as independent obstacles; wakes do not interact. A recirculation zone behind each building reattaches before the next.</td></tr>
+      <tr><td>0.5</td><td>Wake interference</td><td>Wakes interact moderately. The downstream building sits within the wake of the upstream one, creating an elongated recirculation.</td></tr>
+      <tr><td>0.8</td><td>Skimming flow</td><td>A single stable recirculation vortex fills the canyon. Flow skims over the rooftops with minimal vertical exchange.</td></tr>
+    </tbody>
+  </table>
+
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="sideTabs"></div>
+
+  <div class="comparison-slider" id="sideSlider">
+    <img id="sideImgBefore" src="" alt="Contour">
+    <img id="sideImgAfter" class="img-after" src="" alt="Streamlines">
+    <div class="slider-handle"><div class="slider-btn"></div></div>
+    <div class="slider-label left">Contour</div>
+    <div class="slider-label right">Streamlines</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ================================================================ -->
+  <h2>2. Top-Down Plan View (Street Level)</h2>
+
+  <p class="section-intro">
+    Two rectangular building footprints at street level in a channel.
+    Flow from left to right around the buildings shows the street-level
+    wind patterns, with high-speed flow in the gaps and low-speed
+    recirculation zones in the wakes.
+  </p>
+
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="topdownTabs"></div>
+
+  <div class="comparison-slider" id="topdownSlider">
+    <img id="topdownImgBefore" src="" alt="Contour">
+    <img id="topdownImgAfter" class="img-after" src="" alt="Streamlines">
+    <div class="slider-handle"><div class="slider-btn"></div></div>
+    <div class="slider-label left">Contour</div>
+    <div class="slider-label right">Streamlines</div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ================================================================ -->
+  <h2>3. Building Downwash</h2>
+
+  <p class="section-intro">
+    A tall building upstream and a low-rise building downstream.
+    The tall building deflects the high-speed wind downward, creating
+    a downwash effect that amplifies pedestrian-level winds. This
+    configuration is relevant to the <strong>Hunt 1984</strong>
+    criterion for pedestrian comfort in urban developments.
+  </p>
+
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="downwashTabs"></div>
+
+  <div class="comparison-slider" id="downwashSlider">
+    <img id="downwashImgBefore" src="" alt="Contour">
+    <img id="downwashImgAfter" class="img-after" src="" alt="Streamlines">
+    <div class="slider-handle"><div class="slider-btn"></div></div>
+    <div class="slider-label left">Contour</div>
+    <div class="slider-label right">Streamlines</div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Discussion</h2>
+
+  <p class="section-intro">
+    Urban microclimate CFD at LBM-relevant Re values (100&ndash;200) is
+    laminar, while real urban flows are turbulent (Re &gt; 10<sup>6</sup>).
+    However, the qualitative flow regimes predicted by Oke 1988 are
+    Reynolds-number independent in the mean -- the aspect ratio H/W
+    determines the recirculation pattern regardless of Re magnitude.
+    These laminar simulations capture the correct regime transitions.
+  </p>
+
+  <p class="section-intro">
+    Real-world applications: pedestrian wind comfort assessment,
+    pollutant dispersion in street canyons, natural ventilation
+    potential for buildings, and urban heat island mitigation.
+    Future work: extend to 3D with the D3Q19 lattice for
+    corner-flow effects around finite-length buildings.
+  </p>
+
+</div>
+
+<footer class="site-footer">
+  <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+</footer>
+
+<script src="assets/js/slider.js"></script>
+<script>
+// ====================================================================
+// Helper for slider groups
+// ====================================================================
+function makeSliderGroup(opts) {
+  var tabId = opts.tabId, containerId = opts.containerId;
+  var beforeId = opts.beforeId, afterId = opts.afterId;
+  var sliderId = opts.sliderId;
+  var label = opts.label, values = opts.values, prefix = opts.prefix;
+  var currentVal = values[0];
+
+  function imageUrl(v, type) {
+    return 'assets/images/' + prefix + '/re' + v + '_' + type + '.png';
+  }
+
+  function makePlaceholder(v, type) {
+    return 'data:image/svg+xml,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300">' +
+      '<rect width="600" height="300" fill="#0d1117"/>' +
+      '<text x="300" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+      label + ' ' + v + ' ' + type + '</text>' +
+      '<text x="300" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+      '(simulation running -- placeholder)</text></svg>'
+    );
+  }
+
+  function updateImages(v) {
+    var before = document.getElementById(beforeId);
+    var after = document.getElementById(afterId);
+    before.onerror = function() { this.src = makePlaceholder(v, 'contour'); };
+    after.onerror = function() { this.src = makePlaceholder(v, 'streamlines'); };
+    before.src = imageUrl(v, 'contour');
+    after.src = imageUrl(v, 'streamlines');
+  }
+
+  function switchVal(v) {
+    currentVal = v;
+    document.querySelectorAll('#' + tabId + ' .teaser-link').forEach(function(btn) {
+      var vm = btn.textContent.match(/\d+\.?\d*/);
+      var bv = vm ? parseFloat(vm[0]) : 0;
+      btn.classList.toggle('active', bv === v);
+    });
+    updateImages(v);
+    setTimeout(function() {
+      var c = document.getElementById(sliderId);
+      var h = c.querySelector('.slider-handle');
+      var a = c.querySelector('.img-after');
+      if (h) h.style.left = '50%';
+      if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+    }, 200);
+  }
+
+  var rc = document.getElementById(tabId);
+  values.forEach(function(v) {
+    var btn = document.createElement('button');
+    btn.className = 'teaser-link' + (v === currentVal ? ' active' : '');
+    btn.textContent = label + ' = ' + v;
+    btn.style.fontSize = '0.7em';
+    btn.onclick = function() { switchVal(v); };
+    rc.appendChild(btn);
+  });
+
+  updateImages(currentVal);
+}
+
+// Initialize all three slider groups
+makeSliderGroup({
+  tabId: 'sideTabs', containerId: 'sideSlider',
+  beforeId: 'sideImgBefore', afterId: 'sideImgAfter',
+  sliderId: 'sideSlider',
+  label: 'H/W', values: [0.3, 0.5, 0.8], prefix: 'urban_side'
+});
+
+makeSliderGroup({
+  tabId: 'topdownTabs', containerId: 'topdownSlider',
+  beforeId: 'topdownImgBefore', afterId: 'topdownImgAfter',
+  sliderId: 'topdownSlider',
+  label: 'Re', values: [100, 200], prefix: 'urban_topdown'
+});
+
+makeSliderGroup({
+  tabId: 'downwashTabs', containerId: 'downwashSlider',
+  beforeId: 'downwashImgBefore', afterId: 'downwashImgAfter',
+  sliderId: 'downwashSlider',
+  label: 'Re', values: [100, 200], prefix: 'downwash'
+});
+
+document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+});
+</script>
+
+</body>
+</html>
