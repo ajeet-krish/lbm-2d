@@ -16,7 +16,7 @@ Usage:
     python3 scripts/postprocess.py output/ribs_re100 --field pressure
 """
 
-import os, sys, json, re, argparse
+import os, sys, json, re, argparse, subprocess
 from pathlib import Path
 import numpy as np
 
@@ -40,15 +40,15 @@ except ImportError:
 # Per-case colormap configuration
 # ---------------------------------------------------------------------------
 CASE_CMAPS = {
-    'cylinder':              ('jet',     'jet'),
+    'cylinder':              ('jet', 'jet'),
     'cavity':                ('viridis', 'viridis'),
-    'backward-facing-step':  ('coolwarm', 'viridis'),
-    'ribbed-channel':        ('plasma',  'plasma'),
-    'urban-canyon':          ('viridis', 'magma'),
-    'urban-side':            ('viridis', 'magma'),
-    'building-downwash':     ('RdBu',    'coolwarm'),
-    'ahmed-body':            ('jet',     'jet'),
-    'airfoil':               ('jet',     'jet'),
+    'backward-facing-step':  ('coolwarm', 'coolwarm'),
+    'ribbed-channel':        ('plasma', 'plasma'),
+    'urban-canyon':          ('viridis', 'viridis'),
+    'urban-side':            ('viridis', 'viridis'),
+    'building-downwash':     ('RdBu', 'RdBu'),
+    'ahmed-body':            ('turbo', 'turbo'),
+    'airfoil':               ('jet', 'jet'),
 }
 
 # Detect shape type from meta.json or directory name
@@ -78,6 +78,8 @@ def _detect_shape(meta, output_dir=None):
         if pname == 'urban':
             if 'side' in dname:
                 return 'urban-side'
+            if 'downwash' in dname:
+                return 'building-downwash'
             return 'urban-canyon'
         # Legacy flat directory names
         if 'urban_side' in dname:
@@ -160,7 +162,7 @@ def _overlay_obstacles(ax, obstacle_mask):
         return
     # Create a masked array: show obstacles as black
     obs = np.ma.masked_where(~obstacle_mask, np.ones_like(obstacle_mask, dtype=float))
-    ax.imshow(obs, origin='lower', cmap='gray', aspect='auto',
+    ax.imshow(obs, origin='lower', cmap='gray_r', aspect='auto',
               vmin=0, vmax=1, alpha=1.0,
               interpolation='nearest')
 
@@ -170,7 +172,7 @@ def _overlay_obstacles(ax, obstacle_mask):
 # ---------------------------------------------------------------------------
 def render_contour(ax, vel, cmap, vmin, vmax, obstacle=None):
     im = ax.imshow(vel, origin='lower', cmap=cmap, aspect='auto',
-                   vmin=vmin, vmax=vmax)
+                   vmin=vmin, vmax=vmax, interpolation='bilinear')
     _overlay_obstacles(ax, obstacle)
     ax.axis('off')
     ax.set_facecolor('white')
@@ -273,6 +275,76 @@ def save_png_split(data, output_dir, frame, cmap_contour, cmap_stream, field='ve
     plt.savefig(path, dpi=120, facecolor='white', edgecolor='none', bbox_inches='tight')
     plt.close()
     print(f"  Saved {path}")
+
+
+# ---------------------------------------------------------------------------
+# Video overlay rendering (contour + streamlines on same axes)
+# ---------------------------------------------------------------------------
+def render_video_overlay(data, output_dir, frame, cmap, field='velocity'):
+    vel = np.array(data[field])
+    u = np.array(data['u'])
+    v = np.array(data['v'])
+    obs = np.array(data.get('obstacle', []))
+    if obs.ndim == 1 and obs.size > 0:
+        obs = obs.reshape(data['ny'], data['nx'])
+    if vel.ndim == 1:
+        vel = vel.reshape(data['ny'], data['nx'])
+    if u.ndim == 1:
+        u = u.reshape(data['ny'], data['nx'])
+    if v.ndim == 1:
+        v = v.reshape(data['ny'], data['nx'])
+
+    vmax_val = max(vel.max(), 0.01)
+    vmin_val = 0
+
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    fig.patch.set_facecolor('white')
+
+    im = ax.imshow(vel, origin='lower', cmap=cmap, aspect='auto',
+                   vmin=vmin_val, vmax=vmax_val, interpolation='bilinear')
+    _overlay_obstacles(ax, obs)
+
+    ny, nx_grid = u.shape
+    yg, xg = np.mgrid[0:ny, 0:nx_grid]
+    step = max(1, nx_grid // 50)
+    vel_mag = np.sqrt(u[::step, ::step]**2 + v[::step, ::step]**2)
+    ax.streamplot(xg[::step, ::step], yg[::step, ::step],
+                  u[::step, ::step], v[::step, ::step],
+                  color=vel_mag,
+                  cmap=cmap, density=1.0, linewidth=0.8, arrowsize=0.8)
+
+    ax.axis('off')
+    ax.set_facecolor('white')
+
+    cbar = plt.colorbar(im, ax=ax, shrink=0.8)
+    cbar.set_label('Velocity Magnitude (m/s)', color='black')
+
+    plt.tight_layout(pad=0.5)
+    fig.subplots_adjust(right=0.92)
+    path = os.path.join(output_dir, f'vid_{int(frame):04d}.png')
+    plt.savefig(path, dpi=120, facecolor='white', edgecolor='none', bbox_inches='tight')
+    plt.close()
+
+
+def make_video(output_dir):
+    vid_pattern = os.path.join(output_dir, 'vid_*.png')
+    output_path = os.path.join(output_dir, 'simulation.mp4')
+    cmd = [
+        'ffmpeg', '-y', '-framerate', '15',
+        '-pattern_type', 'glob', '-i', vid_pattern,
+        '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+        '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+        '-preset', 'medium', '-crf', '18',
+        output_path
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode == 0:
+        print(f"  Video saved: {output_path}")
+        # Clean up individual frames
+        for f in Path(output_dir).glob('vid_*.png'):
+            f.unlink()
+    else:
+        print(f"  ffmpeg error: {result.stderr}")
 
 
 # ---------------------------------------------------------------------------
@@ -388,6 +460,8 @@ def main():
                         help='Field to render as contour (velocity or pressure)')
     parser.add_argument('--friction', action='store_true',
                         help='Print friction factor from meta.json (ribbed channel)')
+    parser.add_argument('--video', action='store_true',
+                        help='Render overlay video (contour + streamlines on same frame)')
     args = parser.parse_args()
 
     input_dir = args.input_dir
@@ -416,12 +490,25 @@ def main():
 
             if not HAS_MPL:
                 print("matplotlib not installed, skipping PNG output")
+            elif args.video:
+                pass  # rendered in video section below
             elif args.split:
                 save_png_split(data, input_dir, frame_num, cmap_primary, cmap_stream, field_key)
             else:
                 save_png_combined(data, input_dir, frame_num, cmap_primary, cmap_stream, field_key)
     else:
         print(f"No frame JSON files found in {input_dir}/frames/")
+
+    if args.video and frame_files:
+        cmap_primary = _resolve_cmap(args.cmap, meta, input_dir)
+        print(f"  Rendering {len(frame_files)} video frames with colormap={cmap_primary}")
+        for vtk_path in frame_files:
+            frame_match = re.search(r'frame_(\d+)', vtk_path.name)
+            frame_num = int(frame_match.group(1)) if frame_match else 0
+            data = _load_frame(str(vtk_path))
+            if HAS_MPL:
+                render_video_overlay(data, input_dir, frame_num, cmap_primary, field_key)
+        make_video(input_dir)
 
     if args.strouhal:
         compute_strouhal(input_dir)

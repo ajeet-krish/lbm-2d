@@ -329,45 +329,45 @@ const FIELD_CONFIG = {
     paramLabel: 'Re',
     reValues: [20, 40, 100, 200],
     stats: {
-      20:  { re: 20, cd: '--', cl: '--', st: '--', xr: '--' },
-      40:  { re: 40, cd: '--', cl: '--', st: '--', xr: '--' },
-      100: { re: 100, cd: 1.56, cl: 0.05, st: '--', xr: '--' },
-      200: { re: 200, cd: 1.32, cl: '--', st: '--', xr: '--' },
-    }
-  },
-  cavity: {
-    label: 'Cavity',
-    colormap: 'viridis',
-    paramLabel: 'Re',
-    reValues: [100, 400, 1000],
-    stats: {
-      100:  { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
-      400:  { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
-      1000: { re: 1000, cd: '--', cl: '--', st: '--', xr: '--' },
-    }
-  },
-  step: {
-    label: 'Bwd Step',
-    colormap: 'coolwarm',
-    paramLabel: 'Re',
-    reValues: [100, 200, 400],
-    stats: {
-      100: { re: 100, cd: '--', cl: '--', st: '--', xr: 2.32 },
-      200: { re: 200, cd: '--', cl: '--', st: '--', xr: 3.82 },
-      400: { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
-    }
-  },
-  ribs: {
-    label: 'Ribbed Channel',
-    colormap: 'plasma',
-    paramLabel: 'Re',
-    reValues: [50, 100, 200],
-    stats: {
-      50:  { re: 50, cd: '--', cl: '--', st: '--', xr: '--' },
-      100: { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
-      200: { re: 200, cd: '--', cl: '--', st: '--', xr: '--' },
-    }
-  },
+       20:  { re: 20,  cd: '--',   cl: '--',   st: '--',   xr: '--' },
+       40:  { re: 40,  cd: '--',   cl: '--',   st: '--',   xr: '--' },
+       100: { re: 100, cd: '1.88', cl: '0.43', st: '0.188', xr: '--' },
+       200: { re: 200, cd: '1.85', cl: '0.94', st: '0.220', xr: '--' },
+     }
+   },
+   cavity: {
+     label: 'Cavity',
+     colormap: 'viridis',
+     paramLabel: 'Re',
+     reValues: [100, 400, 1000],
+     stats: {
+       100:  { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
+       400:  { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
+       1000: { re: 1000, cd: '--', cl: '--', st: '--', xr: '--' },
+     }
+   },
+   step: {
+     label: 'Bwd Step',
+     colormap: 'coolwarm',
+     paramLabel: 'Re',
+     reValues: [100, 200, 400],
+     stats: {
+       100: { re: 100, cd: '--', cl: '--', st: '--', xr: '2.37' },
+       200: { re: 200, cd: '--', cl: '--', st: '--', xr: '4.00' },
+       400: { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
+     }
+   },
+   ribs: {
+     label: 'Ribbed Channel',
+     colormap: 'plasma',
+     paramLabel: 'Re',
+     reValues: [50, 100, 200],
+     stats: {
+       50:  { re: 50,  cd: '--',   cl: '--', st: '--', xr: '--' },
+       100: { re: 100, cd: '--',   cl: '--', st: '--', xr: '0.7' },
+       200: { re: 200, cd: '--',   cl: '--', st: '--', xr: '--' },
+     }
+   },
   urban: {
     label: 'Urban Canyon',
     colormap: 'viridis',
@@ -403,13 +403,13 @@ const FIELD_CONFIG = {
     paramLabel: 'AoA',
     reValues: [0, 4, 8, 12, 16],
     stats: {
-      0:  { re: 0,  cd: '--', cl: 0.00, st: '--', xr: '--' },
-      4:  { re: 4,  cd: '--', cl: 0.16, st: '--', xr: '--' },
-      8:  { re: 8,  cd: '--', cl: 0.34, st: '--', xr: '--' },
-      12: { re: 12, cd: '--', cl: 0.47, st: '--', xr: '--' },
-      16: { re: 16, cd: '--', cl: 0.60, st: '--', xr: '--' },
-    }
-  }
+       0:  { re: 0,  cd: '0.127', cl: '0.000', st: '--', xr: '--' },
+       4:  { re: 4,  cd: '0.170', cl: '0.173', st: '--', xr: '--' },
+       8:  { re: 8,  cd: '0.193', cl: '0.328', st: '--', xr: '--' },
+       12: { re: 12, cd: '0.247', cl: '0.390', st: '--', xr: '--' },
+       16: { re: 16, cd: '0.223', cl: '0.507', st: '--', xr: '--' },
+     }
+   }
 };
 
 // ======================================================================
@@ -424,9 +424,12 @@ let sliderEl = null;
 // Image URL builder
 // ======================================================================
 function imageUrl(caseName, re, type) {
-  // type = 'contour' or 'streamlines'
-  // For now use placeholder; real images loaded when available
-  // Pattern: assets/images/{case}/re{re}_{type}.png
+  if (caseName === 'airfoil') {
+    return 'assets/images/airfoil/aoa' + re + '_' + type + '.png';
+  }
+  if (caseName === 'downwash') {
+    return 'assets/images/urban/downwash/re' + re + '_' + type + '.png';
+  }
   return 'assets/images/' + caseName + '/re' + re + '_' + type + '.png';
 }
 

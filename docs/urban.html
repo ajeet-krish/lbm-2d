@@ -231,21 +231,21 @@ makeSliderGroup({
   tabId: 'sideTabs', containerId: 'sideSlider',
   beforeId: 'sideImgBefore', afterId: 'sideImgAfter',
   sliderId: 'sideSlider',
-  label: 'H/W', values: [0.3, 0.5, 0.8], prefix: 'urban_side'
+  label: 'H/W', values: [0.3, 0.5, 0.8], prefix: 'urban/side'
 });
 
 makeSliderGroup({
   tabId: 'topdownTabs', containerId: 'topdownSlider',
   beforeId: 'topdownImgBefore', afterId: 'topdownImgAfter',
   sliderId: 'topdownSlider',
-  label: 'Re', values: [100, 200], prefix: 'urban_topdown'
+  label: 'Re', values: [100, 200], prefix: 'urban/topdown'
 });
 
 makeSliderGroup({
   tabId: 'downwashTabs', containerId: 'downwashSlider',
   beforeId: 'downwashImgBefore', afterId: 'downwashImgAfter',
   sliderId: 'downwashSlider',
-  label: 'Re', values: [100, 200], prefix: 'downwash'
+  label: 'Re', values: [100, 200], prefix: 'urban/downwash'
 });
 
 document.getElementById('sidebarToggle')?.addEventListener('click', function() {

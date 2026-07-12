@@ -155,18 +155,18 @@ const CASE_CONFIG = {
   paramLabel: 'AoA',
   reValues: [0, 4, 8, 12, 16],
   stats: {
-    0:  { re: 0,  cd: '--', cl: 0.00, st: '--', xr: '--' },
-    4:  { re: 4,  cd: '--', cl: 0.16, st: '--', xr: '--' },
-    8:  { re: 8,  cd: '--', cl: 0.34, st: '--', xr: '--' },
-    12: { re: 12, cd: '--', cl: 0.47, st: '--', xr: '--' },
-    16: { re: 16, cd: '--', cl: 0.60, st: '--', xr: '--' },
+    0:  { re: 0,  cd: '0.127', cl: '0.000', st: '--', xr: '--' },
+    4:  { re: 4,  cd: '0.170', cl: '0.173', st: '--', xr: '--' },
+    8:  { re: 8,  cd: '0.193', cl: '0.328', st: '--', xr: '--' },
+    12: { re: 12, cd: '0.247', cl: '0.390', st: '--', xr: '--' },
+    16: { re: 16, cd: '0.223', cl: '0.507', st: '--', xr: '--' },
   }
 };
 
 let currentRe = CASE_CONFIG.reValues[0];
 
-function imageUrl(re, type) {
-  return 'assets/images/airfoil/re' + re + '_' + type + '.png';
+function imageUrl(aoa, type) {
+  return 'assets/images/airfoil/aoa' + aoa + '_' + type + '.png';
 }
 
 function makePlaceholder(re, type) {
