@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <cmath>
 #include <string>
-#include <cstdlib>
+#include <filesystem>
 
 // ==========================================================================
 // LBM-2D: Ribbed Channel Flow Entry Point
@@ -63,13 +63,19 @@ int main(int argc, char* argv[]) {
     int steps = -1;
     bool save_vtk = false;
 
+    int positional_idx = 1;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--vtk") {
             save_vtk = true;
-        } else if (arg != "--vtk") {
-            if (i == 1) Re = std::stod(arg);
-            else if (i == 2) steps = std::stoi(arg);
+        } else if (arg == "--use-les") {
+            g_use_les = true;
+        } else if (arg == "--cs" && i + 1 < argc) {
+            g_cs = std::stod(argv[++i]);
+        } else if (arg.find("--") != 0) {
+            if (positional_idx == 1) Re = std::stod(arg);
+            else if (positional_idx == 2) steps = std::stoi(arg);
+            ++positional_idx;
         }
     }
 
@@ -88,6 +94,7 @@ int main(int argc, char* argv[]) {
               << "  h_rib = " << params.h_rib
               << "  pitch = " << params.pitch
               << "  body_force = " << params.body_force_accel
+              << (g_use_les ? "  LES(Cs=" + std::to_string(g_cs) + ")" : "")
               << std::endl;
 
     LBMCapabilities system;
@@ -123,9 +130,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Output directory
-    std::string subdir = "output/ribs_re" + std::to_string(static_cast<int>(Re));
-    std::string mkdir_cmd = "mkdir -p " + subdir + "/frames";
-    ::system(mkdir_cmd.c_str());
+    std::string subdir = "output/ribs/re" + std::to_string(static_cast<int>(Re));
+    std::filesystem::create_directories(subdir + "/frames");
 
     save_meta_json(subdir, Re, params.tau, params.u_max,
                    static_cast<double>(2 * NY), "ribbed-channel", NX, NY);
@@ -136,8 +142,8 @@ int main(int argc, char* argv[]) {
         // Force extraction on all obstacles
         double fx_total = 0.0, fy_total = 0.0;
         for (int n = 0; n < NX * NY; ++n) {
-            fx_total += system.fx_cyl[n];
-            fy_total += system.fy_cyl[n];
+            fx_total += system.fx_body[n];
+            fy_total += system.fy_body[n];
         }
 
         save_forces_jsonl(subdir, step, fx_total, fy_total);
@@ -193,8 +199,8 @@ int main(int argc, char* argv[]) {
     double friction_factor = 2.0 * body_force * static_cast<double>(NY * NY)
                              / (u_bulk * u_bulk);
 
-    // Blasius laminar: f_smooth = 64 / Re_H
-    double f_smooth = 64.0 / Re;
+    // Blasius laminar: f_smooth = 96 / Re_H (channel flow)
+    double f_smooth = 96.0 / Re;
 
     // Compute reattachment length Xr/h between ribs
     // Scan the first inter-rib region for u = 0 crossing near wall
@@ -219,8 +225,8 @@ int main(int argc, char* argv[]) {
     // Update meta.json with friction and reattachment
     {
         std::string fname = subdir + "/meta.json";
-        std::ofstream out(fname, std::ios::app);
-        out.seekp(-2, std::ios::end);  // before closing }
+        std::ofstream out(fname, std::ios::in | std::ios::out);
+        out.seekp(-2, std::ios::end);  // overwrite trailing \n}
         out << ",\n  \"u_bulk\": " << u_bulk
             << ",\n  \"friction_factor\": " << friction_factor
             << ",\n  \"f_smooth\": " << f_smooth

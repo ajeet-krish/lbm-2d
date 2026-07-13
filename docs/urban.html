@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="LBM-2D: Urban Canyon Microclimate -- Oke 1988 flow regimes, top-down street-level wind, and building downwash">
-  <title>Urban Canyon - LBM-2D</title>
+  <meta name="description" content="AK-Vortex: Urban Canyon Microclimate, Oke 1988 flow regimes, top-down street-level wind, and building downwash">
+  <title>Urban Canyon - AK-Vortex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,21 +15,32 @@
 <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
 <div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">LBM-2D</a></div>
+  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
   <nav class="sidebar-nav">
     <div class="nav-section">
       <div class="nav-heading">Project</div>
       <a href="index.html" class="nav-item">Home</a>
     </div>
     <div class="nav-section">
-      <div class="nav-heading">Simulation</div>
+      <div class="nav-heading">External Aerodynamics</div>
+      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
       <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Internal Flows</div>
       <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
       <a href="step.html" class="nav-item">Backward Step</a>
-      <a href="airfoil.html" class="nav-item">Airfoil</a>
-      <a href="urban.html" class="nav-item active">Urban Canyon</a>
-      <a href="ahmed.html" class="nav-item">Ahmed Body</a>
       <a href="ribs.html" class="nav-item">Ribbed Channel</a>
+      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
+      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Urban CFD</div>
+      <a href="urban.html" class="nav-item active">Urban Canyon</a>
     </div>
     <div class="nav-section">
       <div class="nav-heading">Reference</div>
@@ -49,7 +60,7 @@
     three canonical configurations that model how wind interacts with buildings
     at the neighbourhood scale. The analysis reproduces the three flow regimes
     of <strong>Oke 1988</strong> as a function of building aspect ratio H/W:
-    isolated roughness (H/W &lt; 0.3), wake interference (0.3&ndash;0.65),
+    isolated roughness (H/W &lt; 0.3), wake interference (0.3-0.65),
     and skimming flow (&gt; 0.65).
   </p>
 
@@ -59,8 +70,8 @@
   <h2>1. Side-View Canyon (Cross-Section)</h2>
 
   <p class="section-intro">
-    Two buildings of equal height H form a street canyon of width W.
-    The flow approaches from the left, separates over the upstream building,
+    Three buildings of equal height H form a row of street canyons of width W.
+    The flow approaches from the left, separates over each upstream building,
     and either reattaches between the buildings or skims over the top
     depending on H/W.
   </p>
@@ -94,7 +105,8 @@
   <h2>2. Top-Down Plan View (Street Level)</h2>
 
   <p class="section-intro">
-    Two rectangular building footprints at street level in a channel.
+    Three rectangular building footprints at street level in a wider channel
+    (NX=900, NY=400) with realistic street spacing (canyon = 2 * building width).
     Flow from left to right around the buildings shows the street-level
     wind patterns, with high-speed flow in the gaps and low-speed
     recirculation zones in the wakes.
@@ -138,10 +150,10 @@
   <h2>Discussion</h2>
 
   <p class="section-intro">
-    Urban microclimate CFD at LBM-relevant Re values (100&ndash;200) is
+    Urban microclimate CFD at LBM-relevant Re values (100-200) is
     laminar, while real urban flows are turbulent (Re &gt; 10<sup>6</sup>).
     However, the qualitative flow regimes predicted by Oke 1988 are
-    Reynolds-number independent in the mean -- the aspect ratio H/W
+    Reynolds-number independent in the mean; the aspect ratio H/W
     determines the recirculation pattern regardless of Re magnitude.
     These laminar simulations capture the correct regime transitions.
   </p>
@@ -157,7 +169,7 @@
 </div>
 
 <footer class="site-footer">
-  <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
 </footer>
 
 <script src="assets/js/slider.js"></script>
@@ -183,7 +195,7 @@ function makeSliderGroup(opts) {
       '<text x="300" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
       label + ' ' + v + ' ' + type + '</text>' +
       '<text x="300" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
-      '(simulation running -- placeholder)</text></svg>'
+      '(simulation running, placeholder)</text></svg>'
     );
   }
 

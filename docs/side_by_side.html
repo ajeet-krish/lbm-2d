@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AK-Vortex: Side-by-Side Cylinders, Interference study with variable spacing ratio at Re=100">
+  <title>Side-by-Side Cylinders - AK-Vortex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+<div class="sidebar">
+  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-heading">External Aerodynamics</div>
+      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+      <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+      <a href="side_by_side.html" class="nav-item active">Side-by-Side Cylinders</a>
+      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Internal Flows</div>
+      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+      <a href="step.html" class="nav-item">Backward Step</a>
+      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
+      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
+      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Urban CFD</div>
+      <a href="urban.html" class="nav-item">Urban Canyon</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Reference</div>
+      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+      <a href="implementation.html" class="nav-item">Implementation</a>
+      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+    </div>
+  </nav>
+</div>
+
+<div class="main-content">
+
+  <h1>Side-by-Side Cylinders: Interference Study</h1>
+
+  <p class="section-intro">
+    Two circular cylinders in side-by-side arrangement at Re=100. Variable
+    spacing ratio S/D = 2, 3, 5. At close spacing, biased gap flow and
+    coupled vortex shedding emerge. The interference between the two cylinders
+    produces fundamentally different wake topologies depending on the spacing
+    ratio.
+  </p>
+
+  <h2>Setup</h2>
+
+  <table>
+    <tr><th>Parameter</th><th>Value</th></tr>
+    <tr><td>Grid</td><td>800 &times; 300</td></tr>
+    <tr><td>Cylinder diameter D</td><td>60 cells</td></tr>
+    <tr><td>Reynolds number</td><td>100</td></tr>
+    <tr><td>Spacing ratios S/D</td><td>2, 3, 5</td></tr>
+    <tr><td>Inlet velocity</td><td>u<sub>inflow</sub> = 0.1 lu/ts</td></tr>
+    <tr><td>Collision</td><td>MRT (d'Humieres 2002)</td></tr>
+    <tr><td>Boundary condition</td><td>Bouzidi interpolated bounce-back</td></tr>
+    <tr><td>Lattice spacing / time step</td><td>&Delta;x = 1, &Delta;t = 1</td></tr>
+  </table>
+
+  <h2>Field Viewer</h2>
+
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="sdTabs"></div>
+
+  <div class="comparison-slider" id="fieldSlider">
+    <img id="sliderImgBefore" src="" alt="Contour">
+    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+    <div class="slider-handle"><div class="slider-btn"></div></div>
+    <div class="slider-label left">Contour</div>
+    <div class="slider-label right">Streamlines</div>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
+    <div class="stat-item"><span class="num" id="statSD">--</span><span class="lbl">S/D</span></div>
+    <div class="stat-item"><span class="num" id="statCd1">--</span><span class="lbl">Cd1</span></div>
+    <div class="stat-item"><span class="num" id="statCd2">--</span><span class="lbl">Cd2</span></div>
+    <div class="stat-item"><span class="num" id="statCl1">--</span><span class="lbl">Cl1</span></div>
+    <div class="stat-item"><span class="num" id="statCl2">--</span><span class="lbl">Cl2</span></div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Validation</h2>
+
+  <table>
+    <thead>
+      <tr><th>S/D</th><th>Regime</th><th>Computed Cd1</th><th>Computed Cd2</th><th>Computed Cl1</th><th>Computed Cl2</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>2</td><td>Biased gap flow, coupled shedding</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+      <tr><td>3</td><td>Proximity interference</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+      <tr><td>5</td><td>Weak interference, quasi-independent</td><td>--</td><td>--</td><td>--</td><td>--</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    Validation values will be populated from simulation results when runs complete.
+    Reference: side-by-side circular cylinders at Re=100 (Alam &amp; Zhou 2007).
+  </div>
+
+  <hr class="divider">
+
+  <h2>Discussion</h2>
+
+  <p class="section-intro">
+    The side-by-side cylinder case tests multi-body interaction in the LBM
+    framework. At large spacing (S/D &gt; 4), the two cylinders behave
+    approximately independently, each shedding a von K&aacute;rm&aacute;n street
+    at the same Strouhal number. At intermediate spacing (2 &lt; S/D &lt; 4),
+    proximity interference modifies the drag and wake frequency.
+  </p>
+
+  <p class="section-intro">
+    At close spacing (S/D &lt; 2), a strong biased gap flow develops where
+    the jet through the gap deflects toward one cylinder, creating asymmetric
+    forces. This biased state can flip bistably in experiments, though in 2D
+    simulations the bias direction is typically fixed by initial conditions.
+    The coupled vortex shedding frequency differs from the isolated cylinder
+    value and depends sensitively on S/D.
+  </p>
+
+</div>
+
+<footer class="site-footer">
+  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+</footer>
+
+<script src="assets/js/slider.js"></script>
+<script>
+const CASE_CONFIG = {
+  paramLabel: 'S/D',
+  sdValues: [2, 3, 5],
+  sdKeys: ['sd2', 'sd3', 'sd5'],
+  stats: {
+    2:  { re: 100, sd: '2', cd1: '--', cd2: '--', cl1: '--', cl2: '--' },
+    3:  { re: 100, sd: '3', cd1: '--', cd2: '--', cl1: '--', cl2: '--' },
+    5:  { re: 100, sd: '5', cd1: '--', cd2: '--', cl1: '--', cl2: '--' },
+  }
+};
+
+let currentSD = CASE_CONFIG.sdValues[0];
+
+function imageUrl(sd, type) {
+  var suffix = 'sd' + (sd * 10);
+  return 'assets/images/side_by_side/' + suffix + '_' + type + '.png';
+}
+
+function makePlaceholder(sd, type) {
+  return 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
+    '<rect width="800" height="300" fill="#0d1117"/>' +
+    '<circle cx="200" cy="130" r="30" fill="none" stroke="#484f58" stroke-width="2"/>' +
+    '<circle cx="200" cy="170" r="30" fill="none" stroke="#484f58" stroke-width="2"/>' +
+    '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+    'Side-by-Side S/D=' + sd + ' ' + type + '</text>' +
+    '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+    '(simulation running, placeholder)</text></svg>'
+  );
+}
+
+function updateImages(sd) {
+  var before = document.getElementById('sliderImgBefore');
+  var after = document.getElementById('sliderImgAfter');
+  before.onerror = function() { this.src = makePlaceholder(sd, 'contour'); };
+  after.onerror = function() { this.src = makePlaceholder(sd, 'streamlines'); };
+  before.src = imageUrl(sd, 'contour');
+  after.src = imageUrl(sd, 'streamlines');
+}
+
+function updateStats(sd) {
+  var s = CASE_CONFIG.stats[sd];
+  document.getElementById('statRe').textContent = s.re;
+  document.getElementById('statSD').textContent = s.sd;
+  document.getElementById('statCd1').textContent = s.cd1;
+  document.getElementById('statCd2').textContent = s.cd2;
+  document.getElementById('statCl1').textContent = s.cl1;
+  document.getElementById('statCl2').textContent = s.cl2;
+}
+
+function switchSD(sd) {
+  currentSD = sd;
+  document.querySelectorAll('#sdTabs .teaser-link').forEach(function(btn) {
+    var rm = btn.textContent.match(/\d+/);
+    var bs = rm ? parseInt(rm[0]) : 0;
+    btn.classList.toggle('active', bs === sd);
+  });
+  updateImages(sd);
+  updateStats(sd);
+  setTimeout(function() {
+    var c = document.getElementById('fieldSlider');
+    var h = c.querySelector('.slider-handle');
+    var a = c.querySelector('.img-after');
+    if (h) h.style.left = '50%';
+    if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+  }, 200);
+}
+
+var rc = document.getElementById('sdTabs');
+CASE_CONFIG.sdValues.forEach(function(sd) {
+  var btn = document.createElement('button');
+  btn.className = 'teaser-link' + (sd === currentSD ? ' active' : '');
+  btn.textContent = CASE_CONFIG.paramLabel + ' = ' + sd;
+  btn.style.fontSize = '0.7em';
+  btn.onclick = function() { switchSD(sd); };
+  rc.appendChild(btn);
+});
+
+updateImages(currentSD);
+updateStats(currentSD);
+
+document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+});
+</script>
+
+</body>
+</html>

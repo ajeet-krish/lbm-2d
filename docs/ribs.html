@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="LBM-2D: Ribbed Channel -- friction factor, reattachment length, internal cooling validation">
-  <title>Ribbed Channel - LBM-2D</title>
+  <meta name="description" content="AK-Vortex: Ribbed Channel, friction factor, reattachment length, internal cooling validation">
+  <title>Ribbed Channel - AK-Vortex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,21 +15,32 @@
 <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
 <div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">LBM-2D</a></div>
+  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
   <nav class="sidebar-nav">
     <div class="nav-section">
       <div class="nav-heading">Project</div>
       <a href="index.html" class="nav-item">Home</a>
     </div>
     <div class="nav-section">
-      <div class="nav-heading">Simulation</div>
+      <div class="nav-heading">External Aerodynamics</div>
+      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
       <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Internal Flows</div>
       <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
       <a href="step.html" class="nav-item">Backward Step</a>
-      <a href="airfoil.html" class="nav-item">Airfoil</a>
-      <a href="urban.html" class="nav-item">Urban Canyon</a>
-      <a href="ahmed.html" class="nav-item">Ahmed Body</a>
       <a href="ribs.html" class="nav-item active">Ribbed Channel</a>
+      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
+      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Urban CFD</div>
+      <a href="urban.html" class="nav-item">Urban Canyon</a>
     </div>
     <div class="nav-section">
       <div class="nav-heading">Reference</div>
@@ -59,8 +70,8 @@
   <p class="section-intro">
     <strong>Gas turbine blade cooling:</strong> Rib turbulators are cast into
     internal cooling passages of high-pressure turbine blades. The ribs
-    augment the heat transfer coefficient by 2&ndash;4x over a smooth channel
-    at the cost of a 3&ndash;5x increase in friction factor. Optimising
+    augment the heat transfer coefficient by 2-4x over a smooth channel
+    at the cost of a 3-5x increase in friction factor. Optimising
     rib geometry (height, pitch, angle) is a key design problem.
   </p>
 
@@ -160,9 +171,9 @@
   <table>
     <thead><tr><th>Re<sub>h</sub></th><th>Xr/h (computed)</th><th>Xr/h (reference)</th></tr></thead>
     <tbody>
-      <tr><td>50</td><td>--</td><td>~4&ndash;6</td></tr>
-      <tr><td>100</td><td>--</td><td>~6&ndash;8</td></tr>
-      <tr><td>200</td><td>--</td><td>~8&ndash;12</td></tr>
+      <tr><td>50</td><td>--</td><td>~4-6</td></tr>
+      <tr><td>100</td><td>--</td><td>~6-8</td></tr>
+      <tr><td>200</td><td>--</td><td>~8-12</td></tr>
     </tbody>
   </table>
 
@@ -171,8 +182,8 @@
   <h2>Discussion</h2>
 
   <p class="section-intro">
-    The ribbed channel at LBM-relevant Re values (50&ndash;200) is laminar,
-    while real turbine cooling passages operate at Re = 10,000&ndash;100,000
+    The ribbed channel at LBM-relevant Re values (50-200) is laminar,
+    while real turbine cooling passages operate at Re = 10,000-100,000
     with fully turbulent flow. The laminar simulations capture the correct
     qualitative trends: increasing Xr/h with Re, and elevated friction factor
     relative to smooth channel. A future extension with a turbulence model
@@ -192,7 +203,7 @@
 </div>
 
 <footer class="site-footer">
-  <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
 </footer>
 
 <script src="assets/js/slider.js"></script>
@@ -223,7 +234,7 @@ function makePlaceholder(re, type) {
     '<text x="200" y="95" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
     'Ribs Re=' + re + ' ' + type + '</text>' +
     '<text x="200" y="115" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
-    '(simulation running -- placeholder)</text></svg>'
+    '(simulation running, placeholder)</text></svg>'
   );
 }
 

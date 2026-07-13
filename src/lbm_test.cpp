@@ -95,13 +95,6 @@ TEST(IndexTest, NodeIndex) {
     EXPECT_EQ(node_index(NX - 1, NY - 1), NX * NY - 1);
 }
 
-TEST(IndexTest, DistributionIndex) {
-    EXPECT_EQ(dist_index(0, 0, 0), 0);
-    EXPECT_EQ(dist_index(0, 0, 1), 1);
-    EXPECT_EQ(dist_index(1, 0, 0), 9);
-    EXPECT_EQ(dist_index(0, 1, 0), NX * 9);
-}
-
 // ------------------------------------------------------------------
 // Bounce-back direction test
 // ------------------------------------------------------------------
@@ -152,13 +145,11 @@ TEST(ObstacleTest, CylinderPlacement) {
 // ------------------------------------------------------------------
 TEST(ForceTest, ResetForces) {
     LBMCapabilities sys;
-    sys.fx_cyl[0] = 1.0;
-    sys.fy_cyl[0] = 2.0;
-    sys.n_cyl_nodes = 5;
+    sys.fx_body[0] = 1.0;
+    sys.fy_body[0] = 2.0;
     sys.reset_forces();
-    EXPECT_DOUBLE_EQ(sys.fx_cyl[0], 0.0);
-    EXPECT_DOUBLE_EQ(sys.fy_cyl[0], 0.0);
-    EXPECT_EQ(sys.n_cyl_nodes, 0);
+    EXPECT_DOUBLE_EQ(sys.fx_body[0], 0.0);
+    EXPECT_DOUBLE_EQ(sys.fy_body[0], 0.0);
 }
 
 // ------------------------------------------------------------------

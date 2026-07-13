@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="LBM-2D: Backward-Facing Step -- Reattachment length validation against Armaly 1983">
-  <title>Backward-Facing Step - LBM-2D</title>
+  <meta name="description" content="AK-Vortex: Backward-Facing Step, Reattachment length validation against Armaly 1983">
+  <title>Backward-Facing Step - AK-Vortex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,21 +15,32 @@
 <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
 <div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">LBM-2D</a></div>
+  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
   <nav class="sidebar-nav">
     <div class="nav-section">
       <div class="nav-heading">Project</div>
       <a href="index.html" class="nav-item">Home</a>
     </div>
     <div class="nav-section">
-      <div class="nav-heading">Simulation</div>
+      <div class="nav-heading">External Aerodynamics</div>
+      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
       <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Internal Flows</div>
       <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
       <a href="step.html" class="nav-item active">Backward Step</a>
-      <a href="airfoil.html" class="nav-item">Airfoil</a>
-      <a href="urban.html" class="nav-item">Urban Canyon</a>
-      <a href="ahmed.html" class="nav-item">Ahmed Body</a>
       <a href="ribs.html" class="nav-item">Ribbed Channel</a>
+      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
+      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Urban CFD</div>
+      <a href="urban.html" class="nav-item">Urban Canyon</a>
     </div>
     <div class="nav-section">
       <div class="nav-heading">Reference</div>
@@ -126,7 +137,7 @@
 </div>
 
 <footer class="site-footer">
-  <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
 </footer>
 
 <script src="assets/js/slider.js"></script>
@@ -155,7 +166,7 @@ function makePlaceholder(re, type) {
     '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
     'Step Re=' + re + ' ' + type + '</text>' +
     '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
-    '(simulation running -- placeholder)</text></svg>'
+    '(simulation running, placeholder)</text></svg>'
   );
 }
 

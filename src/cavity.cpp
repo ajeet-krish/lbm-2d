@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <cmath>
 #include <string>
+#include <filesystem>
 
 // ==========================================================================
 // LBM-2D Lid-Driven Cavity Entry Point
@@ -43,9 +44,20 @@ int main(int argc, char* argv[]) {
     int ny = 256;
     int steps = -1;
 
-    if (argc >= 2) Re = std::stod(argv[1]);
-    if (argc >= 3) nx = std::stoi(argv[2]);
-    if (argc >= 4) steps = std::stoi(argv[3]);
+    int positional_idx = 1;
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--use-les") {
+            g_use_les = true;
+        } else if (arg == "--cs" && i + 1 < argc) {
+            g_cs = std::stod(argv[++i]);
+        } else if (arg.find("--") != 0) {
+            if (positional_idx == 1) Re = std::stod(arg);
+            else if (positional_idx == 2) nx = std::stoi(arg);
+            else if (positional_idx == 3) steps = std::stoi(arg);
+            ++positional_idx;
+        }
+    }
     ny = nx;  // square cavity
 
     // Set globals for cavity mode
@@ -76,17 +88,18 @@ int main(int argc, char* argv[]) {
               << "  tau = " << params.tau
               << "  u_lid = " << params.u_lid
               << "  steps = " << params.num_steps
+              << (g_use_les ? "  LES(Cs=" + std::to_string(g_cs) + ")" : "")
               << std::endl;
 
     // Create output directory
     std::string subdir = "output/cavity/re" + std::to_string(static_cast<int>(Re));
-    std::string mkdir_cmd = "mkdir -p " + subdir;
-    std::system(mkdir_cmd.c_str());
+    std::filesystem::create_directories(subdir + "/frames");
 
     for (int step = 0; step <= params.num_steps; ++step) {
         execute_time_step(system, params.tau, params.u_lid);
 
         if (step % params.vtk_interval == 0) {
+            save_json_frame(system, step, subdir);
             save_vtk_frame(system, step, subdir);
         }
 

@@ -26,13 +26,6 @@ target_include_directories(LBM_Cavity PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(LBM_Cavity PRIVATE OpenMP::OpenMP_CXX)
 
 # ------------------------------------------------------------------
-# Airfoil analysis executable
-# ------------------------------------------------------------------
-add_executable(LBM_Airfoil src/airfoil.cpp src/lbm.hpp src/lbm_types.hpp src/geometry.hpp)
-target_include_directories(LBM_Airfoil PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(LBM_Airfoil PRIVATE OpenMP::OpenMP_CXX)
-
-# ------------------------------------------------------------------
 # Backward-facing step executable
 # ------------------------------------------------------------------
 add_executable(LBM_Step src/step.cpp src/lbm.hpp src/lbm_types.hpp)
@@ -61,11 +54,32 @@ target_include_directories(LBM_Downwash PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(LBM_Downwash PRIVATE OpenMP::OpenMP_CXX)
 
 # ------------------------------------------------------------------
-# Ahmed body executable
+# Square cylinder (ERCOFTAC 043)
 # ------------------------------------------------------------------
-add_executable(LBM_Ahmed src/ahmed.cpp src/lbm.hpp src/lbm_types.hpp src/geometry.hpp)
-target_include_directories(LBM_Ahmed PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(LBM_Ahmed PRIVATE OpenMP::OpenMP_CXX)
+add_executable(LBM_SquareCylinder src/square_cylinder.cpp src/lbm.hpp src/lbm_types.hpp src/geometry.hpp)
+target_include_directories(LBM_SquareCylinder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_SquareCylinder PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Nozzle (converging-diverging)
+# ------------------------------------------------------------------
+add_executable(LBM_Nozzle src/nozzle.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_Nozzle PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_Nozzle PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Flat plate boundary layer (primary validation case)
+# ------------------------------------------------------------------
+add_executable(LBM_FlatPlate src/flat_plate.cpp src/lbm.hpp src/lbm_types.hpp src/geometry.hpp)
+target_include_directories(LBM_FlatPlate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_FlatPlate PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# AMR test executable (cylinder with adaptive mesh refinement)
+# ------------------------------------------------------------------
+add_executable(LBM_AMR src/amr_test.cpp src/lbm.hpp src/lbm_types.hpp src/amr.hpp)
+target_include_directories(LBM_AMR PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_AMR PRIVATE OpenMP::OpenMP_CXX)
 
 # ------------------------------------------------------------------
 # Unit tests (Google Test)
@@ -116,10 +130,53 @@ add_custom_target(downwash
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-add_custom_target(ahmed
-  COMMAND LBM_Ahmed
+add_custom_target(amr
+  COMMAND LBM_AMR
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+
+add_custom_target(square_cylinder
+  COMMAND LBM_SquareCylinder
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(nozzle
+  COMMAND LBM_Nozzle
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(flat_plate
+  COMMAND LBM_FlatPlate
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+# ------------------------------------------------------------------
+# Periodic hills (canonical LES benchmark)
+# ------------------------------------------------------------------
+add_executable(LBM_PeriodicHills src/periodic_hills.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_PeriodicHills PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_PeriodicHills PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Cylinder near a wall (ground effect)
+# ------------------------------------------------------------------
+add_executable(LBM_CylinderNearWall src/cylinder_near_wall.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_CylinderNearWall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_CylinderNearWall PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Side-by-side cylinders (interference)
+# ------------------------------------------------------------------
+add_executable(LBM_SideBySide src/side_by_side_cylinders.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_SideBySide PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_SideBySide PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Rotating cylinder (Magnus effect)
+# ------------------------------------------------------------------
+add_executable(LBM_RotatingCylinder src/rotating_cylinder.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_RotatingCylinder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_RotatingCylinder PRIVATE OpenMP::OpenMP_CXX)
 
 add_custom_target(serve-docs
   COMMAND python3 -m http.server 8765 -d ${CMAKE_SOURCE_DIR}/docs

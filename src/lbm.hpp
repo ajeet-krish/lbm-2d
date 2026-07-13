@@ -84,6 +84,23 @@ inline void place_walls(LBMCapabilities& sys) {
 }
 
 // ------------------------------------------------------------------
+// Convergence detection: returns true when a quantity has stabilized
+// Compares mean over a recent window vs an earlier window
+// ------------------------------------------------------------------
+inline bool check_convergence(const std::vector<double>& values, int window = 1000,
+                             double threshold = 1e-4) {
+    int n = static_cast<int>(values.size());
+    if (n < 2 * window) return false;
+    double recent = 0.0;
+    for (int i = n - window; i < n; ++i) recent += values[i];
+    recent /= static_cast<double>(window);
+    double earlier = 0.0;
+    for (int i = n - 2 * window; i < n - window; ++i) earlier += values[i];
+    earlier /= static_cast<double>(window);
+    return std::abs(recent - earlier) < threshold;
+}
+
+// ------------------------------------------------------------------
 // Moving lid: enforce u = u_lid, v = 0 at y = NY-1
 // Sets equilibrium distribution at top wall nodes.
 // ------------------------------------------------------------------
@@ -106,7 +123,7 @@ inline void enforce_lid(LBMCapabilities& sys, double u_lid) {
 // Inverse transform: moment space -> f
 // ------------------------------------------------------------------
 inline void mrt_collide(double* f_node, double rho, double u, double v,
-                        const MRTParams& mrt) {
+                        const MRTParams& mrt, double cs_sq = 0.0, double tau_base = 0.0) {
     double f0 = f_node[0], f1 = f_node[1], f2 = f_node[2];
     double f3 = f_node[3], f4 = f_node[4];
     double f5 = f_node[5], f6 = f_node[6], f7 = f_node[7], f8 = f_node[8];
@@ -131,13 +148,26 @@ inline void mrt_collide(double* f_node, double rho, double u, double v,
     double pxx_eq = rho*(u*u - v*v);
     double pxy_eq = rho*u*v;
 
+    // Smagorinsky LES: compute effective s_shear from non-equilibrium stress
+    double s_shear_eff = mrt.s_shear;
+    if (cs_sq > 0.0 && tau_base > 0.0) {
+        double pxx_neq = pxx - pxx_eq;
+        double pxy_neq = pxy - pxy_eq;
+        double Q = std::sqrt(2.0 * (pxx_neq*pxx_neq + pxy_neq*pxy_neq));
+        double A = 9.0 * cs_sq * Q / (2.0 * rho);
+        double tau_eff = (tau_base + std::sqrt(tau_base*tau_base + 4.0*A)) / 2.0;
+        double s = 1.0 / tau_eff;
+        auto clamp = [](double x) { return (x < 0.5) ? 0.5 : ((x > 1.99) ? 1.99 : x); };
+        s_shear_eff = clamp(s);
+    }
+
     // Relax non-conserved moments
     e   -= mrt.s_bulk  * (e   - e_eq);
     eps -= mrt.s_bulk  * (eps - eps_eq);
     qx  -= mrt.s_normal * (qx  - qx_eq);
     qy  -= mrt.s_normal * (qy  - qy_eq);
-    pxx -= mrt.s_shear * (pxx - pxx_eq);
-    pxy -= mrt.s_shear * (pxy - pxy_eq);
+    pxx -= s_shear_eff * (pxx - pxx_eq);
+    pxy -= s_shear_eff * (pxy - pxy_eq);
 
     // Inverse transform: construct f_i = M_inv[i] . m
     f_node[0] = (1.0/9.0)*rho + (-1.0/9.0)*e + (1.0/9.0)*eps;
@@ -204,9 +234,13 @@ inline void apply_bouzidi_bb(LBMCapabilities& sys, int x, int y, int i,
 inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow) {
     int n_nodes = NX * NY;
 
-    // --- Collision ---
+    double Fscale = (sys.body_force_x != 0.0)
+        ? (1.0 - 1.0 / (2.0 * tau)) * 3.0 * sys.body_force_x : 0.0;
+
+    // --- Collision (+ body force fused + LES) ---
     if (g_collision == CollisionType::MRT) {
         MRTParams mrt = MRTParams::from_tau(tau);
+        double cs_sq = g_use_les ? (g_cs * g_cs) : 0.0;
         #pragma omp parallel for collapse(2)
         for (int y = 0; y < NY; ++y) {
             for (int x = 0; x < NX; ++x) {
@@ -215,7 +249,12 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
                 double* f_node = &sys.f[node_idx * 9];
                 double rho, u, v;
                 compute_macros(f_node, rho, u, v);
-                mrt_collide(f_node, rho, u, v, mrt);
+                mrt_collide(f_node, rho, u, v, mrt, cs_sq, tau);
+                if (Fscale != 0.0) {
+                    for (int i = 0; i < 9; ++i) {
+                        f_node[i] += weights[i] * cx[i] * Fscale;
+                    }
+                }
             }
         }
     } else {
@@ -228,70 +267,60 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
                 double* f_node = &sys.f[node_idx * 9];
                 double rho, u, v;
                 compute_macros(f_node, rho, u, v);
+                double inv_tau = 1.0 / tau;
                 for (int i = 0; i < 9; ++i) {
                     double feq = compute_equilibrium(i, rho, u, v);
-                    f_node[i] -= (1.0 / tau) * (f_node[i] - feq);
+                    f_node[i] -= inv_tau * (f_node[i] - feq);
+                    if (Fscale != 0.0) {
+                        f_node[i] += weights[i] * cx[i] * Fscale;
+                    }
                 }
             }
         }
     }
 
-    // --- Body force post-collision (Guo forcing term, for both MRT and BGK) ---
-    if (sys.body_force_x != 0.0) {
+    // --- Zero f_next (fast memset) ---
+    std::fill(sys.f_next.begin(), sys.f_next.end(), 0.0);
+
+    // --- Streaming (g_case hoisted outside direction loop) ---
+    bool use_interp_global = sys.bb_geom.is_valid();
+
+    if (g_case == CaseType::CAVITY) {
         #pragma omp parallel for collapse(2)
         for (int y = 0; y < NY; ++y) {
             for (int x = 0; x < NX; ++x) {
                 int node_idx = node_index(x, y);
                 if (sys.obstacle[node_idx]) continue;
                 double* f_node = &sys.f[node_idx * 9];
-                double Fscale = (1.0 - 1.0 / (2.0 * tau)) * 3.0 * sys.body_force_x;
                 for (int i = 0; i < 9; ++i) {
-                    f_node[i] += weights[i] * cx[i] * Fscale;
-                }
-            }
-        }
-    }
-
-    // Zero out f_next for obstacle nodes
-    #pragma omp parallel for
-    for (int n = 0; n < n_nodes; ++n) {
-        for (int i = 0; i < 9; ++i) {
-            sys.f_next[n * 9 + i] = 0.0;
-        }
-    }
-
-    // --- Streaming ---
-    #pragma omp parallel for collapse(2)
-    for (int y = 0; y < NY; ++y) {
-        for (int x = 0; x < NX; ++x) {
-            int node_idx = node_index(x, y);
-            if (sys.obstacle[node_idx]) continue;
-
-            double* f_node = &sys.f[node_idx * 9];
-
-            for (int i = 0; i < 9; ++i) {
-                int next_x = x + cx[i];
-                int next_y = y + cy[i];
-                bool use_interp = sys.bb_geom.is_valid();
-
-                if (g_case == CaseType::CAVITY) {
-                    // Cavity: bounce-back on walls
+                    int next_x = x + cx[i];
+                    int next_y = y + cy[i];
                     if (next_x < 0 || next_x >= NX || next_y < 0 || next_y >= NY) {
                         sys.f_next[node_idx * 9 + bounce_back[i]] = f_node[i];
                     } else {
                         int target_node = node_index(next_x, next_y);
                         if (sys.obstacle[target_node]) {
-                            if (use_interp) {
+                            if (use_interp_global)
                                 apply_bouzidi_bb(sys, x, y, i, f_node, node_idx);
-                            } else {
+                            else
                                 sys.f_next[node_idx * 9 + bounce_back[i]] = f_node[i];
-                            }
                         } else {
                             sys.f_next[target_node * 9 + i] = f_node[i];
                         }
                     }
-                } else if (g_case == CaseType::RIBS) {
-                    // Ribbed channel: periodic in x and y
+                }
+            }
+        }
+    } else if (g_case == CaseType::RIBS) {
+        #pragma omp parallel for collapse(2)
+        for (int y = 0; y < NY; ++y) {
+            for (int x = 0; x < NX; ++x) {
+                int node_idx = node_index(x, y);
+                if (sys.obstacle[node_idx]) continue;
+                double* f_node = &sys.f[node_idx * 9];
+                for (int i = 0; i < 9; ++i) {
+                    int next_x = x + cx[i];
+                    int next_y = y + cy[i];
                     if (next_x < 0) next_x += NX;
                     if (next_x >= NX) next_x -= NX;
                     if (next_y < 0) next_y += NY;
@@ -302,19 +331,29 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
                     } else {
                         sys.f_next[target_node * 9 + i] = f_node[i];
                     }
-                } else {
-                    // Default: periodic in y, convective outlet at x
+                }
+            }
+        }
+    } else {
+        // Default: periodic in y, convective outlet at x
+        #pragma omp parallel for collapse(2)
+        for (int y = 0; y < NY; ++y) {
+            for (int x = 0; x < NX; ++x) {
+                int node_idx = node_index(x, y);
+                if (sys.obstacle[node_idx]) continue;
+                double* f_node = &sys.f[node_idx * 9];
+                for (int i = 0; i < 9; ++i) {
+                    int next_x = x + cx[i];
+                    int next_y = y + cy[i];
                     if (next_y < 0) next_y += NY;
                     if (next_y >= NY) next_y -= NY;
-
                     if (next_x >= 0 && next_x < NX) {
                         int target_node = node_index(next_x, next_y);
                         if (sys.obstacle[target_node]) {
-                            if (use_interp) {
+                            if (use_interp_global)
                                 apply_bouzidi_bb(sys, x, y, i, f_node, node_idx);
-                            } else {
+                            else
                                 sys.f_next[node_idx * 9 + bounce_back[i]] = f_node[i];
-                            }
                         } else {
                             sys.f_next[target_node * 9 + i] = f_node[i];
                         }
@@ -365,23 +404,12 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
                     int target_idx = node_index(nx, ny);
                     if (sys.obstacle[target_idx]) {
                         double f_boundary = sys.f[node_idx * 9 + bounce_back[i]];
-                        sys.fx_cyl[node_idx] += cx[i] * 2.0 * f_boundary;
-                        sys.fy_cyl[node_idx] += cy[i] * 2.0 * f_boundary;
+                        sys.fx_body[node_idx] += cx[i] * 2.0 * f_boundary;
+                        sys.fy_body[node_idx] += cy[i] * 2.0 * f_boundary;
                     }
                 }
             }
         }
-    }
-}
-
-// ------------------------------------------------------------------
-// JSON helper: write a double array with 6-digit precision
-// ------------------------------------------------------------------
-inline void write_json_double_array(std::ofstream& out, const double* data, int count) {
-    for (int i = 0; i < count; ++i) {
-        if (i > 0) out << ",";
-        out.precision(6);
-        out << std::fixed << data[i];
     }
 }
 
@@ -395,104 +423,104 @@ inline void save_json_frame(const LBMCapabilities& sys, int step, const std::str
     int ny_ds = (NY + ds - 1) / ds;
 
     std::string dir = output_dir + "/frames";
-    std::string mkdir_cmd = "mkdir -p " + dir;
-    ::system(mkdir_cmd.c_str());
+    std::filesystem::create_directories(dir);
 
     std::string filename = dir + "/frame_" + std::to_string(step) + ".json";
     std::ofstream out(filename);
     out.precision(6);
     out << std::fixed;
 
-    // Write velocity magnitude + components
-    out << "{\"nx\":" << nx_ds << ",\"ny\":" << ny_ds << ",\"velocity\":[";
-    bool first = true;
+    // Cache downsampled macro values
+    int n_ds = nx_ds * ny_ds;
+    std::vector<double> vel_arr(n_ds, 0.0);
+    std::vector<double> u_arr(n_ds, 0.0);
+    std::vector<double> v_arr(n_ds, 0.0);
+    std::vector<double> rho_arr(n_ds, 0.0);
+    std::vector<double> omega_arr(n_ds, 0.0);
+    std::vector<int> obst_arr(n_ds, 0);
+    int idx2 = 0;
     for (int y = 0; y < NY; y += ds) {
         for (int x = 0; x < NX; x += ds) {
             int idx = node_index(x, y);
             if (sys.obstacle[idx]) {
-                if (!first) out << ",";
-                out << "0";
-                first = false;
+                obst_arr[idx2] = 1;
+                ++idx2;
                 continue;
             }
             double rho, u, v;
             compute_macros(&sys.f[idx * 9], rho, u, v);
-            if (rho < 1e-12) { u = 0.0; v = 0.0; }
+            if (rho < 1e-12 || std::isnan(rho)) { rho = 1.0; u = 0.0; v = 0.0; }
+            if (std::isnan(u)) u = 0.0;
+            if (std::isnan(v)) v = 0.0;
             double vel = std::sqrt(u * u + v * v);
-            if (!first) out << ",";
-            out << vel;
-            first = false;
+            if (std::isnan(vel)) vel = 0.0;
+            vel_arr[idx2] = vel;
+            u_arr[idx2] = u;
+            v_arr[idx2] = v;
+            rho_arr[idx2] = rho;
+            ++idx2;
         }
+    }
+
+    // Compute vorticity on downsampled grid using central differences
+    // omega = dv/dx - du/dy  (2D z-component of vorticity)
+    for (int j = 0; j < ny_ds; ++j) {
+        for (int i = 0; i < nx_ds; ++i) {
+            int idx = j * nx_ds + i;
+            if (obst_arr[idx]) continue;
+            int il = std::max(0, i - 1);
+            int ir = std::min(nx_ds - 1, i + 1);
+            int jd = std::max(0, j - 1);
+            int ju = std::min(ny_ds - 1, j + 1);
+            double dv_dx = (v_arr[j * nx_ds + ir] - v_arr[j * nx_ds + il])
+                           / (2.0 * static_cast<double>((ir - il) * ds));
+            double du_dy = (u_arr[ju * nx_ds + i] - u_arr[jd * nx_ds + i])
+                           / (2.0 * static_cast<double>((ju - jd) * ds));
+            omega_arr[idx] = dv_dx - du_dy;
+        }
+    }
+
+    // Write velocity magnitude
+    out << "{\"nx\":" << nx_ds << ",\"ny\":" << ny_ds << ",\"velocity\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << vel_arr[i];
     }
 
     out << "],\"u\":[";
-    first = true;
-    for (int y = 0; y < NY; y += ds) {
-        for (int x = 0; x < NX; x += ds) {
-            int idx = node_index(x, y);
-            if (sys.obstacle[idx]) {
-                if (!first) out << ",";
-                out << "0";
-                first = false;
-                continue;
-            }
-            double rho, u, v;
-            compute_macros(&sys.f[idx * 9], rho, u, v);
-            if (rho < 1e-12) { u = 0.0; v = 0.0; }
-            if (!first) out << ",";
-            out << u;
-            first = false;
-        }
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << u_arr[i];
     }
 
     out << "],\"v\":[";
-    first = true;
-    for (int y = 0; y < NY; y += ds) {
-        for (int x = 0; x < NX; x += ds) {
-            int idx = node_index(x, y);
-            if (sys.obstacle[idx]) {
-                if (!first) out << ",";
-                out << "0";
-                first = false;
-                continue;
-            }
-            double rho, u, v;
-            compute_macros(&sys.f[idx * 9], rho, u, v);
-            if (rho < 1e-12) { u = 0.0; v = 0.0; }
-            if (!first) out << ",";
-            out << v;
-            first = false;
-        }
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << v_arr[i];
     }
 
     out << "],\"rho\":[";
-    first = true;
-    for (int y = 0; y < NY; y += ds) {
-        for (int x = 0; x < NX; x += ds) {
-            int idx = node_index(x, y);
-            if (sys.obstacle[idx]) {
-                if (!first) out << ",";
-                out << "0";
-                first = false;
-                continue;
-            }
-            double rho, u, v;
-            compute_macros(&sys.f[idx * 9], rho, u, v);
-            if (!first) out << ",";
-            out << rho;
-            first = false;
-        }
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << rho_arr[i];
+    }
+
+    out << "],\"p\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << (rho_arr[i] / 3.0);
+    }
+
+    out << "],\"omega\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << omega_arr[i];
     }
 
     out << "],\"obstacle\":[";
-    first = true;
-    for (int y = 0; y < NY; y += ds) {
-        for (int x = 0; x < NX; x += ds) {
-            int idx = node_index(x, y);
-            if (!first) out << ",";
-            out << (sys.obstacle[idx] ? 1 : 0);
-            first = false;
-        }
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << obst_arr[i];
     }
 
     out << "]}";
@@ -500,13 +528,19 @@ inline void save_json_frame(const LBMCapabilities& sys, int step, const std::str
 }
 
 // ------------------------------------------------------------------
-// Forces JSONL export: append one line per step
+// Forces JSONL export: cached file handle (open once in trunc mode)
 // ------------------------------------------------------------------
 inline void save_forces_jsonl(const std::string& output_dir, int step, double cd, double cl) {
-    std::string filename = output_dir + "/forces.jsonl";
-    std::ofstream out(filename, std::ios::app);
-    out.precision(6);
-    out << std::fixed;
+    static std::string cached_dir;
+    static std::ofstream out;
+    if (cached_dir != output_dir) {
+        if (out.is_open()) out.close();
+        std::string filename = output_dir + "/forces.jsonl";
+        out.open(filename, std::ios::trunc);
+        out.precision(6);
+        out << std::fixed;
+        cached_dir = output_dir;
+    }
     out << "{\"step\":" << step << ",\"cd\":" << cd << ",\"cl\":" << cl << "}\n";
 }
 
@@ -593,8 +627,8 @@ inline void save_vtk_frame(const LBMCapabilities& sys, int frame, const std::str
     for (int y = 0; y < NY; ++y) {
         for (int x = 0; x < NX; ++x) {
             int idx = node_index(x, y);
-            if (sys.fx_cyl[idx] != 0.0 || sys.fy_cyl[idx] != 0.0) {
-                out << sys.fx_cyl[idx] << "\n";
+            if (sys.fx_body[idx] != 0.0 || sys.fy_body[idx] != 0.0) {
+                out << sys.fx_body[idx] << "\n";
             } else {
                 out << "0.0\n";
             }

@@ -3,16 +3,18 @@
 #include <iomanip>
 #include <cmath>
 #include <string>
-#include <cstdlib>
+#include <filesystem>
 
 // ==========================================================================
 // LBM-2D: Building Downwash Flow
 // ==========================================================================
 // Usage:
-//   ./build/LBM_Downwash                          (default: Re_H=100, 40000 steps)
+//   ./build/LBM_Downwash                          (default: Re_H=100)
 //   ./build/LBM_Downwash 200                      (Re_H=200)
 //
 // Tall building upstream, low-rise downstream.
+// Buildings scaled up: h_tall=120, h_low=45, w_bldg=45, gap=45.
+// Maintains height ratio ~2.67 (120/45).
 // Re_H = u_ref * H_tall / nu
 // Validation: Cp distribution vs Hunt 1984 (qualitative)
 // ==========================================================================
@@ -31,10 +33,10 @@ struct DownwashParams {
 };
 
 DownwashParams compute_params(double Re_H, int steps = -1) {
-    int h_tall = 80;
-    int h_low  = 30;
-    int w_bldg = 30;
-    int gap = h_low;  // gap between buildings = low-rise height
+    int h_tall = 120;
+    int h_low  = 45;
+    int w_bldg = 45;
+    int gap = h_low;  // gap = low-rise height
     double u_ref = 0.1;
     double length_scale = static_cast<double>(h_tall);
     double nu = u_ref * length_scale / Re_H;
@@ -61,14 +63,16 @@ int main(int argc, char* argv[]) {
     int steps = -1;
     bool save_vtk = false;
 
+    int positional_idx = 1;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg == "--vtk") {
-            save_vtk = true;
-        } else if (i == 1) {
-            Re = std::stod(arg);
-        } else if (i == 2) {
-            steps = std::stoi(arg);
+        if (arg == "--vtk") { save_vtk = true;
+        } else if (arg == "--use-les") { g_use_les = true;
+        } else if (arg == "--cs" && i + 1 < argc) { g_cs = std::stod(argv[++i]);
+        } else if (arg.find("--") != 0) {
+            if (positional_idx == 1) Re = std::stod(arg);
+            else if (positional_idx == 2) steps = std::stoi(arg);
+            ++positional_idx;
         }
     }
 
@@ -79,20 +83,16 @@ int main(int argc, char* argv[]) {
 
     for (int y = 0; y < NY; ++y) {
         for (int x = 0; x < NX; ++x) {
-            // Bottom wall
-            if (y == 0) {
-                system.obstacle[node_index(x, y)] = true;
-            }
+            if (y == 0) system.obstacle[node_index(x, y)] = true;
+            if (y == NY - 1) system.obstacle[node_index(x, y)] = true;
             // Tall building (upstream)
             if (x >= params.tall_x0 && x < params.tall_x0 + params.w_bldg
-                && y < params.h_tall) {
+                && y < params.h_tall)
                 system.obstacle[node_index(x, y)] = true;
-            }
             // Low-rise building (downstream)
             if (x >= params.low_x0 && x < params.low_x0 + params.w_bldg
-                && y < params.h_low) {
+                && y < params.h_low)
                 system.obstacle[node_index(x, y)] = true;
-            }
         }
     }
 
@@ -103,9 +103,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::string subdir = "output/downwash_re" + std::to_string(static_cast<int>(Re));
-    std::string mkdir_cmd = "mkdir -p " + subdir + "/frames";
-    ::system(mkdir_cmd.c_str());
+    std::string subdir = "output/urban/downwash_re" + std::to_string(static_cast<int>(Re));
+    std::filesystem::create_directories(subdir + "/frames");
 
     save_meta_json(subdir, Re, params.tau, params.u_ref,
                    static_cast<double>(params.h_tall), "building-downwash", NX, NY);
@@ -117,6 +116,7 @@ int main(int argc, char* argv[]) {
               << "  h_low = " << params.h_low
               << "  w_bldg = " << params.w_bldg
               << "  gap = " << params.gap
+              << (g_use_les ? "  LES(Cs=" + std::to_string(g_cs) + ")" : "")
               << std::endl;
 
     for (int step = 0; step <= params.num_steps; ++step) {
@@ -124,17 +124,15 @@ int main(int argc, char* argv[]) {
 
         double fx_total = 0.0, fy_total = 0.0;
         for (int n = 0; n < NX * NY; ++n) {
-            fx_total += system.fx_cyl[n];
-            fy_total += system.fy_cyl[n];
+            fx_total += system.fx_body[n];
+            fy_total += system.fy_body[n];
         }
 
         save_forces_jsonl(subdir, step, fx_total, fy_total);
 
         if (step % params.save_interval == 0) {
             save_json_frame(system, step, subdir);
-            if (save_vtk) {
-                save_vtk_frame(system, step, subdir);
-            }
+            if (save_vtk) save_vtk_frame(system, step, subdir);
         }
 
         if (step % 2000 == 0) {
@@ -147,6 +145,7 @@ int main(int argc, char* argv[]) {
     std::cout << "==============================================" << std::endl;
     std::cout << " Downwash simulation complete." << std::endl;
     std::cout << "  Re_H = " << Re << std::endl;
+    std::cout << "  h_tall = " << params.h_tall << "  h_low = " << params.h_low << std::endl;
     std::cout << "  Steps = " << params.num_steps << std::endl;
     std::cout << "==============================================" << std::endl;
 

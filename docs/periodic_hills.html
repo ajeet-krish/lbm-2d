@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AK-Vortex: Periodic Hills, Canonical LES benchmark for separated turbulent flow (Moser/Kim/Moin 1993)">
+  <title>Periodic Hills - AK-Vortex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+<div class="sidebar">
+  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-heading">Project</div>
+      <a href="index.html" class="nav-item">Home</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">External Aerodynamics</div>
+      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+      <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Internal Flows</div>
+      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+      <a href="step.html" class="nav-item">Backward Step</a>
+      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
+      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
+      <a href="periodic_hills.html" class="nav-item active">Periodic Hills</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Urban CFD</div>
+      <a href="urban.html" class="nav-item">Urban Canyon</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Reference</div>
+      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+      <a href="implementation.html" class="nav-item">Implementation</a>
+      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+    </div>
+  </nav>
+</div>
+
+<div class="main-content">
+
+  <h1>Periodic Hills: Canonical Separated Turbulent Flow</h1>
+
+  <p class="section-intro">
+    Flow over periodic hills is a canonical benchmark for separated turbulent flows
+    (Moser, Kim &amp; Moin 1993). The sinusoidal hill profile induces a separation
+    bubble, recirculation zone, and reattachment, ideal for validating LES
+    turbulence models. The Smagorinsky subgrid-scale model is essential here
+    (auto-LES activates when tau &lt; 0.55).
+  </p>
+
+  <h2>Setup</h2>
+
+  <table>
+    <tr><th>Parameter</th><th>Value</th></tr>
+    <tr><td>Grid</td><td>900 &times; 400</td></tr>
+    <tr><td>Hill height h<sub>max</sub></td><td>100 cells</td></tr>
+    <tr><td>Channel height H</td><td>200 cells (2h)</td></tr>
+    <tr><td>Hill wavelength L</td><td>1800 cells (9H)</td></tr>
+    <tr><td>Reynolds number</td><td>100, 1000, 2800</td></tr>
+    <tr><td>Inlet velocity</td><td>u<sub>ref</sub> = 0.1 lu/ts</td></tr>
+    <tr><td>Collision</td><td>MRT + Smagorinsky LES</td></tr>
+    <tr><td>Boundary condition</td><td>Periodic (x), bounce-back (y)</td></tr>
+    <tr><td>Lattice spacing / time step</td><td>&Delta;x = 1, &Delta;t = 1</td></tr>
+  </table>
+
+  <h2>Field Viewer</h2>
+
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
+
+  <div class="comparison-slider" id="fieldSlider">
+    <img id="sliderImgBefore" src="" alt="Contour">
+    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+    <div class="slider-handle"><div class="slider-btn"></div></div>
+    <div class="slider-label left">Contour</div>
+    <div class="slider-label right">Streamlines</div>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
+    <div class="stat-item"><span class="num" id="statFx">--</span><span class="lbl">Mean Fx</span></div>
+    <div class="stat-item"><span class="num" id="statLES">--</span><span class="lbl">LES</span></div>
+    <div class="stat-item"><span class="num" id="statSteps">--</span><span class="lbl">Steps</span></div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Physics</h2>
+
+  <p class="section-intro">
+    The sinusoidal hill profile is defined as:
+    <code>y<sub>hill</sub>(x) = h<sub>max</sub> * [1 - cos(2*pi*x/L)] / 2</code>.
+    Flow accelerates over the hill crest, separates at the summit, and forms a
+    recirculation bubble in the valley. Reattachment occurs downstream, and the
+    flow re-accelerates over the next hill.
+  </p>
+
+  <p class="section-intro">
+    At Re = 100, the flow is laminar with a steady separation bubble.
+    At Re = 1000, transitional effects appear. At Re = 2800 (DNS reference),
+    the flow is fully turbulent with Reynolds stresses dominating momentum transport.
+  </p>
+
+  <hr class="divider">
+
+  <h2>Validation</h2>
+
+  <table>
+    <thead>
+      <tr><th>Re</th><th>Regime</th><th>Expected Separation</th><th>Expected Reattachment</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>100</td><td>Laminar</td><td>Hill crest</td><td>~0.5L downstream</td><td>Steady, symmetric</td></tr>
+      <tr><td>1000</td><td>Transitional</td><td>Hill crest</td><td>~0.3L downstream</td><td>Unsteady, LES required</td></tr>
+      <tr><td>2800</td><td>Turbulent</td><td>Hill crest</td><td>~0.2L downstream</td><td>LES benchmark (Moser 1993)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    This is a demanding LES test case. The Smagorinsky model (Cs = 0.12) provides
+    subgrid-scale eddy viscosity to stabilize the high-Re simulations.
+    Results will be validated against the Moser/Kim/Moin 1993 DNS data.
+  </div>
+
+  <hr class="divider">
+
+  <h2>Discussion</h2>
+
+  <p class="section-intro">
+    Periodic hills exercise the solver's ability to handle: (1) curved no-slip
+    boundaries, (2) flow separation and reattachment, (3) turbulent transition,
+    and (4) LES turbulence modeling. The sinusoidal profile is smooth, avoiding
+    sharp-edge singularities, making it ideal for Bouzidi interpolated bounce-back.
+  </p>
+
+</div>
+
+<footer class="site-footer">
+  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+</footer>
+
+<script src="assets/js/slider.js"></script>
+<script>
+const CASE_CONFIG = {
+  paramLabel: 'Re',
+  reValues: [100, 1000, 2800],
+  stats: {
+    100:  { re: 100,  fx: '--', les: 'off', steps: '240k' },
+    1000: { re: 1000, fx: '--', les: 'on',  steps: '240k' },
+    2800: { re: 2800, fx: '--', les: 'on',  steps: '240k' },
+  }
+};
+
+let currentRe = CASE_CONFIG.reValues[0];
+
+function imageUrl(re, type) {
+  return 'assets/images/periodic_hills/re' + re + '_' + type + '.png';
+}
+
+function makePlaceholder(re, type) {
+  return 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="400" viewBox="0 0 900 400">' +
+    '<rect width="900" height="400" fill="#0d1117"/>' +
+    '<path d="M0,300 Q225,200 450,300 Q675,400 900,300" fill="none" stroke="#484f58" stroke-width="2"/>' +
+    '<text x="450" y="180" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+    'Periodic Hills Re=' + re + ' ' + type + '</text>' +
+    '<text x="450" y="200" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+    '(simulation running, placeholder)</text></svg>'
+  );
+}
+
+function updateImages(re) {
+  var before = document.getElementById('sliderImgBefore');
+  var after = document.getElementById('sliderImgAfter');
+  before.onerror = function() { this.src = makePlaceholder(re, 'contour'); };
+  after.onerror = function() { this.src = makePlaceholder(re, 'streamlines'); };
+  before.src = imageUrl(re, 'contour');
+  after.src = imageUrl(re, 'streamlines');
+}
+
+function updateStats(re) {
+  var s = CASE_CONFIG.stats[re];
+  document.getElementById('statRe').textContent = s.re;
+  document.getElementById('statFx').textContent = s.fx;
+  document.getElementById('statLES').textContent = s.les;
+  document.getElementById('statSteps').textContent = s.steps;
+}
+
+function switchRe(re) {
+  currentRe = re;
+  document.querySelectorAll('#reTabs .teaser-link').forEach(function(btn) {
+    var rm = btn.textContent.match(/\d+/);
+    var br = rm ? parseInt(rm[0]) : 0;
+    btn.classList.toggle('active', br === re);
+  });
+  updateImages(re);
+  updateStats(re);
+  setTimeout(function() {
+    var c = document.getElementById('fieldSlider');
+    var h = c.querySelector('.slider-handle');
+    var a = c.querySelector('.img-after');
+    if (h) h.style.left = '50%';
+    if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+  }, 200);
+}
+
+var rc = document.getElementById('reTabs');
+CASE_CONFIG.reValues.forEach(function(re) {
+  var btn = document.createElement('button');
+  btn.className = 'teaser-link' + (re === currentRe ? ' active' : '');
+  btn.textContent = CASE_CONFIG.paramLabel + ' = ' + re;
+  btn.style.fontSize = '0.7em';
+  btn.onclick = function() { switchRe(re); };
+  rc.appendChild(btn);
+});
+
+updateImages(currentRe);
+updateStats(currentRe);
+
+document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+});
+</script>
+
+</body>
+</html>

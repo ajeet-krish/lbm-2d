@@ -6,7 +6,6 @@
 #include <string>
 #include <random>
 #include <fstream>
-#include <cstdlib>
 
 // ==========================================================================
 // LBM-2D Solver Entry Point -- Cylinder Flow
@@ -84,9 +83,8 @@ ForceHistory run_simulation(double Re, int steps, bool save_vtk) {
     }
 
     // Output directory
-    std::string subdir = "output/re" + std::to_string(static_cast<int>(Re));
-    std::string mkdir_cmd = "mkdir -p " + subdir + "/frames";
-    ::system(mkdir_cmd.c_str());
+    std::string subdir = "output/cylinder/re" + std::to_string(static_cast<int>(Re));
+    std::filesystem::create_directories(subdir + "/frames");
 
     // Write metadata
     save_meta_json(subdir, Re, params.tau, params.u_inflow,
@@ -99,6 +97,7 @@ ForceHistory run_simulation(double Re, int steps, bool save_vtk) {
               << "  steps = " << params.num_steps
               << "  u_in = " << params.u_inflow
               << "  collision = " << (g_collision == CollisionType::MRT ? "MRT" : "BGK")
+              << (g_use_les ? "  LES(Cs=" + std::to_string(g_cs) + ")" : "")
               << std::endl;
 
     for (int step = 0; step <= params.num_steps; ++step) {
@@ -106,8 +105,8 @@ ForceHistory run_simulation(double Re, int steps, bool save_vtk) {
 
         double fx_total = 0.0, fy_total = 0.0;
         for (int n = 0; n < NX * NY; ++n) {
-            fx_total += system.fx_cyl[n];
-            fy_total += system.fy_cyl[n];
+            fx_total += system.fx_body[n];
+            fy_total += system.fy_body[n];
         }
 
         double cd = 2.0 * fx_total / (params.length_scale
@@ -150,17 +149,31 @@ int main(int argc, char* argv[]) {
     double Re = 100.0;
     int steps = -1;
     bool save_vtk = false;
+    int positional_idx = 1;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--vtk") {
             save_vtk = true;
-        } else if (arg != "--vtk") {
-            if (i == 1 || (i == 2 && argc > 2 && std::string(argv[1]).find("--") != 0)) {
-                // Positional: Re or steps
-                if (i == 1) Re = std::stod(arg);
-                else if (i == 2) steps = std::stoi(arg);
-            }
+        } else if (arg == "--use-les") {
+            g_use_les = true;
+        } else if (arg == "--cs" && i + 1 < argc) {
+            g_cs = std::stod(argv[++i]);
+        } else if (arg.find("--") != 0) {
+            if (positional_idx == 1) Re = std::stod(arg);
+            else if (positional_idx == 2) steps = std::stoi(arg);
+            ++positional_idx;
+        }
+    }
+
+    // Auto-LES: enable Smagorinsky when tau < 0.55 (high Re stability)
+    {
+        double nu = 0.1 * (NY / 5.0) / Re;
+        double tau_check = 0.5 + 3.0 * nu;
+        if (tau_check < 0.55 && !g_use_les) {
+            g_use_les = true;
+            std::cout << "Auto-LES: tau=" << tau_check << " < 0.55, enabling Smagorinsky LES (Cs="
+                      << g_cs << ")" << std::endl;
         }
     }
 

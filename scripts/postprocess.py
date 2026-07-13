@@ -46,9 +46,15 @@ CASE_CMAPS = {
     'ribbed-channel':        ('plasma', 'plasma'),
     'urban-canyon':          ('viridis', 'viridis'),
     'urban-side':            ('viridis', 'viridis'),
+    'urban-topdown':         ('viridis', 'viridis'),
     'building-downwash':     ('RdBu', 'RdBu'),
-    'ahmed-body':            ('turbo', 'turbo'),
-    'airfoil':               ('jet', 'jet'),
+    'flat-plate':            ('jet', 'jet'),
+    'nozzle':                ('coolwarm', 'coolwarm'),
+    'square-cylinder':       ('jet', 'jet'),
+    'periodic-hills':        ('viridis', 'viridis'),
+    'cylinder-near-wall':    ('jet', 'jet'),
+    'side-by-side':          ('jet', 'jet'),
+    'rotating-cylinder':     ('jet', 'jet'),
 }
 
 # Detect shape type from meta.json or directory name
@@ -73,8 +79,20 @@ def _detect_shape(meta, output_dir=None):
             return 'building-downwash'
         if pname == 'cavity':
             return 'cavity'
-        if pname == 'airfoil':
-            return 'airfoil'
+        if pname == 'flatplate':
+            return 'flat-plate'
+        if pname == 'nozzle':
+            return 'nozzle'
+        if pname == 'square_cylinder':
+            return 'square-cylinder'
+        if pname == 'periodic_hills':
+            return 'periodic-hills'
+        if pname == 'cylinder_near_wall':
+            return 'cylinder-near-wall'
+        if pname == 'side_by_side':
+            return 'side-by-side'
+        if pname == 'rotating_cylinder':
+            return 'rotating-cylinder'
         if pname == 'urban':
             if 'side' in dname:
                 return 'urban-side'
@@ -84,6 +102,8 @@ def _detect_shape(meta, output_dir=None):
         # Legacy flat directory names
         if 'urban_side' in dname:
             return 'urban-side'
+        if 'urban_topdown' in dname:
+            return 'urban-topdown'
         if 'cylinder' not in dname and 'step' in dname:
             return 'backward-facing-step'
         if 'ribs' in dname:
@@ -92,10 +112,20 @@ def _detect_shape(meta, output_dir=None):
             return 'urban-canyon'
         if 'downwash' in dname:
             return 'building-downwash'
-        if 'ahmed' in dname:
-            return 'ahmed-body'
-        if 'airfoil' in dname:
-            return 'airfoil'
+        if 'flatplate' in dname:
+            return 'flat-plate'
+        if 'nozzle' in dname:
+            return 'nozzle'
+        if 'square_cylinder' in dname:
+            return 'square-cylinder'
+        if 'periodic_hills' in dname:
+            return 'periodic-hills'
+        if 'cylinder_near_wall' in dname:
+            return 'cylinder-near-wall'
+        if 'side_by_side' in dname:
+            return 'side-by-side'
+        if 'rotating_cylinder' in dname:
+            return 'rotating-cylinder'
         if 'cavity' in dname:
             return 'cavity'
     return 'cylinder'
@@ -130,6 +160,7 @@ def _load_frame(path):
     raw['velocity'] = np.array(raw.get('velocity', []))
     raw['rho'] = np.array(raw.get('rho', []))
     raw['obstacle'] = np.array(raw.get('obstacle', []), dtype=bool)
+    raw['omega'] = np.array(raw.get('omega', []))
     raw['nx'] = int(raw.get('nx', 0))
     raw['ny'] = int(raw.get('ny', 0))
     return raw
@@ -440,6 +471,36 @@ def compute_strouhal(output_dir):
 
 
 # ---------------------------------------------------------------------------
+# Vorticity rendering (RdBu symmetric colormap)
+# ---------------------------------------------------------------------------
+def save_vorticity_png(data, output_dir, frame):
+    omega = np.array(data.get('omega', []))
+    obs = np.array(data.get('obstacle', []))
+    if omega.ndim == 0 or omega.size == 0:
+        print(f"  No omega field in frame {frame}, skipping")
+        return
+    if omega.ndim == 1:
+        omega = omega.reshape(data['ny'], data['nx'])
+    if obs.ndim == 1 and obs.size > 0:
+        obs = obs.reshape(data['ny'], data['nx'])
+
+    # Symmetric limits around 0
+    vmax = max(abs(omega.max()), abs(omega.min()), 1e-6)
+
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    fig.patch.set_facecolor('white')
+    im = render_contour(ax, omega, 'RdBu', -vmax, vmax, obs)
+    cbar = plt.colorbar(im, ax=ax, shrink=0.8)
+    cbar.set_label('Vorticity (1/s)', color='black')
+    plt.tight_layout(pad=0.5)
+    fig.subplots_adjust(right=0.92)
+    path = os.path.join(output_dir, f'vorticity_{int(frame):04d}.png')
+    plt.savefig(path, dpi=120, facecolor='white', edgecolor='none', bbox_inches='tight')
+    plt.close()
+    print(f"  Saved {path}")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
@@ -454,7 +515,7 @@ def main():
     parser.add_argument('--strouhal', action='store_true',
                         help='Compute Strouhal from forces.jsonl')
     parser.add_argument('--vorticity', action='store_true',
-                        help='[NYI] Compute and render vorticity field')
+                        help='Render vorticity (omega) field')
     parser.add_argument('--field', default='velocity',
                         choices=['velocity', 'pressure'],
                         help='Field to render as contour (velocity or pressure)')
@@ -490,6 +551,8 @@ def main():
 
             if not HAS_MPL:
                 print("matplotlib not installed, skipping PNG output")
+            elif args.vorticity:
+                save_vorticity_png(data, input_dir, frame_num)
             elif args.video:
                 pass  # rendered in video section below
             elif args.split:

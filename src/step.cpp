@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <cmath>
 #include <string>
-#include <cstdlib>
+#include <filesystem>
 
 // ==========================================================================
 // LBM-2D Backward-Facing Step Entry Point
@@ -59,15 +59,19 @@ int main(int argc, char* argv[]) {
     int steps = -1;
     bool save_vtk = false;
 
+    int positional_idx = 1;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--vtk") {
             save_vtk = true;
-        } else if (arg != "--vtk") {
-            if (i == 1 || (i == 2 && argc > 2 && std::string(argv[1]).find("--") != 0)) {
-                if (i == 1) Re = std::stod(arg);
-                else if (i == 2) steps = std::stoi(arg);
-            }
+        } else if (arg == "--use-les") {
+            g_use_les = true;
+        } else if (arg == "--cs" && i + 1 < argc) {
+            g_cs = std::stod(argv[++i]);
+        } else if (arg.find("--") != 0) {
+            if (positional_idx == 1) Re = std::stod(arg);
+            else if (positional_idx == 2) steps = std::stoi(arg);
+            ++positional_idx;
         }
     }
 
@@ -108,9 +112,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Output directory
-    std::string subdir = "output/step_re" + std::to_string(static_cast<int>(Re));
-    std::string mkdir_cmd = "mkdir -p " + subdir + "/frames";
-    ::system(mkdir_cmd.c_str());
+    std::string subdir = "output/step/re" + std::to_string(static_cast<int>(Re));
+    std::filesystem::create_directories(subdir + "/frames");
 
     // Write metadata
     save_meta_json(subdir, Re, params.tau, params.u_max,
@@ -124,6 +127,7 @@ int main(int argc, char* argv[]) {
               << "  h_inlet = " << params.h_inlet
               << "  D_h = " << params.length_scale
               << "  collision = " << (g_collision == CollisionType::MRT ? "MRT" : "BGK")
+              << (g_use_les ? "  LES(Cs=" + std::to_string(g_cs) + ")" : "")
               << std::endl;
 
     for (int step = 0; step <= params.num_steps; ++step) {
@@ -132,8 +136,8 @@ int main(int argc, char* argv[]) {
         // Save force history (drag on all obstacles = step + walls)
         double fx_total = 0.0, fy_total = 0.0;
         for (int n = 0; n < NX * NY; ++n) {
-            fx_total += system.fx_cyl[n];
-            fy_total += system.fy_cyl[n];
+            fx_total += system.fx_body[n];
+            fy_total += system.fy_body[n];
         }
 
         save_forces_jsonl(subdir, step, fx_total, fy_total);

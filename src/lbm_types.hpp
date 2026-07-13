@@ -2,6 +2,10 @@
 #include <vector>
 #include <array>
 #include <cmath>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <string>
 
 // ==========================================================================
 // D2Q9 LATTICE BOLTZMANN -- Type definitions and lattice constants
@@ -13,12 +17,18 @@ inline int NY = 300;
 constexpr int NUM_DIRECTIONS = 9;
 
 // Simulation case type
-enum class CaseType { CYLINDER, CAVITY, STEP, RIBS, URBAN_CANYON, DOWNWASH, AHMED };
+enum class CaseType { CYLINDER, CAVITY, STEP, RIBS, URBAN_CANYON, DOWNWASH,
+                      SQUARE_CYLINDER, NOZZLE, FLAT_PLATE,
+                      PERIODIC_HILLS, CYLINDER_NEAR_WALL, SIDE_BY_SIDE, ROTATING_CYLINDER };
 
 // Collision operator type
 enum class CollisionType { MRT, BGK };
 inline CollisionType g_collision = CollisionType::MRT;   // MRT default, BGK fallback
 inline CaseType g_case = CaseType::CYLINDER;
+
+// Smagorinsky LES subgrid-scale model (Phase 1)
+inline bool g_use_les = false;          // toggle LES on/off (default off)
+inline double g_cs = 0.12;              // Smagorinsky constant (typical 0.1-0.2)
 
 // ------------------------------------------------------------------
 // D2Q9 velocity vectors (cx[i], cy[i]) for i = 0..8
@@ -60,7 +70,7 @@ struct MRTParams {
     //   s_normal = 1.0     -- fully relax ghost modes
     static MRTParams from_tau(double tau) {
         double s = 1.0 / tau;
-        auto clamp = [](double x) { return (x < 0.5) ? 0.5 : ((x > 1.8) ? 1.8 : x); };
+        auto clamp = [](double x) { return (x < 0.5) ? 0.5 : ((x > 1.99) ? 1.99 : x); };
         return { clamp(s), 1.2, 1.0 };
     }
 };
@@ -70,10 +80,6 @@ struct MRTParams {
 // ------------------------------------------------------------------
 inline int node_index(int x, int y) {
     return y * NX + x;
-}
-
-inline int dist_index(int x, int y, int i) {
-    return (y * NX + x) * 9 + i;
 }
 
 // ------------------------------------------------------------------
@@ -158,11 +164,10 @@ struct BounceBackGeometry {
 struct LBMCapabilities {
     std::vector<double> f;          // current distribution f[node * 9 + i]
     std::vector<double> f_next;     // buffer for next timestep
-    std::vector<bool> obstacle;     // true if node is inside obstacle
+    std::vector<uint8_t> obstacle;  // true if node is inside obstacle
 
-    std::vector<double> fx_cyl;     // cumulative drag force on obstacle
-    std::vector<double> fy_cyl;     // cumulative lift force on obstacle
-    int n_cyl_nodes;                // number of obstacle boundary nodes
+    std::vector<double> fx_body;    // cumulative drag force on obstacle
+    std::vector<double> fy_body;    // cumulative lift force on obstacle
 
     BounceBackGeometry bb_geom;     // for interpolated bounce-back
     double body_force_x = 0.0;      // body force for periodic channel flows
@@ -176,9 +181,8 @@ struct LBMCapabilities {
     }
 
     void reset_forces() {
-        fx_cyl.assign(NX * NY, 0.0);
-        fy_cyl.assign(NX * NY, 0.0);
-        n_cyl_nodes = 0;
+        fx_body.assign(NX * NY, 0.0);
+        fy_body.assign(NX * NY, 0.0);
     }
 };
 

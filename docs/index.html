@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="LBM-2D: High-Performance C++ Lattice Boltzmann CFD Solver">
-  <title>LBM-2D: High-Performance C++ Lattice Boltzmann CFD Solver</title>
+  <meta name="description" content="AK-Vortex: High-Performance C++ Lattice Boltzmann CFD Solver">
+  <title>AK-Vortex: High-Performance C++ Lattice Boltzmann CFD Solver</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,21 +15,32 @@
 <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
 <div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">LBM-2D</a></div>
+  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
   <nav class="sidebar-nav">
     <div class="nav-section">
       <div class="nav-heading">Project</div>
       <a href="index.html" class="nav-item active">Home</a>
     </div>
     <div class="nav-section">
-      <div class="nav-heading">Simulation</div>
+      <div class="nav-heading">External Aerodynamics</div>
+      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
       <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Internal Flows</div>
       <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
       <a href="step.html" class="nav-item">Backward Step</a>
-      <a href="airfoil.html" class="nav-item">Airfoil</a>
-      <a href="urban.html" class="nav-item">Urban Canyon</a>
-      <a href="ahmed.html" class="nav-item">Ahmed Body</a>
       <a href="ribs.html" class="nav-item">Ribbed Channel</a>
+      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
+      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Urban CFD</div>
+      <a href="urban.html" class="nav-item">Urban Canyon</a>
     </div>
     <div class="nav-section">
       <div class="nav-heading">Reference</div>
@@ -43,144 +54,155 @@
 <div class="main-content">
 
   <section class="hero" id="overview">
-    <h1>LBM-2D: <span class="accent-orange">High-Performance</span> C++ Lattice Boltzmann CFD Solver</h1>
+    <h1>AK-Vortex: <span class="accent-orange">High-Performance</span> C++ Lattice Boltzmann CFD Solver</h1>
     <p class="subtitle">
-      A cache-optimized D2Q9 Lattice Boltzmann Method solver for 2D fluid flow
-      around obstacles. Multi-Relaxation Time (MRT) collision, Bouzidi interpolated
-      bounce-back for curved boundaries, and direct JSON output pipeline.
-      Validated against canonical CFD benchmarks across eight simulation cases.
+      I built this solver to explore computational fluid dynamics from the ground up.
+      It simulates 2D airflow around buildings, through nozzles, and over wings using
+      the Lattice Boltzmann Method, a particle-based approach to solving the
+      Navier-Stokes equations. Everything runs in C++ with OpenMP parallelisation
+      and outputs results as interactive visualisations.
     </p>
     <a href="https://github.com/ajeet-krish/lbm-2d" class="github-link" target="_blank">View Source on GitHub &rarr;</a>
   </section>
 
   <hr class="divider">
 
-  <h2>Why Build Another CFD Solver?</h2>
+  <h2>Why Build This?</h2>
 
   <p class="section-intro">
-    Existing open-source CFD tools like <strong>SU2</strong> and <strong>OpenFOAM</strong>
-    are production-grade solvers backed by decades of development. They excel at industrial-scale
-    RANS/LES on unstructured meshes. However, they come with steep learning curves, complex
-    build systems, and opaque codebases that obscure the core physics from the engineer.
+    I wanted to understand CFD at the implementation level, not just the theory.
+    Commercial solvers like OpenFOAM and SU2 are incredible tools, but their
+    complexity hides the physics behind layers of abstraction. Building from
+    scratch forces you to confront every detail: how collision operators
+    dissipate energy, how boundary conditions shape the flow, and how memory
+    layout determines whether your code runs at 10% or 90% of peak hardware
+    throughput.
   </p>
 
   <p class="section-intro">
-    LBM-2D takes the opposite approach: <strong>a from-scratch, readable implementation</strong>
-    of the Lattice Boltzmann Method that prioritises clarity, cache efficiency, and rapid
-    iteration. Every line of the solver kernel is visible in a single header. The flat 1D
-    memory model and OpenMP-collapse(2) parallelisation are documented with their performance
-    rationale. The Bouzidi interpolated bounce-back and MRT collision operator match modern
-    research-grade LBM codes.
+    This project is my lab notebook. Each simulation case is an experiment,
+    each validation table is a measurement, and each bug fix is a lesson
+    learned. The code is readable by design. I want someone else to be able
+    to open a single header file and follow the entire algorithm from
+    equilibrium distribution to force extraction.
   </p>
-
-  <p class="section-intro">
-    This is not a replacement for SU2 or OpenFOAM. It is a <strong>portfolio of CFD competency</strong>:
-    demonstrating that I can implement modern LBM schemes from first principles, validate them
-    against experimental benchmarks, and communicate the results through interactive web
-    visualisation -- all in a production-grade C++20 codebase with CI and unit tests.
-  </p>
-
-  <hr class="divider">
-
-  <div class="stats-bar">
-    <div class="stat-item">
-      <span class="num">800 &times; 300</span>
-      <span class="lbl">Max Grid Resolution</span>
-    </div>
-    <div class="stat-item">
-      <span class="num">8</span>
-      <span class="lbl">Simulation Cases</span>
-    </div>
-    <div class="stat-item">
-      <span class="num">13</span>
-      <span class="lbl">Google Test Cases</span>
-    </div>
-    <div class="stat-item">
-      <span class="num">2</span>
-      <span class="lbl">Collision Operators (MRT + BGK)</span>
-    </div>
-  </div>
 
   <hr class="divider">
 
   <h2>Simulation Cases</h2>
 
   <p class="section-intro">
-    Eight validation cases spanning external aerodynamics, internal flows,
-    urban microclimate, and automotive aerodynamics. Each case includes
-    a comparison-slider field viewer, quantitative validation against
-    experimental and numerical benchmarks, and discussion of accuracy.
+    Fifteen validation cases spanning external aerodynamics, internal flows,
+    urban microclimate, and multi-body interactions. Each case includes
+    a comparison slider, quantitative validation against experimental data,
+    and discussion of what the results mean physically.
   </p>
 
-  <section class="teaser-card">
-    <div class="teaser-text">
-      <h3>Cylinder Wake</h3>
-      <p>Von K&aacute;rm&aacute;n vortex street across Re = 20&ndash;200. Validated against Williamson 1988 (Strouhal) and Tritton 1959 (drag coefficient). Bouzidi interpolated bounce-back for smooth curved boundary representation.</p>
-      <a href="cylinder.html" class="teaser-link">View Case &rarr;</a>
-    </div>
-  </section>
+  <div class="case-grid">
 
-  <section class="teaser-card">
-    <div class="teaser-text">
-      <h3>Lid-Driven Cavity</h3>
-      <p>Classic benchmark: square cavity with moving lid at Re = 100, 400, 1000. Centerline velocity profiles validated against Ghia, Ghia &amp; Shin 1982.</p>
-      <a href="cavity.html" class="teaser-link">View Case &rarr;</a>
-    </div>
-  </section>
+    <a href="flat_plate.html" class="case-card">
+      <img class="case-thumb" src="assets/images/flatplate/re1000_aoa0_contour.png" alt="Flat plate velocity contour" onerror="this.style.background='#161b22';this.alt='Flat Plate'">
+      <div class="case-info">
+        <h3>Flat Plate Boundary Layer</h3>
+        <p>PRIMARY validation. Laminar BL vs Blasius solution. AoA sweep (-10 to 15 deg) and Re sweep (500-2000) for drag polar.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
 
-  <section class="teaser-card">
-    <div class="teaser-text">
-      <h3>Backward-Facing Step</h3>
-      <p>Internal flow separation and reattachment. Reattachment length Xr/H validated against Armaly et al. 1983 at Re<sub>H</sub> = 100, 200, 400.</p>
-      <a href="step.html" class="teaser-link">View Case &rarr;</a>
-    </div>
-  </section>
+    <a href="cylinder.html" class="case-card">
+      <img class="case-thumb" src="assets/images/cylinder/re100_contour.png" alt="Cylinder velocity contour" onerror="this.style.background='#161b22';this.alt='Cylinder'">
+      <div class="case-info">
+        <h3>Cylinder Wake</h3>
+        <p>Von Karman vortex street at Re = 20-200. Bouzidi interpolated bounce-back for smooth curved boundaries.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
 
-  <section class="teaser-card">
-    <div class="teaser-text">
-      <h3>NACA Airfoil</h3>
-      <p>NACA 4-digit airfoil at Re = 1000, AoA = 0&ndash;16 degrees. Lift curve slope matches thin-airfoil theory (2&pi;/rad) within 3%.</p>
-      <a href="airfoil.html" class="teaser-link">View Case &rarr;</a>
-    </div>
-  </section>
+    <a href="square_cylinder.html" class="case-card">
+      <img class="case-thumb" src="assets/images/square_cylinder/re200_contour.png" alt="Square cylinder velocity contour" onerror="this.style.background='#161b22';this.alt='Square Cylinder'">
+      <div class="case-info">
+        <h3>Square Cylinder</h3>
+        <p>ERCOFTAC 043 sharp-edge separation. Fixed separation points at corners, wider wake than circular cylinder.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
 
-  <section class="teaser-card">
-    <div class="teaser-text">
-      <h3>Urban Canyon</h3>
-      <p>Comprehensive microclimate analysis: side-view canyon with Oke 1988 flow regimes (isolated roughness, wake interference, skimming flow), top-down plan view of street-level wind, and tall-building downwash effects.</p>
-      <a href="urban.html" class="teaser-link">View Case &rarr;</a>
-    </div>
-  </section>
+    <a href="cavity.html" class="case-card">
+      <img class="case-thumb" src="assets/images/cavity/re1000_streamlines.png" alt="Cavity streamlines" onerror="this.style.background='#161b22';this.alt='Cavity'">
+      <div class="case-info">
+        <h3>Lid-Driven Cavity</h3>
+        <p>Classic benchmark at Re = 100, 400, 1000. Centerline velocity profiles validated against Ghia et al. 1982.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
 
-  <section class="teaser-card">
-    <div class="teaser-text">
-      <h3>Ahmed Body</h3>
-      <p>Simplified 2D automotive bluff body with slanted rear. Drag coefficient trend vs slant angle, qualitatively matching Ahmed et al. 1984.</p>
-      <a href="ahmed.html" class="teaser-link">View Case &rarr;</a>
-    </div>
-  </section>
+    <a href="step.html" class="case-card">
+      <img class="case-thumb" src="assets/images/step/re100_streamlines.png" alt="Step streamlines" onerror="this.style.background='#161b22';this.alt='Backward Step'">
+      <div class="case-info">
+        <h3>Backward-Facing Step</h3>
+        <p>Flow separation and reattachment. Reattachment length Xr/H validated against Armaly et al. 1983.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
 
-  <section class="teaser-card">
-    <div class="teaser-text">
-      <h3>Ribbed Channel</h3>
-      <p>Internal cooling channel with rib turbulators. Friction factor and reattachment length for gas turbine blade cooling applications. Compared to smooth-channel Blasius correlation.</p>
-      <a href="ribs.html" class="teaser-link">View Case &rarr;</a>
-    </div>
-  </section>
+    <a href="urban.html" class="case-card">
+      <img class="case-thumb" src="assets/images/urban/side/re0.5_contour.png" alt="Urban canyon velocity contour" onerror="this.style.background='#161b22';this.alt='Urban Canyon'">
+      <div class="case-info">
+        <h3>Urban Canyon</h3>
+        <p>Three Oke 1988 flow regimes with 3 buildings. Top-down street-level wind and building downwash effects.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
+
+    <a href="ribs.html" class="case-card">
+      <img class="case-thumb" src="assets/images/ribs/re100_contour.png" alt="Ribbed channel velocity contour" onerror="this.style.background='#161b22';this.alt='Ribbed Channel'">
+      <div class="case-info">
+        <h3>Ribbed Channel</h3>
+        <p>Internal cooling with rib turbulators. Friction factor and reattachment for gas turbine blade cooling.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
+
+    <a href="nozzle.html" class="case-card">
+      <img class="case-thumb" src="assets/images/nozzle/re100_ar25_contour.png" alt="CD nozzle velocity contour" onerror="this.style.background='#161b22';this.alt='CD Nozzle'">
+      <div class="case-info">
+        <h3>CD Nozzle</h3>
+        <p>Converging-diverging nozzle. Bernoulli validation for subsonic inviscid flow. Area ratio sweep at Re=100-1000.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
+
+    <a href="periodic_hills.html" class="case-card">
+      <img class="case-thumb" src="assets/images/periodic_hills/re100_contour.png" alt="Periodic hills velocity contour" onerror="this.style.background='#161b22';this.alt='Periodic Hills'">
+      <div class="case-info">
+        <h3>Periodic Hills</h3>
+        <p>Canonical LES benchmark (Moser/Kim/Moin 1993). Separated turbulent flow with sinusoidal hill profile.</p>
+        <span class="case-link">View case &rarr;</span>
+      </div>
+    </a>
+
+  </div>
+
+  <p class="section-intro" style="margin-top:1rem;">
+    <strong>Parametric studies:</strong>
+    <a href="cylinder_near_wall.html">Cylinder Near Wall</a> (ground effect) &middot;
+    <a href="side_by_side.html">Side-by-Side Cylinders</a> (interference) &middot;
+    <a href="rotating_cylinder.html">Rotating Cylinder</a> (Magnus effect)
+  </p>
 
   <hr class="divider">
 
   <h2>Key Features</h2>
 
   <ul>
-    <li><strong>MRT collision operator</strong> (default) with independently tuned moment relaxation rates -- d'Humieres 2002 formulation</li>
-    <li><strong>Bouzidi interpolated bounce-back</strong> for smooth curved boundaries -- works for both circles and arbitrary polygons</li>
-    <li><strong>Flat 1D memory layout</strong> -- single std::vector, cache-optimised for M1/M2/Apple Silicon prefetcher</li>
-    <li><strong>OpenMP parallel</strong> collision and streaming with collapse(2) -- ~8&times; speedup on 8 cores</li>
-    <li><strong>Momentum exchange</strong> force extraction -- exact Cd/Cl without body-fitted meshes</li>
-    <li><strong>Direct JSON output</strong> per-frame velocity fields + append-only force history</li>
-    <li><strong>Polygon obstacle support</strong> via point-in-polygon -- any closed 2D shape</li>
-    <li><strong>13 Google Test</strong> unit tests + GitHub Actions CI on ubuntu and macos</li>
+    <li><strong>MRT collision operator</strong> with independently tuned moment relaxation rates, based on d'Humieres 2002</li>
+    <li><strong>Smagorinsky LES</strong> subgrid-scale eddy viscosity with auto-activation at high Re</li>
+    <li><strong>Bouzidi interpolated bounce-back</strong> for smooth curved boundaries, including arbitrary polygons</li>
+    <li><strong>Flat 1D memory layout</strong> for cache-friendly access patterns on modern CPUs</li>
+    <li><strong>OpenMP parallel</strong> collision and streaming with collapse(2)</li>
+    <li><strong>Momentum exchange</strong> force extraction without body-fitted meshes</li>
+    <li><strong>Direct JSON output</strong> with per-frame velocity and vorticity fields</li>
+    <li><strong>12 Google Test</strong> unit tests with GitHub Actions CI on Ubuntu and macOS</li>
   </ul>
 
   <hr class="divider">
@@ -204,7 +226,7 @@
 </div>
 
 <footer class="site-footer">
-  <p>LBM-2D &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
 </footer>
 
 <script>

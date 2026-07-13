@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AK-Vortex: Converging-Diverging Nozzle, Bernoulli equation validation for subsonic inviscid flow">
+  <title>CD Nozzle - AK-Vortex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+<div class="sidebar">
+  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-heading">Project</div>
+      <a href="index.html" class="nav-item">Home</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">External Aerodynamics</div>
+      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+      <a href="cylinder.html" class="nav-item">Cylinder</a>
+      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Internal Flows</div>
+      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+      <a href="step.html" class="nav-item">Backward Step</a>
+      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
+      <a href="nozzle.html" class="nav-item active">CD Nozzle</a>
+      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Urban CFD</div>
+      <a href="urban.html" class="nav-item">Urban Canyon</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-heading">Reference</div>
+      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+      <a href="implementation.html" class="nav-item">Implementation</a>
+      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+    </div>
+  </nav>
+</div>
+
+<div class="main-content">
+
+  <h1>Converging-Diverging Nozzle: Bernoulli Validation</h1>
+
+  <p class="section-intro">
+    A smooth cosine-profile converging-diverging nozzle validates the solver's
+    ability to handle internal flows with variable cross-section. The Bernoulli
+    equation predicts velocity and pressure distributions for subsonic inviscid
+    flow, providing an analytical benchmark. Smagorinsky LES activates
+    automatically at high Re (tau &lt; 0.55).
+  </p>
+
+  <h2>Setup</h2>
+
+  <table>
+    <tr><th>Parameter</th><th>Value</th></tr>
+    <tr><td>Grid</td><td>800 &times; 300</td></tr>
+    <tr><td>Nozzle length</td><td>NX/2 = 400 cells</td></tr>
+    <tr><td>Throat half-height</td><td>NY/8 = 37 cells</td></tr>
+    <tr><td>Area ratio (A<sub>throat</sub>/A<sub>inlet</sub>)</td><td>0.25, 0.50</td></tr>
+    <tr><td>Reynolds number</td><td>100, 500, 1000</td></tr>
+    <tr><td>Inlet velocity</td><td>u<sub>ref</sub> = 0.1 (Re=100), 0.05 (Re=500,1000)</td></tr>
+    <tr><td>Collision</td><td>MRT + Smagorinsky LES (auto at high Re)</td></tr>
+    <tr><td>Boundary condition</td><td>Zou-He inlet, convective outlet, bounce-back walls</td></tr>
+    <tr><td>Lattice spacing / time step</td><td>&Delta;x = 1, &Delta;t = 1</td></tr>
+  </table>
+
+  <h2>Field Viewer</h2>
+
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
+
+  <div class="comparison-slider" id="fieldSlider">
+    <img id="sliderImgBefore" src="" alt="Contour">
+    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+    <div class="slider-handle"><div class="slider-btn"></div></div>
+    <div class="slider-label left">Contour</div>
+    <div class="slider-label right">Streamlines</div>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
+    <div class="stat-item"><span class="num" id="statAR">--</span><span class="lbl">Area Ratio</span></div>
+    <div class="stat-item"><span class="num" id="statTau">--</span><span class="lbl">tau</span></div>
+    <div class="stat-item"><span class="num" id="statLES">--</span><span class="lbl">LES</span></div>
+  </div>
+
+  <hr class="divider">
+
+  <h2>Bernoulli Theory</h2>
+
+  <p class="section-intro">
+    For subsonic inviscid flow, the Bernoulli equation gives:
+  </p>
+
+  <p class="section-intro" style="text-align:center;font-family:monospace;">
+    v(x) = Q / A(x)
+  </p>
+  <p class="section-intro" style="text-align:center;font-family:monospace;">
+    p(x) = p<sub>0</sub> - 0.5 * rho * v(x)<sup>2</sup>
+  </p>
+
+  <p class="section-intro">
+    Where Q is the volume flow rate and A(x) is the local cross-sectional area.
+    The nozzle wall profile follows a cosine curve:
+    y<sub>wall</sub>(x) = (NY/2) * [1 - (1 - AR) * sin<sup>2</sup>(pi * x / L)].
+  </p>
+
+  <hr class="divider">
+
+  <h2>Validation</h2>
+
+  <table>
+    <thead>
+      <tr><th>Re</th><th>AR</th><th>Expected v<sub>throat</sub>/v<sub>inlet</sub></th><th>Computed</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>100</td><td>0.25</td><td>4.0</td><td>--</td><td>Laminar, stable</td></tr>
+      <tr><td>100</td><td>0.50</td><td>2.0</td><td>--</td><td>Laminar, stable</td></tr>
+      <tr><td>500</td><td>0.25</td><td>4.0</td><td>--</td><td>LES required</td></tr>
+      <tr><td>1000</td><td>0.25</td><td>4.0</td><td>--</td><td>LES required, u_ref reduced</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    High-Re cases (Re=500, 1000) use reduced inlet velocity (u_ref=0.05) and
+    auto-LES to maintain stability. The throat velocity reaches 4x inlet velocity
+    for AR=0.25, approaching the LBM compressibility limit.
+  </div>
+
+  <hr class="divider">
+
+  <h2>Discussion</h2>
+
+  <p class="section-intro">
+    The CD nozzle tests internal flow acceleration/deceleration, pressure recovery,
+    and wall boundary conditions. The smooth cosine profile avoids geometric
+    singularities, making it ideal for Bouzidi interpolated bounce-back. The Bernoulli
+    validation is exact for inviscid flow; viscous effects (boundary layers) cause
+    slight deviations that decrease with increasing Re.
+  </p>
+
+</div>
+
+<footer class="site-footer">
+  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
+</footer>
+
+<script src="assets/js/slider.js"></script>
+<script>
+const CASE_CONFIG = {
+  paramLabel: 'Re',
+  configs: [
+    { re: 100,  ar: 0.25, tau: '0.575', les: 'off' },
+    { re: 100,  ar: 0.50, tau: '0.575', les: 'off' },
+    { re: 500,  ar: 0.25, tau: '0.522', les: 'on' },
+    { re: 1000, ar: 0.25, tau: '0.511', les: 'on' },
+  ]
+};
+
+var currentIndex = 0;
+
+function imageUrl(re, ar, type) {
+  var arStr = 'ar' + Math.round(ar * 100);
+  return 'assets/images/nozzle/re' + re + '_' + arStr + '_' + type + '.png';
+}
+
+function makePlaceholder(re, ar, type) {
+  return 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
+    '<rect width="800" height="300" fill="#0d1117"/>' +
+    '<path d="M200,50 Q400,120 600,50" fill="none" stroke="#484f58" stroke-width="2"/>' +
+    '<path d="M200,250 Q400,180 600,250" fill="none" stroke="#484f58" stroke-width="2"/>' +
+    '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+    'Nozzle Re=' + re + ' AR=' + ar + ' ' + type + '</text>' +
+    '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+    '(simulation running, placeholder)</text></svg>'
+  );
+}
+
+function updateImages(cfg) {
+  var before = document.getElementById('sliderImgBefore');
+  var after = document.getElementById('sliderImgAfter');
+  before.onerror = function() { this.src = makePlaceholder(cfg.re, cfg.ar, 'contour'); };
+  after.onerror = function() { this.src = makePlaceholder(cfg.re, cfg.ar, 'streamlines'); };
+  before.src = imageUrl(cfg.re, cfg.ar, 'contour');
+  after.src = imageUrl(cfg.re, cfg.ar, 'streamlines');
+}
+
+function updateStats(cfg) {
+  document.getElementById('statRe').textContent = cfg.re;
+  document.getElementById('statAR').textContent = cfg.ar;
+  document.getElementById('statTau').textContent = cfg.tau;
+  document.getElementById('statLES').textContent = cfg.les;
+}
+
+function switchConfig(idx) {
+  currentIndex = idx;
+  var cfg = CASE_CONFIG.configs[idx];
+  document.querySelectorAll('#reTabs .teaser-link').forEach(function(btn, i) {
+    btn.classList.toggle('active', i === idx);
+  });
+  updateImages(cfg);
+  updateStats(cfg);
+  setTimeout(function() {
+    var c = document.getElementById('fieldSlider');
+    var h = c.querySelector('.slider-handle');
+    var a = c.querySelector('.img-after');
+    if (h) h.style.left = '50%';
+    if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+  }, 200);
+}
+
+var rc = document.getElementById('reTabs');
+CASE_CONFIG.configs.forEach(function(cfg, idx) {
+  var btn = document.createElement('button');
+  btn.className = 'teaser-link' + (idx === 0 ? ' active' : '');
+  btn.textContent = 'Re=' + cfg.re + ' AR=' + cfg.ar;
+  btn.style.fontSize = '0.7em';
+  btn.onclick = function() { switchConfig(idx); };
+  rc.appendChild(btn);
+});
+
+updateImages(CASE_CONFIG.configs[0]);
+updateStats(CASE_CONFIG.configs[0]);
+
+document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+});
+</script>
+
+</body>
+</html>
