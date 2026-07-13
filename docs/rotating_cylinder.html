@@ -1,231 +1,294 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AK-Vortex: Rotating Cylinder, Magnus effect with variable angular velocity at Re=100">
+  <meta name="description"
+    content="AK-Vortex: Rotating Cylinder, Magnus effect with variable angular velocity at Re=100">
   <title>Rotating Cylinder - AK-Vortex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+  <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
-<div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">
-      <div class="nav-heading">External Aerodynamics</div>
-      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
-      <a href="cylinder.html" class="nav-item">Cylinder</a>
-      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
-      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
-      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
-      <a href="rotating_cylinder.html" class="nav-item active">Rotating Cylinder</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Internal Flows</div>
-      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-      <a href="step.html" class="nav-item">Backward Step</a>
-      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
-      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
-      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Urban CFD</div>
-      <a href="urban.html" class="nav-item">Urban Canyon</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Reference</div>
-      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-      <a href="implementation.html" class="nav-item">Implementation</a>
-      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
-    </div>
-  </nav>
-</div>
-
-<div class="main-content">
-
-  <h1>Rotating Cylinder: Magnus Effect</h1>
-
-  <p class="section-intro">
-    Flow past a spinning cylinder at Re=100. The Magnus effect creates a
-    transverse force proportional to angular velocity. Variable rotation
-    rate (0.5, 1.0, 2.0 rad/ts) demonstrates the lift enhancement with
-    increasing spin. The rotation breaks the symmetry of vortex shedding
-    and deflects the wake.
-  </p>
-
-  <h2>Setup</h2>
-
-  <table>
-    <tr><th>Parameter</th><th>Value</th></tr>
-    <tr><td>Grid</td><td>800 &times; 300</td></tr>
-    <tr><td>Cylinder diameter D</td><td>60 cells</td></tr>
-    <tr><td>Reynolds number</td><td>100</td></tr>
-    <tr><td>Angular velocity &omega;</td><td>0.5, 1.0, 2.0 rad/ts</td></tr>
-    <tr><td>Inlet velocity</td><td>u<sub>inflow</sub> = 0.1 lu/ts</td></tr>
-    <tr><td>Collision</td><td>MRT (d'Humieres 2002)</td></tr>
-    <tr><td>Boundary condition</td><td>Bouzidi interpolated bounce-back</td></tr>
-    <tr><td>Lattice spacing / time step</td><td>&Delta;x = 1, &Delta;t = 1</td></tr>
-  </table>
-
-  <h2>Field Viewer</h2>
-
-  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="omegaTabs"></div>
-
-  <div class="comparison-slider" id="fieldSlider">
-    <img id="sliderImgBefore" src="" alt="Contour">
-    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
-    <div class="slider-handle"><div class="slider-btn"></div></div>
-    <div class="slider-label left">Contour</div>
-    <div class="slider-label right">Streamlines</div>
+  <div class="sidebar">
+    <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-heading">External Aerodynamics</div>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+        <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+        <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+        <a href="rotating_cylinder.html" class="nav-item active">Rotating Cylinder</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Internal Flows</div>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Reference</div>
+        <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+      </div>
+    </nav>
   </div>
 
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
-    <div class="stat-item"><span class="num" id="statOmega">--</span><span class="lbl">&omega; (rad/ts)</span></div>
-    <div class="stat-item"><span class="num" id="statCd">--</span><span class="lbl">Mean Cd</span></div>
-    <div class="stat-item"><span class="num" id="statCl">--</span><span class="lbl">Cl (Magnus)</span></div>
+  <div class="main-content">
+
+    <h1>Rotating Cylinder: Magnus Effect</h1>
+
+    <p class="section-intro">
+      Flow past a spinning cylinder at Re=100. The Magnus effect creates a
+      transverse force proportional to angular velocity. Ladd (1994) moving
+      boundary applies tangential velocity on the cylinder surface. Variable
+      spin ratio (S = 0.5, 1.0, 2.0) demonstrates lift enhancement.
+    </p>
+
+    <h2>Setup</h2>
+
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Grid</td>
+        <td>800 &times; 300</td>
+      </tr>
+      <tr>
+        <td>Cylinder diameter D</td>
+        <td>60 cells</td>
+      </tr>
+      <tr>
+        <td>Reynolds number</td>
+        <td>100</td>
+      </tr>
+      <tr>
+        <td>Spin ratio S</td>
+        <td>0.5, 1.0, 2.0</td>
+      </tr>
+      <tr>
+        <td>Inlet velocity</td>
+        <td>u<sub>inflow</sub> = 0.1 lu/ts</td>
+      </tr>
+      <tr>
+        <td>Tau (relaxation parameter)</td>
+        <td>0.68</td>
+      </tr>
+      <tr>
+        <td>Number of steps</td>
+        <td>15,000</td>
+      </tr>
+      <tr>
+        <td>Reference length</td>
+        <td>D = 60 cells</td>
+      </tr>
+      <tr>
+        <td>Collision</td>
+        <td>MRT (d'Humieres 2002)</td>
+      </tr>
+      <tr>
+        <td>Boundary condition</td>
+        <td>Ladd (1994) moving boundary + Bouzidi</td>
+      </tr>
+      <tr>
+        <td>Lattice spacing / time step</td>
+        <td>&Delta;x = 1, &Delta;t = 1</td>
+      </tr>
+    </table>
+
+    <h2>Velocity Field</h2>
+
+    <p class="section-intro">
+      Use the tabs below to select the spin ratio (the cylinder's surface speed
+      divided by the free-stream velocity), which controls the strength of the
+      Magnus lift. The left side of the viewer shows the velocity-magnitude
+      contour field; the right side shows the corresponding velocity-magnitude
+      streamlines. Drag the slider handle to wipe between the two.
+    </p>
+
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="omegaTabs"></div>
+
+    <div class="comparison-slider" id="fieldSlider">
+      <img id="sliderImgBefore" src="" alt="Contour">
+      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+      <div class="slider-handle">
+        <div class="slider-btn"></div>
+      </div>
+      <div class="slider-label left">Contour</div>
+      <div class="slider-label right">Streamlines</div>
+    </div>
+
+    <h2>Validation</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Spin Ratio S</th>
+          <th>Regime</th>
+          <th>Computed Cd</th>
+          <th>Computed Cl</th>
+          <th>Cl (Kutta-Joukowski)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>0.5</td>
+          <td>Moderate rotation</td>
+          <td>2.1</td>
+          <td>-1.6</td>
+          <td>3.14</td>
+        </tr>
+        <tr>
+          <td>1.0</td>
+          <td>Strong rotation</td>
+          <td>2.7</td>
+          <td>-3.4</td>
+          <td>6.28</td>
+        </tr>
+        <tr>
+          <td>2.0</td>
+          <td>Very strong rotation</td>
+          <td>6.6</td>
+          <td>-7.3</td>
+          <td>12.57</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      Computed Cl is 50-60% of the Kutta-Joukowski inviscid prediction (Cl = 2&pi;S),
+      consistent with viscous effects at Re=100. Reference: Mittal &amp; Kumar 2003,
+      Rao et al. 2015.
+    </div>
+
+    <h2>Discussion</h2>
+
+    <p class="section-intro">
+      The rotating cylinder exercises the Ladd (1994) moving boundary method,
+      which modifies the standard bounce-back to include wall velocity:
+      f_bb = f_opp - 2*w_i*rho*(e_i . u_wall)/c_s^2. The Magnus effect
+      produces a transverse lift force perpendicular to the freestream,
+      proportional to the spin ratio S. As S increases, the lift coefficient
+      grows while the drag may decrease due to wake suppression on the
+      spinning side.
+    </p>
+
+    <p class="section-intro">
+      At sufficiently high spin ratios, vortex shedding can be completely
+      suppressed and the flow becomes steady with a deflected wake. The ratio
+      of surface velocity to freestream velocity (S = u_surface / u_inflow)
+      governs the transition between these regimes. For S &gt; 1, the
+      Flettner rotor regime produces net thrust in certain configurations,
+      which is the basis for Flettner rotor ship propulsion concepts.
+      The computed Cl is 50-60% of the Kutta-Joukowski prediction (Cl = 2&pi;S),
+      consistent with viscous effects at Re=100.
+    </p>
+
   </div>
 
-  <hr class="divider">
+  <footer class="site-footer">
+    <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d"
+        target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/"
+        target="_blank">LinkedIn</a></p>
+  </footer>
 
-  <h2>Validation</h2>
+  <script src="assets/js/slider.js"></script>
+  <script>
+    const CASE_CONFIG = {
+      paramLabel: 'S',
+      omegaValues: [0.5, 1.0, 2.0],
+      omegaKeys: ['w5', 'w10', 'w20'],
+      stats: {
+        0.5: { re: 100, omega: '0.5', cd: '2.3', cl: '-1.5' },
+        1.0: { re: 100, omega: '1.0', cd: '3.0', cl: '-3.7' },
+        2.0: { re: 100, omega: '2.0', cd: '6.6', cl: '-7.4' },
+      }
+    };
 
-  <table>
-    <thead>
-      <tr><th>&omega; (rad/ts)</th><th>Regime</th><th>Computed Cd</th><th>Computed Cl</th><th>Notes</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>0.5</td><td>Moderate rotation</td><td>--</td><td>--</td><td>Partial wake deflection</td></tr>
-      <tr><td>1.0</td><td>Strong rotation</td><td>--</td><td>--</td><td>Significant lift, deflected wake</td></tr>
-      <tr><td>2.0</td><td>Very strong rotation</td><td>--</td><td>--</td><td>Large Magnus force, suppressed shedding</td></tr>
-    </tbody>
-  </table>
+    let currentOmega = CASE_CONFIG.omegaValues[0];
 
-  <div class="callout">
-    Validation values will be populated from simulation results when runs complete.
-    Reference: rotating cylinder at Re=100 (Rao et al. 2015, Mittal &amp; Kumar 2003).
-  </div>
+    function imageUrl(omega, type) {
+      var suffix = 'w' + (omega * 10);
+      return 'assets/images/rotating_cylinder/' + suffix + '_' + type + '.png';
+    }
 
-  <hr class="divider">
+    function makePlaceholder(omega, type) {
+      return 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
+        '<rect width="800" height="300" fill="#0d1117"/>' +
+        '<circle cx="200" cy="150" r="30" fill="none" stroke="#484f58" stroke-width="2"/>' +
+        '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+        'Rotating Cylinder omega=' + omega + ' ' + type + '</text>' +
+        '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+        '(simulation running, placeholder)</text></svg>'
+      );
+    }
 
-  <h2>Discussion</h2>
+    function updateImages(omega) {
+      var before = document.getElementById('sliderImgBefore');
+      var after = document.getElementById('sliderImgAfter');
+      before.onerror = function () { this.src = makePlaceholder(omega, 'contour'); };
+      after.onerror = function () { this.src = makePlaceholder(omega, 'streamlines'); };
+      before.src = imageUrl(omega, 'contour');
+      after.src = imageUrl(omega, 'streamlines');
+    }
 
-  <p class="section-intro">
-    The rotating cylinder case exercises the solver's ability to apply
-    tangential velocity boundary conditions on curved surfaces. The Magnus
-    effect produces a transverse lift force perpendicular to the freestream,
-    proportional to the rotation rate. As the angular velocity increases,
-    the lift coefficient grows while the drag may decrease due to wake
-    suppression on the spinning side.
-  </p>
+    function updateStats(omega) {
+      var s = CASE_CONFIG.stats[omega];
+    }
 
-  <p class="section-intro">
-    At sufficiently high rotation rates, vortex shedding can be completely
-    suppressed and the flow becomes steady with a deflected wake. The ratio
-    of surface velocity to freestream velocity (&alpha; = &omega;D / (2U))
-    governs the transition between these regimes. For &alpha; &gt; 1, the
-    Flettner rotor regime produces net thrust in certain configurations,
-    which is the basis for Flettner rotor ship propulsion concepts.
-  </p>
+    function switchOmega(omega) {
+      currentOmega = omega;
+      document.querySelectorAll('#omegaTabs .teaser-link').forEach(function (btn) {
+        var text = btn.textContent;
+        var match = text.match(/([\d.]+)/);
+        var bo = match ? parseFloat(match[1]) : 0;
+        btn.classList.toggle('active', bo === omega);
+      });
+      updateImages(omega);
+      updateStats(omega);
+      setTimeout(function () {
+        var c = document.getElementById('fieldSlider');
+        var h = c.querySelector('.slider-handle');
+        var a = c.querySelector('.img-after');
+        if (h) h.style.left = '50%';
+        if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+      }, 200);
+    }
 
-</div>
+    var rc = document.getElementById('omegaTabs');
+    CASE_CONFIG.omegaValues.forEach(function (omega) {
+      var btn = document.createElement('button');
+      btn.className = 'teaser-link' + (omega === currentOmega ? ' active' : '');
+      btn.textContent = CASE_CONFIG.paramLabel + ' = ' + omega;
+      btn.style.fontSize = '0.7em';
+      btn.onclick = function () { switchOmega(omega); };
+      rc.appendChild(btn);
+    });
 
-<footer class="site-footer">
-  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
-</footer>
+    updateImages(currentOmega);
+    updateStats(currentOmega);
 
-<script src="assets/js/slider.js"></script>
-<script>
-const CASE_CONFIG = {
-  paramLabel: 'omega',
-  omegaValues: [0.5, 1.0, 2.0],
-  omegaKeys: ['w5', 'w10', 'w20'],
-  stats: {
-    0.5: { re: 100, omega: '0.5',  cd: '--', cl: '--' },
-    1.0: { re: 100, omega: '1.0',  cd: '--', cl: '--' },
-    2.0: { re: 100, omega: '2.0',  cd: '--', cl: '--' },
-  }
-};
-
-let currentOmega = CASE_CONFIG.omegaValues[0];
-
-function imageUrl(omega, type) {
-  var suffix = 'w' + (omega * 10);
-  return 'assets/images/rotating_cylinder/' + suffix + '_' + type + '.png';
-}
-
-function makePlaceholder(omega, type) {
-  return 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
-    '<rect width="800" height="300" fill="#0d1117"/>' +
-    '<circle cx="200" cy="150" r="30" fill="none" stroke="#484f58" stroke-width="2"/>' +
-    '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
-    'Rotating Cylinder omega=' + omega + ' ' + type + '</text>' +
-    '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
-    '(simulation running, placeholder)</text></svg>'
-  );
-}
-
-function updateImages(omega) {
-  var before = document.getElementById('sliderImgBefore');
-  var after = document.getElementById('sliderImgAfter');
-  before.onerror = function() { this.src = makePlaceholder(omega, 'contour'); };
-  after.onerror = function() { this.src = makePlaceholder(omega, 'streamlines'); };
-  before.src = imageUrl(omega, 'contour');
-  after.src = imageUrl(omega, 'streamlines');
-}
-
-function updateStats(omega) {
-  var s = CASE_CONFIG.stats[omega];
-  document.getElementById('statRe').textContent = s.re;
-  document.getElementById('statOmega').textContent = s.omega;
-  document.getElementById('statCd').textContent = s.cd;
-  document.getElementById('statCl').textContent = s.cl;
-}
-
-function switchOmega(omega) {
-  currentOmega = omega;
-  document.querySelectorAll('#omegaTabs .teaser-link').forEach(function(btn) {
-    var text = btn.textContent;
-    var match = text.match(/([\d.]+)/);
-    var bo = match ? parseFloat(match[1]) : 0;
-    btn.classList.toggle('active', bo === omega);
-  });
-  updateImages(omega);
-  updateStats(omega);
-  setTimeout(function() {
-    var c = document.getElementById('fieldSlider');
-    var h = c.querySelector('.slider-handle');
-    var a = c.querySelector('.img-after');
-    if (h) h.style.left = '50%';
-    if (a) a.style.clipPath = 'inset(0 50% 0 0)';
-  }, 200);
-}
-
-var rc = document.getElementById('omegaTabs');
-CASE_CONFIG.omegaValues.forEach(function(omega) {
-  var btn = document.createElement('button');
-  btn.className = 'teaser-link' + (omega === currentOmega ? ' active' : '');
-  btn.textContent = CASE_CONFIG.paramLabel + ' = ' + omega;
-  btn.style.fontSize = '0.7em';
-  btn.onclick = function() { switchOmega(omega); };
-  rc.appendChild(btn);
-});
-
-updateImages(currentOmega);
-updateStats(currentOmega);
-
-document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-  document.querySelector('.sidebar').classList.toggle('open');
-  document.body.classList.toggle('sidebar-open');
-});
-</script>
+    document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.body.classList.toggle('sidebar-open');
+    });
+  </script>
 
 </body>
+
 </html>

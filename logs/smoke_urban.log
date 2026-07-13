@@ -1,0 +1,20 @@
+Mode: side  Re = 200  tau = 0.62  steps = 180000  u_ref = 0.1  H/W = 0.6  n_bldg = 3  H = 80  W = 133  W_bldg = 96
+  step      0  Fx = 107.1333
+  step   2000  Fx = 1.0830
+  step   4000  Fx = 2.1004
+  step   6000  Fx = 2.7051
+  step   8000  Fx = 0.3364
+  step  10000  Fx = 1.0514
+  step  12000  Fx = 0.9979
+  step  14000  Fx = 1.4733
+  step  16000  Fx = 1.3255
+  step  18000  Fx = 1.6652
+  step  20000  Fx = 0.7833
+  step  22000  Fx = 0.6525
+  step  24000  Fx = 0.4243
+  step  26000  Fx = 1.8791
+  step  28000  Fx = 2.0947
+  step  30000  Fx = 1.8519
+  step  32000  Fx = 0.2155
+  step  34000  Fx = 0.8785
+  step  36000  Fx = 0.7763

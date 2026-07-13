@@ -49,12 +49,13 @@ CASE_CMAPS = {
     'urban-topdown':         ('viridis', 'viridis'),
     'building-downwash':     ('RdBu', 'RdBu'),
     'flat-plate':            ('jet', 'jet'),
-    'nozzle':                ('coolwarm', 'coolwarm'),
     'square-cylinder':       ('jet', 'jet'),
     'periodic-hills':        ('viridis', 'viridis'),
     'cylinder-near-wall':    ('jet', 'jet'),
     'side-by-side':          ('jet', 'jet'),
     'rotating-cylinder':     ('jet', 'jet'),
+    'orifice-plate':         ('coolwarm', 'coolwarm'),
+    'sports-ball':           ('jet', 'jet'),
 }
 
 # Detect shape type from meta.json or directory name
@@ -81,8 +82,6 @@ def _detect_shape(meta, output_dir=None):
             return 'cavity'
         if pname == 'flatplate':
             return 'flat-plate'
-        if pname == 'nozzle':
-            return 'nozzle'
         if pname == 'square_cylinder':
             return 'square-cylinder'
         if pname == 'periodic_hills':
@@ -93,6 +92,10 @@ def _detect_shape(meta, output_dir=None):
             return 'side-by-side'
         if pname == 'rotating_cylinder':
             return 'rotating-cylinder'
+        if pname == 'orifice_plate':
+            return 'orifice-plate'
+        if pname == 'sports_ball':
+            return 'sports-ball'
         if pname == 'urban':
             if 'side' in dname:
                 return 'urban-side'
@@ -114,8 +117,6 @@ def _detect_shape(meta, output_dir=None):
             return 'building-downwash'
         if 'flatplate' in dname:
             return 'flat-plate'
-        if 'nozzle' in dname:
-            return 'nozzle'
         if 'square_cylinder' in dname:
             return 'square-cylinder'
         if 'periodic_hills' in dname:

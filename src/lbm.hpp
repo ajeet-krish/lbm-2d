@@ -201,6 +201,7 @@ inline void mrt_collide(double* f_node, double rho, double u, double v,
 // Bouzidi interpolated bounce-back for a single boundary link
 // Called during streaming when fluid->solid link is detected.
 // Reads post-collision sys.f, writes to sys.f_next.
+// Ladd (1994) moving boundary: f_bb = f_opp - 2*w_i*rho*(e_i.u_wall)/c_s^2
 // ------------------------------------------------------------------
 inline void apply_bouzidi_bb(LBMCapabilities& sys, int x, int y, int i,
                               const double* f_node, int node_idx) {
@@ -208,24 +209,39 @@ inline void apply_bouzidi_bb(LBMCapabilities& sys, int x, int y, int i,
     double q = geom.compute_q(static_cast<double>(x), static_cast<double>(y), i);
     int bb = bounce_back[i];
 
+    // Compute bounce-back value (standard Bouzidi)
+    double f_bb;
     if (q < 0.5) {
-        // Interpolate between x_f and x_f - e_i
         int src_x = x - cx[i];
         int src_y = y - cy[i];
         if (src_x >= 0 && src_x < NX && src_y >= 0 && src_y < NY) {
             double f_i_src = sys.f[node_index(src_x, src_y) * 9 + i];
-            sys.f_next[node_idx * 9 + bb] = 2.0 * q * f_node[i]
-                                           + (1.0 - 2.0 * q) * f_i_src;
+            f_bb = 2.0 * q * f_node[i] + (1.0 - 2.0 * q) * f_i_src;
         } else {
-            sys.f_next[node_idx * 9 + bb] = f_node[i];
+            f_bb = f_node[i];
         }
     } else {
-        // Interpolate between bounce-back and forward at x_f
         double inv2q = 1.0 / (2.0 * q);
         double f_opp = sys.f[node_idx * 9 + bb];
-        sys.f_next[node_idx * 9 + bb] = inv2q * f_node[i]
-                                       + (1.0 - inv2q) * f_opp;
+        f_bb = inv2q * f_node[i] + (1.0 - inv2q) * f_opp;
     }
+
+    // Ladd (1994) moving boundary correction
+    if (geom.has_moving_wall) {
+        // Wall velocity at the solid node position (bounce point approximation)
+        double u_wx, u_wy;
+        geom.compute_wall_velocity(static_cast<double>(x + cx[i]),
+                                   static_cast<double>(y + cy[i]),
+                                   u_wx, u_wy);
+        // f_bb -= 2 * w_i * rho * (e_i . u_wall) / c_s^2
+        // c_s^2 = 1/3 in lattice units
+        double rho, u, v;
+        compute_macros(f_node, rho, u, v);
+        double edot_uw = cx[i] * u_wx + cy[i] * u_wy;
+        f_bb -= 2.0 * weights[i] * rho * edot_uw * 3.0;  // * 3.0 = / (1/3)
+    }
+
+    sys.f_next[node_idx * 9 + bb] = f_bb;
 }
 
 // ------------------------------------------------------------------
@@ -403,6 +419,13 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
 
                     int target_idx = node_index(nx, ny);
                     if (sys.obstacle[target_idx]) {
+                        // For CYLINDER_NEAR_WALL, only count forces on the cylinder
+                        // (skip wall nodes at y=0 which are not part of bb_geom)
+                        if (g_case == CaseType::CYLINDER_NEAR_WALL) {
+                            double dx = static_cast<double>(nx) - sys.bb_geom.cx;
+                            double dy = static_cast<double>(ny) - sys.bb_geom.cy;
+                            if (std::sqrt(dx*dx + dy*dy) > sys.bb_geom.radius) continue;
+                        }
                         double f_boundary = sys.f[node_idx * 9 + bounce_back[i]];
                         sys.fx_body[node_idx] += cx[i] * 2.0 * f_boundary;
                         sys.fy_body[node_idx] += cy[i] * 2.0 * f_boundary;

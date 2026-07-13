@@ -25,7 +25,9 @@
 //
 // Parameters:
 //   H = channel half-height = NY * 2/3
-//   h_max = hill height = H/2
+//   h_max = hill height = H * hmax_frac (default 1/6; was 1/2 which nearly
+//           closes the channel and hides the sinusoidal profile). Keeping
+//           h_max moderate reveals 2-3 full hill-valley periods.
 //   L = hill wavelength = 9 * H (standard)
 //   Re = u_lid * H / nu
 // ==========================================================================
@@ -41,10 +43,10 @@ struct HillParams {
     int L;
 };
 
-HillParams compute_params(double Re, int steps = -1) {
+HillParams compute_params(double Re, int steps = -1, double hmax_frac = 1.0 / 6.0) {
     double u_lid = 0.1;
     int H = NY * 2 / 3;
-    int h_max = H / 2;
+    int h_max = std::max(1, static_cast<int>(H * hmax_frac));
     int L = 9 * H;
 
     double length_scale = static_cast<double>(H);
@@ -85,12 +87,14 @@ int main(int argc, char* argv[]) {
 
     double Re = 100.0;
     int steps = -1;
+    double hmax_frac = 1.0 / 6.0;
 
     int positional_idx = 1;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--use-les") { g_use_les = true;
         } else if (arg == "--cs" && i + 1 < argc) { g_cs = std::stod(argv[++i]);
+        } else if (arg == "--hmax" && i + 1 < argc) { hmax_frac = std::stod(argv[++i]);
         } else if (arg.find("--") != 0) {
             if (positional_idx == 1) Re = std::stod(arg);
             else if (positional_idx == 2) steps = std::stoi(arg);
@@ -100,7 +104,10 @@ int main(int argc, char* argv[]) {
 
     g_case = CaseType::PERIODIC_HILLS;
 
-    auto params = compute_params(Re, steps);
+    auto params = compute_params(Re, steps, hmax_frac);
+
+    // Auto-LES: enable Smagorinsky for low-tau (high-Re) runs for stability.
+    if (params.tau < 0.55) g_use_les = true;
     LBMCapabilities system;
 
     place_hills(system, params);
@@ -123,6 +130,7 @@ int main(int argc, char* argv[]) {
               << "  steps = " << params.num_steps
               << "  H = " << params.H
               << "  h_max = " << params.h_max
+              << "  h_max/H = " << (static_cast<double>(params.h_max) / params.H)
               << "  L = " << params.L
               << (g_use_les ? "  LES(Cs=" + std::to_string(g_cs) + ")" : "")
               << std::endl;

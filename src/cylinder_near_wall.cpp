@@ -10,9 +10,9 @@
 // LBM-2D: Cylinder Near a Wall (Ground Effect)
 // ==========================================================================
 // Usage:
-//   ./build/LBM_CylinderNearWall 100 4       (Re=100, gap=4 cells)
-//   ./build/LBM_CylinderNearWall 200 8       (Re=200, gap=8 cells)
-//   ./build/LBM_CylinderNearWall 100 2 20000 (Re=100, gap=2, 20000 steps)
+//   ./build/LBM_CylinderNearWall 100 20       (Re=100, gap=20 cells)
+//   ./build/LBM_CylinderNearWall 200 40       (Re=200, gap=40 cells)
+//   ./build/LBM_CylinderNearWall 100 10 20000 (Re=100, gap=10, 20000 steps)
 //
 // A cylinder placed near a flat wall. The wall gap (distance from
 // cylinder bottom to wall) modifies the wake structure and drag.
@@ -27,7 +27,7 @@
 //
 // Parameters:
 //   Re = u_inflow * D / nu,  D = 2 * NY/10 = 60
-//   gap = cells between cylinder bottom and wall (default 4)
+//   gap = cells between cylinder bottom and wall (default 20)
 //   wall at y=0
 // ==========================================================================
 
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     std::cout << "==============================================" << std::endl;
 
     double Re = 100.0;
-    int gap = 4;
+    int gap = 20;
     int steps = -1;
 
     int positional_idx = 1;
@@ -89,6 +89,11 @@ int main(int argc, char* argv[]) {
     LBMCapabilities system;
 
     place_cylinder(system, params.cx_cyl, params.cy_cyl, params.radius);
+
+    // Add physical wall at y=0 (bottom boundary)
+    for (int x = 0; x < NX; ++x) {
+        system.obstacle[node_index(x, 0)] = true;
+    }
 
     for (int n = 0; n < NX * NY; ++n) {
         double* f_node = &system.f[n * 9];

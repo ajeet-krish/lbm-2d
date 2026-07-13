@@ -14,8 +14,9 @@
 //   ./build/LBM_SideBySide 100 5             (Re=100, spacing S/D=5)
 //   ./build/LBM_SideBySide 100 2 20000       (Re=100, S/D=2, 20000 steps)
 //
-// Two identical cylinders placed side-by-side perpendicular to the flow.
-// The gap between cylinders creates interference effects:
+// Two identical cylinders placed side-by-side TRANSVERSE to the flow
+// (same x-position, different y-positions). The transverse gap between
+// cylinders creates interference effects:
 //   - S/D < 1.5: Single combined wake (shared vortex street)
 //   - S/D ~ 1.5-3.5: Biased (deflected) gap flow, flip-flopping
 //   - S/D > 3.5: Independent vortex shedding
@@ -26,9 +27,10 @@
 // Validation: Zdravkovich 1977, Kim & Durbin 1988
 //
 // Parameters:
-//   Re = u_inflow * D / nu,  D = 2 * NY/10 = 60
-//   S/D = center-to-center spacing / diameter
-//   S = center-to-center distance
+//   Re = u_inflow * D / nu,  D = 2 * NY/15 = 40
+//   S/D = center-to-center spacing / diameter (transverse)
+//   S = center-to-center distance (in y)
+//   D is reduced to NY/15 so that S/D=5 (200 cells) fits the NY=300 domain.
 // ==========================================================================
 
 struct SideBySideParams {
@@ -37,30 +39,30 @@ struct SideBySideParams {
     int num_steps;
     int save_interval;
     double length_scale;
-    int cx1, cx2, cy;
+    int cx, cy1, cy2;
     int radius;
     double sd_ratio;
 };
 
 SideBySideParams compute_params(double Re, double sd_ratio, int steps = -1) {
     double u_inflow = 0.1;
-    int radius = NY / 10;
+    int radius = NY / 15;
     int D = 2 * radius;
     double length_scale = static_cast<double>(D);
     double nu = u_inflow * length_scale / Re;
     double tau = 0.5 + 3.0 * nu;
 
     int spacing = static_cast<int>(sd_ratio * D);
-    int cy = NY / 2;
-    int cx1 = NX / 4 - spacing / 2;
-    int cx2 = cx1 + spacing;
+    int cx = NX / 4;
+    int cy1 = NY / 2 - spacing / 2;
+    int cy2 = cy1 + spacing;
 
     int num_steps = (steps > 0) ? steps
         : std::max(4000, static_cast<int>(10.0 * NX / u_inflow));
     int save_interval = num_steps / 50;
 
     return {tau, u_inflow, num_steps, save_interval, length_scale,
-            cx1, cx2, cy, radius, sd_ratio};
+            cx, cy1, cy2, radius, sd_ratio};
 }
 
 int main(int argc, char* argv[]) {
@@ -91,8 +93,8 @@ int main(int argc, char* argv[]) {
     auto params = compute_params(Re, sd_ratio, steps);
     LBMCapabilities system;
 
-    place_cylinder(system, params.cx1, params.cy, params.radius);
-    place_cylinder(system, params.cx2, params.cy, params.radius);
+    place_cylinder(system, params.cx, params.cy1, params.radius);
+    place_cylinder(system, params.cx, params.cy2, params.radius);
 
     for (int n = 0; n < NX * NY; ++n) {
         double* f_node = &system.f[n * 9];
@@ -103,8 +105,8 @@ int main(int argc, char* argv[]) {
 
     std::mt19937 rng(42);
     std::uniform_real_distribution<double> pert_dist(-1e-4, 1e-4);
-    int x_start = std::min(params.cx1, params.cx2) + 5;
-    int x_end = std::min(NX, std::max(params.cx1, params.cx2) + 60);
+    int x_start = params.cx + 5;
+    int x_end = std::min(NX, params.cx + 60);
     for (int x = x_start; x < x_end; ++x) {
         for (int y = 0; y < NY; ++y) {
             int n = node_index(x, y);
@@ -133,7 +135,7 @@ int main(int argc, char* argv[]) {
               << "  tau = " << params.tau
               << "  steps = " << params.num_steps
               << "  D = " << 2 * params.radius
-              << "  spacing = " << (params.cx2 - params.cx1)
+              << "  spacing = " << (params.cy2 - params.cy1)
               << (g_use_les ? "  LES(Cs=" + std::to_string(g_cs) + ")" : "")
               << std::endl;
 

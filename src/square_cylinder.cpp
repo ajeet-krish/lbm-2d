@@ -73,12 +73,14 @@ int main(int argc, char* argv[]) {
 
     int half = params.side / 2;
 
-    // Square polygon (4 vertices, clockwise)
+    // Square polygon expanded by 0.5 to include boundary cells in ray-casting
+    // (point_in_polygon uses strict <, so interior-only points miss the outer shell)
+    double expand = 0.5;
     std::vector<std::pair<double,double>> sq_poly = {
-        {static_cast<double>(params.cx - half), static_cast<double>(params.cy - half)},
-        {static_cast<double>(params.cx + half), static_cast<double>(params.cy - half)},
-        {static_cast<double>(params.cx + half), static_cast<double>(params.cy + half)},
-        {static_cast<double>(params.cx - half), static_cast<double>(params.cy + half)}
+        {static_cast<double>(params.cx - half - expand), static_cast<double>(params.cy - half - expand)},
+        {static_cast<double>(params.cx + half + expand), static_cast<double>(params.cy - half - expand)},
+        {static_cast<double>(params.cx + half + expand), static_cast<double>(params.cy + half + expand)},
+        {static_cast<double>(params.cx - half - expand), static_cast<double>(params.cy + half + expand)}
     };
 
     place_polygon(system, sq_poly);

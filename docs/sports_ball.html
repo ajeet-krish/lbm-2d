@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="AK-Vortex: Sports-Ball Surface Roughness, dimpled cylinder drag reduction at low Reynolds number">
+  <title>Sports-Ball Roughness - AK-Vortex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+  <div class="sidebar">
+    <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-heading">Project</div>
+        <a href="index.html" class="nav-item">Home</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">External Aerodynamics</div>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+        <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+        <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+        <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Internal Flows</div>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="sports_ball.html" class="nav-item active">Sports-Ball Roughness</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Reference</div>
+        <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="main-content">
+
+    <h1>Sports-Ball Surface Roughness</h1>
+
+    <p class="section-intro">
+      A classic demonstration of how <strong>surface texture</strong>, not just
+      shape, controls drag. A golf ball flies farther than a smooth ball of the
+      same size because its dimples trip the boundary layer into a turbulent,
+      attached state that delays separation and shrinks the wake. This case
+      compares a <strong>smooth cylinder</strong> against a
+      <strong>dimpled cylinder</strong> (a ring of small bumps emulating
+      dimples/seams at coarse lattice resolution) at Re = 100.
+    </p>
+
+    <p class="section-intro">
+      Beyond sports equipment, the physics underpins <strong>riblet films</strong>
+      for drag reduction on aircraft and ships, <strong>turbulator strips</strong>
+      on wind-turbine blades, and the general principle that engineered
+      roughness can be beneficial when it delays separation. At low resolution
+      (DX = 1 lu), the dimples are intentionally crude -- this demonstrates the
+      concept, not a high-fidelity dimple CFD study.
+    </p>
+
+    <h2>Setup</h2>
+
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Grid</td>
+        <td>800 &times; 300</td>
+      </tr>
+      <tr>
+        <td>Cylinder diameter D</td>
+        <td>60 cells (NY/10)</td>
+      </tr>
+      <tr>
+        <td>Configuration</td>
+        <td>Smooth vs dimpled (16 bumps)</td>
+      </tr>
+      <tr>
+        <td>Bump size</td>
+        <td>3 &times; 2 cells (w &times; d)</td>
+      </tr>
+      <tr>
+        <td>Reynolds number</td>
+        <td>100</td>
+      </tr>
+      <tr>
+        <td>Inlet velocity</td>
+        <td>u<sub>inflow</sub> = 0.1 lu/ts</td>
+      </tr>
+      <tr>
+        <td>Tau (relaxation parameter)</td>
+        <td>0.68</td>
+      </tr>
+      <tr>
+        <td>Number of steps</td>
+        <td>20,000</td>
+      </tr>
+      <tr>
+        <td>Reference length</td>
+        <td>D = 60 cells</td>
+      </tr>
+      <tr>
+        <td>Collision</td>
+        <td>MRT (d'Humieres 2002)</td>
+      </tr>
+      <tr>
+        <td>Boundary condition</td>
+        <td>Bouzidi interpolated bounce-back</td>
+      </tr>
+      <tr>
+        <td>Lattice spacing / time step</td>
+        <td>&Delta;x = 1, &Delta;t = 1</td>
+      </tr>
+    </table>
+
+    <h2>Velocity Field</h2>
+
+    <p class="section-intro">
+      Use the tabs below to compare the <strong>smooth</strong> and
+      <strong>dimpled</strong> cylinders. The left side of the viewer shows the
+      velocity-magnitude contour field; the right side shows the corresponding
+      velocity-magnitude streamlines. Drag the slider handle to wipe between the
+      two.
+    </p>
+
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="caseTabs"></div>
+
+    <div class="comparison-slider" id="fieldSlider">
+      <img id="sliderImgBefore" src="" alt="Contour">
+      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+      <div class="slider-handle">
+        <div class="slider-btn"></div>
+      </div>
+      <div class="slider-label left">Contour</div>
+      <div class="slider-label right">Streamlines</div>
+    </div>
+
+    <h2>Validation</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Configuration</th>
+          <th>Re</th>
+          <th>Computed Cd</th>
+          <th>Wake</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Smooth cylinder</td>
+          <td>100</td>
+          <td>--</td>
+          <td>Baseline, wider wake</td>
+        </tr>
+        <tr>
+          <td>Dimpled cylinder</td>
+          <td>100</td>
+          <td>--</td>
+          <td>Delayed separation (expected)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      Expected trend (golf-ball analogy): the dimpled surface trips the boundary
+      layer, keeping flow attached longer and reducing Cd relative to the smooth
+      cylinder. At Re = 100 the effect is modest, but the mechanism is the same
+      one that makes a dimpled golf ball outperform a smooth one by ~50% in
+      flight distance. Values above populate from the simulation runs.
+    </div>
+
+    <h2>Discussion</h2>
+
+    <p class="section-intro">
+      This case extends the solver beyond smooth-body validation into
+      <strong>roughness-controlled separation</strong> -- a topic with direct
+      industrial relevance (turbulators on turbine blades, riblets on fuselages).
+      It also shows that at coarse lattice resolution, surface features can be
+      represented as discrete obstacle bumps, a useful technique for studying
+      patterned surfaces without sub-grid geometry.
+    </p>
+
+  </div>
+
+  <footer class="site-footer">
+    <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d"
+        target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/"
+        target="_blank">LinkedIn</a></p>
+  </footer>
+
+  <script src="assets/js/slider.js"></script>
+  <script>
+    const CASE_CONFIG = {
+      paramLabel: 'config',
+      cases: [
+        { id: 'smooth', label: 'Smooth' },
+        { id: 'dimpled', label: 'Dimpled' },
+      ],
+      data: {
+        smooth: { cd: '--' },
+        dimpled: { cd: '--' },
+      }
+    };
+
+    let currentId = 'smooth';
+
+    function imageUrl(id, type) {
+      return 'assets/images/sports_ball/re100_' + id + '_' + type + '.png';
+    }
+
+    function makePlaceholder(id, type) {
+      return 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
+        '<rect width="800" height="300" fill="#0d1117"/>' +
+        '<circle cx="200" cy="150" r="30" fill="none" stroke="#484f58" stroke-width="2"/>' +
+        '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+        'Sports-Ball ' + id + ' ' + type + '</text>' +
+        '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+        '(simulation running, placeholder)</text></svg>'
+      );
+    }
+
+    function updateImages(id) {
+      var before = document.getElementById('sliderImgBefore');
+      var after = document.getElementById('sliderImgAfter');
+      before.onerror = function () { this.src = makePlaceholder(id, 'contour'); };
+      after.onerror = function () { this.src = makePlaceholder(id, 'streamlines'); };
+      before.src = imageUrl(id, 'contour');
+      after.src = imageUrl(id, 'streamlines');
+    }
+
+    var rc = document.getElementById('caseTabs');
+    CASE_CONFIG.cases.forEach(function (c) {
+      var btn = document.createElement('button');
+      btn.className = 'teaser-link' + (c.id === currentId ? ' active' : '');
+      btn.textContent = c.label;
+      btn.style.fontSize = '0.7em';
+      btn.onclick = function () {
+        currentId = c.id;
+        document.querySelectorAll('#caseTabs .teaser-link').forEach(function (b) {
+          b.classList.toggle('active', b.textContent === c.label);
+        });
+        updateImages(currentId);
+      };
+      rc.appendChild(btn);
+    });
+
+    updateImages(currentId);
+
+    document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.body.classList.toggle('sidebar-open');
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="AK-Vortex: Multi-Stage Orifice Plate, staggered serpentine flow path for pressure drop validation">
+  <title>Orifice Plate - AK-Vortex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+
+  <div class="sidebar">
+    <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-heading">Project</div>
+        <a href="index.html" class="nav-item">Home</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">External Aerodynamics</div>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+        <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+        <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+        <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Internal Flows</div>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="orifice_plate.html" class="nav-item active">Orifice Plate</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Reference</div>
+        <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="main-content">
+
+    <h1>Orifice Plate: Single and Multi-Stage Pressure Drop</h1>
+
+    <p class="section-intro">
+      The orifice plate is a canonical internal flow benchmark for pressure
+      drop across a constriction. This case sweeps four configurations of
+      increasing complexity: a single plate with one centered opening, a single
+      plate with three evenly spaced openings, and two- and three-plate
+      staggered arrangements where the openings alternate between the upper and
+      lower channel to force a serpentine flow path.
+    </p>
+
+    <p class="section-intro">
+      These configurations have direct industrial applications in flow metering
+      (ISO 5167 orifice plates), labyrinth seals in turbomachinery, baffled
+      heat exchangers, and muffler/silencer systems. The multi-stage cases
+      provide a clear validation target: the total loss coefficient should
+      scale approximately as N times the single-plate loss, with additional
+      turning losses from the serpentine path.
+    </p>
+
+    <h2>Setup</h2>
+
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Grid</td>
+        <td>800 &times; 300</td>
+      </tr>
+      <tr>
+        <td>Configurations</td>
+        <td>1p1h, 1p3h, 2p, 3p</td>
+      </tr>
+      <tr>
+        <td>Plate thickness</td>
+        <td>2 cells</td>
+      </tr>
+      <tr>
+        <td>Hole width</td>
+        <td>37 cells (NY/8)</td>
+      </tr>
+      <tr>
+        <td>Reynolds number</td>
+        <td>100</td>
+      </tr>
+      <tr>
+        <td>Inlet velocity</td>
+        <td>u<sub>inflow</sub> = 0.1 lu/ts</td>
+      </tr>
+      <tr>
+        <td>Tau (relaxation parameter)</td>
+        <td>1.40</td>
+      </tr>
+      <tr>
+        <td>Number of steps</td>
+        <td>20,000</td>
+      </tr>
+      <tr>
+        <td>Reference length</td>
+        <td>H = NY = 300 cells (channel height)</td>
+      </tr>
+      <tr>
+        <td>Collision</td>
+        <td>MRT (d'Humieres 2002)</td>
+      </tr>
+      <tr>
+        <td>Boundary condition</td>
+        <td>Zou-He inlet, convective outlet, bounce-back plates</td>
+      </tr>
+      <tr>
+        <td>Lattice spacing / time step</td>
+        <td>&Delta;x = 1, &Delta;t = 1</td>
+      </tr>
+    </table>
+
+    <h2>Velocity Field</h2>
+
+    <p class="section-intro">
+      Use the tabs below to select the plate configuration: one plate with one
+      hole, one plate with three holes, or two/three staggered plates with a
+      single hole each at contrasting heights. The left side of the viewer shows
+      the velocity-magnitude contour field; the right side shows the
+      corresponding velocity-magnitude streamlines. Drag the slider handle to
+      wipe between the two.
+    </p>
+
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="plateTabs"></div>
+
+    <div class="comparison-slider" id="fieldSlider">
+      <img id="sliderImgBefore" src="" alt="Contour">
+      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+      <div class="slider-handle">
+        <div class="slider-btn"></div>
+      </div>
+      <div class="slider-label left">Contour</div>
+      <div class="slider-label right">Streamlines</div>
+    </div>
+
+    <h2>Validation</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Config</th>
+          <th>Re</th>
+          <th>Computed Fx</th>
+          <th>Loss Coeff K</th>
+          <th>Regime</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1 plate, 1 hole</td>
+          <td>100</td>
+          <td>14.5</td>
+          <td>154</td>
+          <td>Classic single orifice</td>
+        </tr>
+        <tr>
+          <td>1 plate, 3 holes</td>
+          <td>100</td>
+          <td>0.93</td>
+          <td>9.9</td>
+          <td>Perforated baffle (lowest loss)</td>
+        </tr>
+        <tr>
+          <td>2 plates</td>
+          <td>100</td>
+          <td>36.7</td>
+          <td>391</td>
+          <td>Single serpentine turn</td>
+        </tr>
+        <tr>
+          <td>3 plates</td>
+          <td>100</td>
+          <td>63.3</td>
+          <td>675</td>
+          <td>Double serpentine turn (highest loss)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      The loss coefficient K represents the dimensionless pressure drop:
+      K = 2 &times; Delta_p / (&rho; &times; u<sup>2</sup>).
+      For N plates with identical openings, the total loss should scale
+      as K_total &asymp; N &times; K_single (independent additivity) with
+      additional losses from the serpentine turning flow. At Re=100
+      (laminar regime), viscous losses dominate and K scales as 1/Re.
+      Reference: ISO 5167, Idelchik 2006 (Handbook of Hydraulic Resistance).
+    </div>
+
+    <h2>Discussion</h2>
+
+    <p class="section-intro">
+      The staggered orifice plate configuration exercises the solver's ability
+      to handle multiple internal solid boundaries with confined flow passages.
+      Unlike external aerodynamics cases where the flow can freely divert around
+      obstacles, the serpentine path forces the fluid through narrow gaps at
+      alternating elevations. This creates a complex flow pattern with:
+    </p>
+
+    <ul>
+      <li><strong>Sudden contraction/expansion</strong> at each plate entrance/exit</li>
+      <li><strong>180-degree turning flow</strong> between stages</li>
+      <li><strong>Confined jet impingement</strong> on the channel walls</li>
+      <li><strong>Recirculation zones</strong> in the blind corners behind each plate</li>
+    </ul>
+
+    <p class="section-intro">
+      The pressure drop across each stage depends on the contraction ratio
+      (hole area / channel area), the Reynolds number, and the inter-stage
+      spacing. For design purposes, the total loss is approximated as:
+    </p>
+
+    <div class="formula">
+      K_total = N &times; K_orifice + (N - 1) &times; K_turn
+    </div>
+
+    <p class="section-intro">
+      where K_orifice is the single-orifice loss coefficient and K_turn
+      accounts for the 180-degree turning loss between stages. At high Re,
+      K_turn dominates due to momentum-driven separation; at low Re (laminar),
+      viscous friction in the inter-stage passages adds significant losses.
+      This case serves as a validation bridge between simple orifice metering
+      (ISO 5167) and complex labyrinth seal flows in turbomachinery.
+    </p>
+
+  </div>
+
+  <footer class="site-footer">
+    <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d"
+        target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/"
+        target="_blank">LinkedIn</a></p>
+  </footer>
+
+  <script src="assets/js/slider.js"></script>
+  <script>
+    // Orifice plate tab configuration
+    const PLATE_CONFIGS = [
+      { id: '1p1h', label: '1 Plate / 1 Hole', re: 100 },
+      { id: '1p3h', label: '1 Plate / 3 Holes', re: 100 },
+      { id: '2p', label: '2 Plates', re: 100 },
+      { id: '3p', label: '3 Plates', re: 100 },
+    ];
+
+    const PLATE_DATA = {
+      '1p1h': { cd: null, cl: null, fx: null, step: null },
+      '1p3h': { cd: null, cl: null, fx: null, step: null },
+      '2p': { cd: null, cl: null, fx: null, step: null },
+      '3p': { cd: null, cl: null, fx: null, step: null },
+    };
+
+    let currentPlateId = '1p3h';
+
+    function plateImagePath(id, type) {
+      return 'assets/images/orifice_plate/' + id + '_' + type + '.png';
+    }
+
+    function renderPlateTabs() {
+      const container = document.getElementById('plateTabs');
+      if (!container) return;
+      container.innerHTML = PLATE_CONFIGS.map(c =>
+        '<button class="teaser-link' + (c.id === currentPlateId ? ' active' : '') +
+        '" data-id="' + c.id + '">' + c.label + '</button>'
+      ).join('');
+      container.querySelectorAll('.teaser-link').forEach(btn => {
+        btn.addEventListener('click', function () {
+          currentPlateId = this.dataset.id;
+          updatePlateDisplay();
+          renderPlateTabs();
+        });
+      });
+    }
+
+    function updatePlateDisplay() {
+      const d = PLATE_DATA[currentPlateId] || {};
+      document.getElementById('sliderImgBefore').src = plateImagePath(currentPlateId, 'contour');
+      document.getElementById('sliderImgAfter').src = plateImagePath(currentPlateId, 'streamlines');
+    }
+
+    renderPlateTabs();
+    updatePlateDisplay();
+
+    // Initialize slider
+    (function () {
+      const slider = document.querySelector('.comparison-slider');
+      if (!slider || typeof initSlider !== 'function') return;
+      const handle = slider.querySelector('.slider-handle');
+      const imgAfter = slider.querySelector('.img-after');
+      let dragging = false;
+
+      function slide(e) {
+        if (!dragging) return;
+        const rect = slider.getBoundingClientRect();
+        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const pct = (x / rect.width) * 100;
+        handle.style.left = pct + '%';
+        imgAfter.style.clipPath = 'inset(0 ' + (100 - pct) + '% 0 0)';
+      }
+
+      handle.addEventListener('mousedown', function (e) { dragging = true; e.preventDefault(); });
+      document.addEventListener('mousemove', slide);
+      document.addEventListener('mouseup', function () { dragging = false; });
+
+      // Touch support
+      handle.addEventListener('touchstart', function (e) { dragging = true; e.preventDefault(); });
+      document.addEventListener('touchmove', function (e) {
+        if (!dragging) return;
+        const touch = e.touches[0];
+        const rect = slider.getBoundingClientRect();
+        const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
+        const pct = (x / rect.width) * 100;
+        handle.style.left = pct + '%';
+        imgAfter.style.clipPath = 'inset(0 ' + (100 - pct) + '% 0 0)';
+      });
+      document.addEventListener('touchend', function () { dragging = false; });
+    })();
+
+    document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.body.classList.toggle('sidebar-open');
+    });
+  </script>
+</body>
+
+</html>

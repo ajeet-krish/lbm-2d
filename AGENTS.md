@@ -27,7 +27,7 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 - MRT collision operator (default, BGK fallback) with tuned rates
 - Bouzidi interpolated bounce-back for cylinders (q_cylinder) and polygons (q_polygon)
 - JSON output pipeline (meta.json, forces.jsonl, frame_*.json) with pressure field
-- 15 simulation cases: cylinder, cavity, step, ribs, urban (side+topdown), downwash, square cylinder, flat plate, nozzle, periodic hills, cylinder near wall, side-by-side cylinders, rotating cylinder
+- 15 simulation cases: cylinder, cavity, step, sports-ball, urban (side+topdown), downwash, square cylinder, flat plate, orifice plate, periodic hills, cylinder near wall, side-by-side cylinders, rotating cylinder
 - 12 Google Test suite tests, GitHub Actions CI
 - Postprocess.py with --split, --cmap, --strouhal, --video, obstacle overlay, pressure contour
 - Comparison slider (contour vs streamline), slider.js
@@ -47,13 +47,20 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 - Urban canyon enhanced: 3 buildings in row, wider domain (900x400), larger buildings (H=NY/4, W=1.5H)
 - Urban topdown enhanced: 3 buildings, larger (w=60, l=NY/2), wider spacing (2*w) for realistic street network
 - Downwash enhanced: buildings scaled up (h_tall=120, h_low=45, w=45), maintaining 2.67 height ratio
-- Cavity updated: JSON frame output added alongside VTK
+- Cavity: JSON frame output; website uses JSON slider (static PNG gallery removed), VTK still written for Paraview
 - Auto-LES: automatically enables Smagorinsky when tau < 0.55 (high Re stability)
 - Periodic hills: canonical LES benchmark (Moser/Kim/Moin 1993), sinusoidal hill profile
-- Cylinder near wall: ground effect study with variable wall gap (2,4,8 cells)
-- Side-by-side cylinders: interference study with variable S/D ratio (2,3,5)
+- Cylinder near wall: ground effect study, cylinder raised to wall gaps 10/20/40 cells (clear under-flow)
+- Side-by-side cylinders: TRANSVERSE arrangement (same x, offset in y), D=40 (NY/15) so S/D=5 fits domain, S/D=2,3,5
 - Rotating cylinder: Magnus effect with variable angular velocity (0.5,1.0,2.0 rad/ts)
-- Removed: ahmed body (2D limitation), airfoil (replaced by flat plate), tandem cylinders (redundant)
+- Ladd (1994) moving boundary: omega_lat = omega_user * u_inflow / R, f_bb correction term
+- Cylinder near wall: physical wall at y=0, force extraction filtered to cylinder only
+- Orifice plate: 4 configs (1p1h, 1p3h, 2p, 3p); u_inflow=0.025 + LES for single-hole jet stability
+- Periodic hills: hill height reduced to h_max=H/6 (was H/2) so the full sinusoidal profile (3 hill-valley periods) is visible; L=9H unchanged
+- Urban canyon: moved to External Aerodynamics nav. Side view = 4 cases (H/W 0.3/0.5/0.8 with 2 buildings, H/W 0.6 with 3 buildings). Top-down adds horizontal-orientation buildings (wind funneled along pedestrian, orifice-like) alongside vertical
+- Ribbed channel repurposed to sports-ball surface roughness (dimpled cylinder, drag reduction at low resolution)
+- Removed: nozzle (replaced by orifice plate), ahmed body (2D limitation), airfoil (replaced by flat plate), tandem cylinders (redundant)
+- Website: removed stats-bar from all case pages (data moved to setup/validation tables), "Field Viewer" renamed "Velocity Field" with explanatory text, deleted orphaned results.html/simulation.html
 
 ### Simulation Results (Phase 4)
 
@@ -66,17 +73,28 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 | Cavity | 100-1000 |, |, | Validated vs Ghia |
 | Step | 100-400 |, |, | Validated vs Armaly |
 | Ribs | 50-200 | 0.26-0.64 | 0 | Validated |
-| Nozzle (AR=0.25) | 100-1000 |, |, | Bernoulli validation |
+| Orifice plate | 100 | Fx 0.9 (1p3h) to 63 (3p) |, | ISO 5167 loss validation |
 | Periodic hills | 100-2800 |, |, | LES benchmark |
-| Cylinder near wall | 100 |, |, | Ground effect study |
-| Side-by-side | 100 |, |, | Interference study |
-| Rotating cylinder | 100 |, |, | Magnus effect |
+| Cylinder near wall | 100 | 2.56-2.75 | +0.40 to +1.42 | Ground effect (lift vs gap) |
+| Side-by-side | 100 | 2.57-2.82 | ~0 (amp 0.6-0.7) | Interference study |
+| Rotating cylinder | 100 | Cd~2-7, Cl~-1.5 to -7.4 |, | Magnus effect (Ladd) |
 | Urban canyon | 100 |, |, | Oke 1988 regimes |
 | Downwash | 100 |, |, | Hunt 1984 |
 
 ### Failed / Known Issues
-- Cylinder Re=1000: NaN divergence at tau=0.518 without LES (auto-LES fix applied)
-- Jeffery-Hamel: Removed (wedge apex singularity). Replaced by converging-diverging nozzle.
+- Cylinder Re=1000: NaN divergence at tau=0.518 (auto-LES applied but tau too low for this grid, needs coarser nu or finer grid)
+- Jeffery-Hamel: Removed (wedge apex singularity). Replaced by converging-diverging nozzle (now orifice plate).
+- Rotating cylinder: Ladd (1994) implemented, Cl~50-60% of Kutta-Joukowski prediction (viscous effects)
+- Cylinder near wall: Wall effect working, Cd~2.6 (vs 1.77 isolated), Cl +0.4 to +1.4 (upward, scales with gap)
+- Orifice 3p: Diverged at step 58500 at 60k steps with u_inflow=0.025+LES; rerun at 50k steps completed clean.
+
+### Pending Fixes (Phase 4)
+
+| Fix | Problem | Solution | Files | Priority |
+|-----|---------|----------|-------|----------|
+| Ladd moving boundary | Rotating cylinder has no tangential velocity (Cl~0) | Implement Ladd (1994) bounce-back with wall velocity: f_bb = f_opp - 2*w_i*rho*(e_i.u_wall)/c_s^2 | `lbm_types.hpp`, `lbm.hpp`, `rotating_cylinder.cpp` | **Completed** |
+| Cylinder near wall | Wall not affecting flow (Cd identical to isolated cylinder) | Add obstacle nodes at y=0 to create physical wall, filter force extraction to cylinder only | `cylinder_near_wall.cpp`, `lbm.hpp` | **Completed** |
+| Cylinder Re=1000 | Diverged at step 16k before auto-LES was available | Add auto-LES guard to cylinder entry point and rerun | `main.cpp` | High |
 
 ## Roadmap
 
@@ -157,17 +175,18 @@ AMRGrid
 **New cases implemented:**
 - Flat plate boundary layer: AoA sweep (-10 to 15 deg) + Re sweep (500-2000)
 - Square cylinder (ERCOFTAC 043): Cd/St validation
-- Converging-diverging nozzle: area ratio sweep, Bernoulli validation
+- Orifice plate: 4 configs (1p1h, 1p3h, 2p, 3p), ISO 5167 loss validation
 - Periodic hills: canonical LES benchmark (Moser/Kim/Moin 1993)
-- Cylinder near wall: ground effect study with variable wall gap
-- Side-by-side cylinders: interference study with variable S/D ratio
+- Cylinder near wall: ground effect study with variable wall gap (10/20/40 cells)
+- Side-by-side cylinders: transverse interference study with variable S/D ratio (2,3,5)
 - Rotating cylinder: Magnus effect with variable angular velocity
 
 **Removed cases:**
 - Ahmed body: 2D limitation, doesn't capture 3D slant vortices
 - Airfoil: replaced by flat plate as primary validation case
 - Tandem cylinders: redundant with urban topdown multi-body flow
-- Jeffery-Hamel: wedge apex singularity, replaced by CD nozzle
+- Jeffery-Hamel: wedge apex singularity, replaced by CD nozzle (now orifice plate)
+- Converging-diverging nozzle: replaced by orifice plate (single + multi-stage)
 
 **Re-runs with omega field:**
 - All existing cases regenerated with vorticity output
@@ -179,9 +198,11 @@ AMRGrid
 ### Phase 5: Website Updates
 
 - Add flat plate as PRIMARY validation case (first in navigation)
-- Add square cylinder, nozzle, periodic hills, cylinder near wall, side-by-side, rotating cylinder pages
+- Add square cylinder, orifice plate, periodic hills, cylinder near wall, side-by-side, rotating cylinder pages
 - Update sidebar navigation across all pages
 - Add teaser cards on index.html
+- Remove stats-bar across all case pages; rename "Field Viewer" -> "Velocity Field" with parameter + slider explanations
+- Remove nozzle section entirely (source, html, cmake, enum, nav, images, postprocess); delete orphaned results.html/simulation.html
 
 ## File Layout
 
@@ -204,9 +225,9 @@ lbm-2d/
     flat_plate.cpp             # Flat plate boundary layer (PRIMARY validation)
     cavity.cpp                 # Lid-driven cavity entry point
     step.cpp                   # Backward-facing step entry point
-    square_cylinder.cpp        # Square cylinder (ERCOFTAC 043), sharp-edge separation
-    nozzle.cpp                 # Converging-diverging nozzle, Bernoulli validation
-    ribs.cpp                   # Ribbed channel entry point
+    square_cylinder.cpp          # Square cylinder (ERCOFTAC 043), sharp-edge separation
+    orifice_plate.cpp            # Orifice plate (single + multi-stage, staggered)
+    sports_ball.cpp              # Sports-ball surface roughness (dimpled cylinder)
     urban_canyon.cpp           # Urban canyon (--mode side|topdown), 3 buildings
     downwash.cpp               # Building downwash entry point (scaled up buildings)
     periodic_hills.cpp         # Periodic hills (canonical LES benchmark)
@@ -230,9 +251,9 @@ lbm-2d/
     square_cylinder.html       # ERCOFTAC 043 (sharp-edge separation)
     cavity.html                # Lid-driven cavity
     step.html                  # Backward-facing step
-    ribs.html                  # Ribbed channel
-    nozzle.html                # CD nozzle (Bernoulli validation)
-    urban.html                 # Urban canyon (side + topdown + downwash)
+    sports_ball.html           # Sports-ball surface roughness (dimples, drag reduction)
+    orifice_plate.html           # Orifice plate (single + multi-stage)
+    urban.html                   # Urban canyon (side + topdown + downwash)
     periodic_hills.html        # Periodic hills (LES benchmark)
     cylinder_near_wall.html    # Cylinder near wall (ground effect)
     side_by_side.html          # Side-by-side cylinders (interference)

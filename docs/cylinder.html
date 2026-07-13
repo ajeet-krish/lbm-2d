@@ -1,232 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AK-Vortex: Cylinder Wake Simulation, Von Karman vortex street validation against Williamson 1988 and Tritton 1959">
+  <meta name="description"
+    content="AK-Vortex: Cylinder Wake Simulation, Von Karman vortex street validation against Williamson 1988 and Tritton 1959">
   <title>Cylinder Wake - AK-Vortex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+  <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
-<div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">
-      <div class="nav-heading">Project</div>
-      <a href="index.html" class="nav-item">Home</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">External Aerodynamics</div>
-      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
-      <a href="cylinder.html" class="nav-item active">Cylinder</a>
-      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
-      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
-      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
-      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Internal Flows</div>
-      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-      <a href="step.html" class="nav-item">Backward Step</a>
-      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
-      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
-      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Urban CFD</div>
-      <a href="urban.html" class="nav-item">Urban Canyon</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Reference</div>
-      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-      <a href="implementation.html" class="nav-item">Implementation</a>
-      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
-    </div>
-  </nav>
-</div>
-
-<div class="main-content">
-
-  <h1>Cylinder Wake: Laminar Vortex Shedding</h1>
-
-  <p class="section-intro">
-    Flow past a circular cylinder is the canonical external aerodynamics benchmark.
-    At low Reynolds numbers the wake is steady and symmetric; above Re &asymp; 60 the
-    von K&aacute;rm&aacute;n vortex street emerges with periodic vortex shedding.
-    This solver uses Bouzidi interpolated bounce-back for a smooth cylinder surface,
-    eliminating stair-step boundary artefacts.
-  </p>
-
-  <h2>Setup</h2>
-
-  <table>
-    <tr><th>Parameter</th><th>Value</th></tr>
-    <tr><td>Grid</td><td>800 &times; 300</td></tr>
-    <tr><td>Cylinder diameter D</td><td>60 cells (NY/5)</td></tr>
-    <tr><td>Reynolds number</td><td>20, 40, 100, 200</td></tr>
-    <tr><td>Inlet velocity</td><td>u<sub>inflow</sub> = 0.1 lu/ts</td></tr>
-    <tr><td>Collision</td><td>MRT (d'Humieres 2002)</td></tr>
-    <tr><td>Boundary condition</td><td>Bouzidi interpolated bounce-back</td></tr>
-    <tr><td>Lattice spacing / time step</td><td>&Delta;x = 1, &Delta;t = 1</td></tr>
-  </table>
-
-  <h2>Field Viewer</h2>
-
-  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
-
-  <div class="comparison-slider" id="fieldSlider">
-    <img id="sliderImgBefore" src="" alt="Contour">
-    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
-    <div class="slider-handle"><div class="slider-btn"></div></div>
-    <div class="slider-label left">Contour</div>
-    <div class="slider-label right">Streamlines</div>
+  <div class="sidebar">
+    <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-heading">Project</div>
+        <a href="index.html" class="nav-item">Home</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">External Aerodynamics</div>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <a href="cylinder.html" class="nav-item active">Cylinder</a>
+        <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+        <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+        <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+        <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Internal Flows</div>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Reference</div>
+        <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+      </div>
+    </nav>
   </div>
 
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
-    <div class="stat-item"><span class="num" id="statCd">--</span><span class="lbl">Mean Cd</span></div>
-    <div class="stat-item"><span class="num" id="statCl">--</span><span class="lbl">Cl amp</span></div>
-    <div class="stat-item"><span class="num" id="statSt">--</span><span class="lbl">Strouhal</span></div>
-    <div class="stat-item"><span class="num" id="statXr">--</span><span class="lbl">Xr/H</span></div>
+  <div class="main-content">
+
+    <h1>Cylinder Wake: Laminar Vortex Shedding</h1>
+
+    <p class="section-intro">
+      Flow past a circular cylinder is the canonical external aerodynamics benchmark.
+      At low Reynolds numbers the wake is steady and symmetric; above Re &asymp; 60 the
+      von K&aacute;rm&aacute;n vortex street emerges with periodic vortex shedding.
+      This solver uses Bouzidi interpolated bounce-back for a smooth cylinder surface,
+      eliminating stair-step boundary artefacts.
+    </p>
+
+    <h2>Setup</h2>
+
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Grid</td>
+        <td>800 &times; 300</td>
+      </tr>
+      <tr>
+        <td>Cylinder diameter D</td>
+        <td>60 cells (NY/5)</td>
+      </tr>
+      <tr>
+        <td>Reynolds number</td>
+        <td>20, 40, 100, 200</td>
+      </tr>
+      <tr>
+        <td>Inlet velocity</td>
+        <td>u<sub>inflow</sub> = 0.1 lu/ts</td>
+      </tr>
+      <tr>
+        <td>Tau (relaxation parameter)</td>
+        <td>Re=20: 1.40, Re=40: 0.95, Re=100: 0.68, Re=200: 0.59</td>
+      </tr>
+      <tr>
+        <td>Number of steps</td>
+        <td>80,000</td>
+      </tr>
+      <tr>
+        <td>Reference length</td>
+        <td>D = 60 cells</td>
+      </tr>
+      <tr>
+        <td>Collision</td>
+        <td>MRT (d'Humieres 2002)</td>
+      </tr>
+      <tr>
+        <td>Boundary condition</td>
+        <td>Bouzidi interpolated bounce-back</td>
+      </tr>
+      <tr>
+        <td>Lattice spacing / time step</td>
+        <td>&Delta;x = 1, &Delta;t = 1</td>
+      </tr>
+    </table>
+
+    <h2>Velocity Field</h2>
+
+    <p class="section-intro">
+      Use the tabs below to select a Reynolds number (Re = U&middot;D/&nu;, the
+      ratio of inertial to viscous forces, based on the cylinder diameter D).
+      The left side of the viewer shows the velocity-magnitude contour field;
+      the right side shows the corresponding velocity-magnitude streamlines.
+      Drag the slider handle to wipe between the two.
+    </p>
+
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
+
+    <div class="comparison-slider" id="fieldSlider">
+      <img id="sliderImgBefore" src="" alt="Contour">
+      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+      <div class="slider-handle">
+        <div class="slider-btn"></div>
+      </div>
+      <div class="slider-label left">Contour</div>
+      <div class="slider-label right">Streamlines</div>
+    </div>
+
+    <h2>Validation</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Re</th>
+          <th>Regime</th>
+          <th>Computed St</th>
+          <th>Williamson 1988</th>
+          <th>Computed Cd</th>
+          <th>Tritton 1959</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>20</td>
+          <td>Steady attached</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+          <td>~2.0</td>
+        </tr>
+        <tr>
+          <td>40</td>
+          <td>Steady recirculating</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+          <td>~1.5</td>
+        </tr>
+        <tr>
+          <td>100</td>
+          <td>Laminar shedding</td>
+          <td>--</td>
+          <td>0.164-0.172</td>
+          <td>--</td>
+          <td>~1.4</td>
+        </tr>
+        <tr>
+          <td>200</td>
+          <td>Laminar shedding</td>
+          <td>--</td>
+          <td>0.180-0.195</td>
+          <td>--</td>
+          <td>~1.3</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      Validation values will be populated from simulation results when runs complete.
+      Preliminary results with the new grid resolution and Bouzidi bounce-back show
+      improved agreement over the earlier stair-step BGK results.
+    </div>
+
+    <h2>Discussion</h2>
+
+    <p class="section-intro">
+      The cylinder case exercises the solver's ability to handle curved boundaries,
+      periodic vortex shedding, and time-varying forces. The Bouzidi interpolated
+      bounce-back replaces the stair-step approximation with a smooth boundary
+      representation, reducing the systematic Cd over-prediction common in
+      on-grid bounce-back methods.
+    </p>
+
+    <p class="section-intro">
+      Future comparison: Run the same geometry and Re range in SU2 with an
+      equivalent unstructured mesh to quantify the accuracy/compute trade-off
+      between LBM on Cartesian grids and FV on body-fitted meshes.
+    </p>
+
   </div>
 
-  <hr class="divider">
+  <footer class="site-footer">
+    <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d"
+        target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/"
+        target="_blank">LinkedIn</a></p>
+  </footer>
 
-  <h2>Validation</h2>
+  <script src="assets/js/slider.js"></script>
+  <script>
+    const CASE_CONFIG = {
+      paramLabel: 'Re',
+      reValues: [20, 40, 100, 200],
+      stats: {
+        20: { re: 20, cd: '--', cl: '--', st: '--', xr: '--' },
+        40: { re: 40, cd: '--', cl: '--', st: '--', xr: '--' },
+        100: { re: 100, cd: '1.88', cl: '0.43', st: '0.188', xr: '--' },
+        200: { re: 200, cd: '1.85', cl: '0.94', st: '0.220', xr: '--' },
+      }
+    };
 
-  <table>
-    <thead>
-      <tr><th>Re</th><th>Regime</th><th>Computed St</th><th>Williamson 1988</th><th>Computed Cd</th><th>Tritton 1959</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>20</td><td>Steady attached</td><td>--</td><td>--</td><td>--</td><td>~2.0</td></tr>
-      <tr><td>40</td><td>Steady recirculating</td><td>--</td><td>--</td><td>--</td><td>~1.5</td></tr>
-      <tr><td>100</td><td>Laminar shedding</td><td>--</td><td>0.164-0.172</td><td>--</td><td>~1.4</td></tr>
-      <tr><td>200</td><td>Laminar shedding</td><td>--</td><td>0.180-0.195</td><td>--</td><td>~1.3</td></tr>
-    </tbody>
-  </table>
+    let currentRe = CASE_CONFIG.reValues[0];
 
-  <div class="callout">
-    Validation values will be populated from simulation results when runs complete.
-    Preliminary results with the new grid resolution and Bouzidi bounce-back show
-    improved agreement over the earlier stair-step BGK results.
-  </div>
+    function imageUrl(re, type) {
+      return 'assets/images/cylinder/re' + re + '_' + type + '.png';
+    }
 
-  <hr class="divider">
+    function makePlaceholder(re, type) {
+      return 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
+        '<rect width="800" height="300" fill="#0d1117"/>' +
+        '<circle cx="200" cy="150" r="30" fill="none" stroke="#484f58" stroke-width="2"/>' +
+        '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+        'Cylinder Re=' + re + ' ' + type + '</text>' +
+        '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+        '(simulation running, placeholder)</text></svg>'
+      );
+    }
 
-  <h2>Discussion</h2>
+    function updateImages(re) {
+      var before = document.getElementById('sliderImgBefore');
+      var after = document.getElementById('sliderImgAfter');
+      before.onerror = function () { this.src = makePlaceholder(re, 'contour'); };
+      after.onerror = function () { this.src = makePlaceholder(re, 'streamlines'); };
+      before.src = imageUrl(re, 'contour');
+      after.src = imageUrl(re, 'streamlines');
+    }
 
-  <p class="section-intro">
-    The cylinder case exercises the solver's ability to handle curved boundaries,
-    periodic vortex shedding, and time-varying forces. The Bouzidi interpolated
-    bounce-back replaces the stair-step approximation with a smooth boundary
-    representation, reducing the systematic Cd over-prediction common in
-    on-grid bounce-back methods.
-  </p>
+    function updateStats(re) {
+      var s = CASE_CONFIG.stats[re];
+    }
 
-  <p class="section-intro">
-    Future comparison: Run the same geometry and Re range in SU2 with an
-    equivalent unstructured mesh to quantify the accuracy/compute trade-off
-    between LBM on Cartesian grids and FV on body-fitted meshes.
-  </p>
+    function switchRe(re) {
+      currentRe = re;
+      document.querySelectorAll('#reTabs .teaser-link').forEach(function (btn) {
+        var rm = btn.textContent.match(/\d+/);
+        var br = rm ? parseInt(rm[0]) : 0;
+        btn.classList.toggle('active', br === re);
+      });
+      updateImages(re);
+      updateStats(re);
+      setTimeout(function () {
+        var c = document.getElementById('fieldSlider');
+        var h = c.querySelector('.slider-handle');
+        var a = c.querySelector('.img-after');
+        if (h) h.style.left = '50%';
+        if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+      }, 200);
+    }
 
-</div>
+    var rc = document.getElementById('reTabs');
+    CASE_CONFIG.reValues.forEach(function (re) {
+      var btn = document.createElement('button');
+      btn.className = 'teaser-link' + (re === currentRe ? ' active' : '');
+      btn.textContent = CASE_CONFIG.paramLabel + ' = ' + re;
+      btn.style.fontSize = '0.7em';
+      btn.onclick = function () { switchRe(re); };
+      rc.appendChild(btn);
+    });
 
-<footer class="site-footer">
-  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
-</footer>
+    updateImages(currentRe);
+    updateStats(currentRe);
 
-<script src="assets/js/slider.js"></script>
-<script>
-const CASE_CONFIG = {
-  paramLabel: 'Re',
-  reValues: [20, 40, 100, 200],
-  stats: {
-    20:  { re: 20,  cd: '--',   cl: '--',   st: '--',   xr: '--' },
-    40:  { re: 40,  cd: '--',   cl: '--',   st: '--',   xr: '--' },
-    100: { re: 100, cd: '1.88', cl: '0.43', st: '0.188', xr: '--' },
-    200: { re: 200, cd: '1.85', cl: '0.94', st: '0.220', xr: '--' },
-  }
-};
-
-let currentRe = CASE_CONFIG.reValues[0];
-
-function imageUrl(re, type) {
-  return 'assets/images/cylinder/re' + re + '_' + type + '.png';
-}
-
-function makePlaceholder(re, type) {
-  return 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
-    '<rect width="800" height="300" fill="#0d1117"/>' +
-    '<circle cx="200" cy="150" r="30" fill="none" stroke="#484f58" stroke-width="2"/>' +
-    '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
-    'Cylinder Re=' + re + ' ' + type + '</text>' +
-    '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
-    '(simulation running, placeholder)</text></svg>'
-  );
-}
-
-function updateImages(re) {
-  var before = document.getElementById('sliderImgBefore');
-  var after = document.getElementById('sliderImgAfter');
-  before.onerror = function() { this.src = makePlaceholder(re, 'contour'); };
-  after.onerror = function() { this.src = makePlaceholder(re, 'streamlines'); };
-  before.src = imageUrl(re, 'contour');
-  after.src = imageUrl(re, 'streamlines');
-}
-
-function updateStats(re) {
-  var s = CASE_CONFIG.stats[re];
-  document.getElementById('statRe').textContent = s.re;
-  document.getElementById('statCd').textContent = s.cd;
-  document.getElementById('statCl').textContent = s.cl;
-  document.getElementById('statSt').textContent = s.st;
-  document.getElementById('statXr').textContent = s.xr;
-}
-
-function switchRe(re) {
-  currentRe = re;
-  document.querySelectorAll('#reTabs .teaser-link').forEach(function(btn) {
-    var rm = btn.textContent.match(/\d+/);
-    var br = rm ? parseInt(rm[0]) : 0;
-    btn.classList.toggle('active', br === re);
-  });
-  updateImages(re);
-  updateStats(re);
-  setTimeout(function() {
-    var c = document.getElementById('fieldSlider');
-    var h = c.querySelector('.slider-handle');
-    var a = c.querySelector('.img-after');
-    if (h) h.style.left = '50%';
-    if (a) a.style.clipPath = 'inset(0 50% 0 0)';
-  }, 200);
-}
-
-var rc = document.getElementById('reTabs');
-CASE_CONFIG.reValues.forEach(function(re) {
-  var btn = document.createElement('button');
-  btn.className = 'teaser-link' + (re === currentRe ? ' active' : '');
-  btn.textContent = CASE_CONFIG.paramLabel + ' = ' + re;
-  btn.style.fontSize = '0.7em';
-  btn.onclick = function() { switchRe(re); };
-  rc.appendChild(btn);
-});
-
-updateImages(currentRe);
-updateStats(currentRe);
-
-document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-  document.querySelector('.sidebar').classList.toggle('open');
-  document.body.classList.toggle('sidebar-open');
-});
-</script>
+    document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.body.classList.toggle('sidebar-open');
+    });
+  </script>
 
 </body>
+
 </html>

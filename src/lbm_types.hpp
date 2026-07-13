@@ -18,8 +18,9 @@ constexpr int NUM_DIRECTIONS = 9;
 
 // Simulation case type
 enum class CaseType { CYLINDER, CAVITY, STEP, RIBS, URBAN_CANYON, DOWNWASH,
-                      SQUARE_CYLINDER, NOZZLE, FLAT_PLATE,
-                      PERIODIC_HILLS, CYLINDER_NEAR_WALL, SIDE_BY_SIDE, ROTATING_CYLINDER };
+                      SQUARE_CYLINDER, FLAT_PLATE, SPORTS_BALL,
+                      PERIODIC_HILLS, CYLINDER_NEAR_WALL, SIDE_BY_SIDE,
+                      ROTATING_CYLINDER, ORIFICE_PLATE };
 
 // Collision operator type
 enum class CollisionType { MRT, BGK };
@@ -93,7 +94,24 @@ struct BounceBackGeometry {
     std::vector<std::pair<double,double>> poly_vertices;
     bool is_polygon = false;
 
+    // Moving boundary (Ladd 1994)
+    bool has_moving_wall = false;
+    double omega = 0.0;           // angular velocity (rad/lattice-time)
+    double rot_cx = 0.0, rot_cy = 0.0;  // rotation center
+
     bool is_valid() const { return radius > 0.0 || is_polygon; }
+
+    // Compute wall velocity at a point for rotating cylinder
+    // u_wall = omega * r_hat (tangential velocity)
+    void compute_wall_velocity(double px, double py,
+                               double& u_wall_x, double& u_wall_y) const {
+        if (!has_moving_wall) { u_wall_x = 0.0; u_wall_y = 0.0; return; }
+        double dx = px - rot_cx;
+        double dy = py - rot_cy;
+        // Tangential velocity: u = omega * (-dy, dx)
+        u_wall_x = -omega * dy;
+        u_wall_y =  omega * dx;
+    }
 
     // Compute normalized boundary distance q along direction i
     // from fluid node (xf, yf) toward the obstacle

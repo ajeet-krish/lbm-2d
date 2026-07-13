@@ -1,230 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AK-Vortex: Backward-Facing Step, Reattachment length validation against Armaly 1983">
+  <meta name="description"
+    content="AK-Vortex: Backward-Facing Step, Reattachment length validation against Armaly 1983">
   <title>Backward-Facing Step - AK-Vortex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+  <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
-<div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">
-      <div class="nav-heading">Project</div>
-      <a href="index.html" class="nav-item">Home</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">External Aerodynamics</div>
-      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
-      <a href="cylinder.html" class="nav-item">Cylinder</a>
-      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
-      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
-      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
-      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Internal Flows</div>
-      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-      <a href="step.html" class="nav-item active">Backward Step</a>
-      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
-      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
-      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Urban CFD</div>
-      <a href="urban.html" class="nav-item">Urban Canyon</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Reference</div>
-      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-      <a href="implementation.html" class="nav-item">Implementation</a>
-      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
-    </div>
-  </nav>
-</div>
-
-<div class="main-content">
-
-  <h1>Backward-Facing Step</h1>
-
-  <p class="section-intro">
-    The backward-facing step is a canonical internal flow benchmark that tests
-    a solver's ability to predict flow separation and reattachment. A parabolic
-    inlet profile enters a channel with a sudden expansion, creating a
-    recirculation zone behind the step. The primary metric is the dimensionless
-    reattachment length X<sub>r</sub>/H, where H is the step height.
-  </p>
-
-  <h2>Setup</h2>
-
-  <table>
-    <tr><th>Parameter</th><th>Value</th></tr>
-    <tr><td>Grid</td><td>800 &times; 300</td></tr>
-    <tr><td>Step height H</td><td>100 cells (NY/3)</td></tr>
-    <tr><td>Reynolds number Re<sub>H</sub></td><td>100, 200, 400</td></tr>
-    <tr><td>Inlet profile</td><td>Parabolic (u<sub>max</sub> = 0.1)</td></tr>
-    <tr><td>Collision</td><td>MRT</td></tr>
-    <tr><td>Reference</td><td>Armaly et al. 1983 (laser-Doppler velocimetry)</td></tr>
-  </table>
-
-  <h2>Field Viewer</h2>
-
-  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
-
-  <div class="comparison-slider" id="fieldSlider">
-    <img id="sliderImgBefore" src="" alt="Contour">
-    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
-    <div class="slider-handle"><div class="slider-btn"></div></div>
-    <div class="slider-label left">Contour</div>
-    <div class="slider-label right">Streamlines</div>
+  <div class="sidebar">
+    <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-heading">Project</div>
+        <a href="index.html" class="nav-item">Home</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">External Aerodynamics</div>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+        <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+        <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+        <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Internal Flows</div>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item active">Backward Step</a>
+        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Reference</div>
+        <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+      </div>
+    </nav>
   </div>
 
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
-    <div class="stat-item"><span class="num" id="statCd">--</span><span class="lbl">Mean Cd</span></div>
-    <div class="stat-item"><span class="num" id="statCl">--</span><span class="lbl">Cl amp</span></div>
-    <div class="stat-item"><span class="num" id="statSt">--</span><span class="lbl">Strouhal</span></div>
-    <div class="stat-item"><span class="num" id="statXr">--</span><span class="lbl">Xr/H</span></div>
+  <div class="main-content">
+
+    <h1>Backward-Facing Step</h1>
+
+    <p class="section-intro">
+      The backward-facing step is a canonical internal flow benchmark that tests
+      a solver's ability to predict flow separation and reattachment. A parabolic
+      inlet profile enters a channel with a sudden expansion, creating a
+      recirculation zone behind the step. The primary metric is the dimensionless
+      reattachment length X<sub>r</sub>/H, where H is the step height.
+    </p>
+
+    <h2>Setup</h2>
+
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Grid</td>
+        <td>800 &times; 300</td>
+      </tr>
+      <tr>
+        <td>Step height H</td>
+        <td>100 cells (NY/3)</td>
+      </tr>
+      <tr>
+        <td>Reynolds number Re<sub>H</sub></td>
+        <td>100, 200, 400</td>
+      </tr>
+      <tr>
+        <td>Inlet profile</td>
+        <td>Parabolic (u<sub>max</sub> = 0.1)</td>
+      </tr>
+      <tr>
+        <td>Tau (relaxation parameter)</td>
+        <td>Re=100: 1.30, Re=200: 0.90, Re=400: 0.70</td>
+      </tr>
+      <tr>
+        <td>Number of steps</td>
+        <td>180,000</td>
+      </tr>
+      <tr>
+        <td>Reference length</td>
+        <td>D<sub>h</sub> = 2 &times; H<sub>inlet</sub> = 398 cells</td>
+      </tr>
+      <tr>
+        <td>Collision</td>
+        <td>MRT</td>
+      </tr>
+      <tr>
+        <td>Reference</td>
+        <td>Armaly et al. 1983 (laser-Doppler velocimetry)</td>
+      </tr>
+    </table>
+
+    <h2>Velocity Field</h2>
+
+    <p class="section-intro">
+      Use the tabs below to select a Reynolds number (Re = U&middot;h/&nu;, based
+      on the step height h). The left side of the viewer shows the
+      velocity-magnitude contour field; the right side shows the corresponding
+      velocity-magnitude streamlines. Drag the slider handle to wipe between the
+      two.
+    </p>
+
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
+
+    <div class="comparison-slider" id="fieldSlider">
+      <img id="sliderImgBefore" src="" alt="Contour">
+      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+      <div class="slider-handle">
+        <div class="slider-btn"></div>
+      </div>
+      <div class="slider-label left">Contour</div>
+      <div class="slider-label right">Streamlines</div>
+    </div>
+
+    <h2>Validation</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Re<sub>H</sub></th>
+          <th>Computed Xr/H</th>
+          <th>Armaly 1983</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>100</td>
+          <td>--</td>
+          <td>~3.0</td>
+          <td>Steady, 2D</td>
+        </tr>
+        <tr>
+          <td>200</td>
+          <td>--</td>
+          <td>~6.0</td>
+          <td>Steady, 2D</td>
+        </tr>
+        <tr>
+          <td>400</td>
+          <td>--</td>
+          <td>~9.0</td>
+          <td>Near transition</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      Validation values will be populated from simulation results when runs complete.
+      The step case is run at 800&times;300 resolution (was 400&times;150) with MRT collision,
+      expected to improve reattachment length agreement with Armaly.
+    </div>
+
+    <h2>Discussion</h2>
+
+    <p class="section-intro">
+      The backward-facing step tests the solver's ability to capture separated shear
+      layers and reattachment. The key challenge is resolving the thin shear layer
+      emanating from the step corner. Grid resolution in the wall-normal direction
+      directly affects the reattachment length prediction. The MRT collision operator
+      provides better numerical stability in the recirculation zone compared to BGK.
+    </p>
+
+    <p class="section-intro">
+      Real-world relevance: Sudden expansions appear in heat exchanger manifolds,
+      combustion chambers, and flow-through chemical reactors. Accurate prediction
+      of reattachment length is critical for heat transfer and mixing calculations.
+    </p>
+
   </div>
 
-  <hr class="divider">
+  <footer class="site-footer">
+    <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d"
+        target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/"
+        target="_blank">LinkedIn</a></p>
+  </footer>
 
-  <h2>Validation</h2>
+  <script src="assets/js/slider.js"></script>
+  <script>
+    const CASE_CONFIG = {
+      paramLabel: 'Re',
+      reValues: [100, 200, 400],
+      stats: {
+        100: { re: 100, cd: '--', cl: '--', st: '--', xr: '2.37' },
+        200: { re: 200, cd: '--', cl: '--', st: '--', xr: '4.00' },
+        400: { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
+      }
+    };
 
-  <table>
-    <thead>
-      <tr><th>Re<sub>H</sub></th><th>Computed Xr/H</th><th>Armaly 1983</th><th>Notes</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>100</td><td>--</td><td>~3.0</td><td>Steady, 2D</td></tr>
-      <tr><td>200</td><td>--</td><td>~6.0</td><td>Steady, 2D</td></tr>
-      <tr><td>400</td><td>--</td><td>~9.0</td><td>Near transition</td></tr>
-    </tbody>
-  </table>
+    let currentRe = CASE_CONFIG.reValues[0];
 
-  <div class="callout">
-    Validation values will be populated from simulation results when runs complete.
-    The step case is run at 800&times;300 resolution (was 400&times;150) with MRT collision,
-    expected to improve reattachment length agreement with Armaly.
-  </div>
+    function imageUrl(re, type) {
+      return 'assets/images/step/re' + re + '_' + type + '.png';
+    }
 
-  <hr class="divider">
+    function makePlaceholder(re, type) {
+      return 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
+        '<rect width="800" height="300" fill="#0d1117"/>' +
+        '<rect x="0" y="0" width="200" height="100" fill="#161b22" stroke="#484f58" stroke-width="1"/>' +
+        '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+        'Step Re=' + re + ' ' + type + '</text>' +
+        '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+        '(simulation running, placeholder)</text></svg>'
+      );
+    }
 
-  <h2>Discussion</h2>
+    function updateImages(re) {
+      var before = document.getElementById('sliderImgBefore');
+      var after = document.getElementById('sliderImgAfter');
+      before.onerror = function () { this.src = makePlaceholder(re, 'contour'); };
+      after.onerror = function () { this.src = makePlaceholder(re, 'streamlines'); };
+      before.src = imageUrl(re, 'contour');
+      after.src = imageUrl(re, 'streamlines');
+    }
 
-  <p class="section-intro">
-    The backward-facing step tests the solver's ability to capture separated shear
-    layers and reattachment. The key challenge is resolving the thin shear layer
-    emanating from the step corner. Grid resolution in the wall-normal direction
-    directly affects the reattachment length prediction. The MRT collision operator
-    provides better numerical stability in the recirculation zone compared to BGK.
-  </p>
+    function updateStats(re) {
+      var s = CASE_CONFIG.stats[re];
+      if (!s) return;
+    }
 
-  <p class="section-intro">
-    Real-world relevance: Sudden expansions appear in heat exchanger manifolds,
-    combustion chambers, and flow-through chemical reactors. Accurate prediction
-    of reattachment length is critical for heat transfer and mixing calculations.
-  </p>
+    function switchRe(re) {
+      currentRe = re;
+      document.querySelectorAll('#reTabs .teaser-link').forEach(function (btn) {
+        var rm = btn.textContent.match(/\d+/);
+        var br = rm ? parseInt(rm[0]) : 0;
+        btn.classList.toggle('active', br === re);
+      });
+      updateImages(re);
+      updateStats(re);
+      setTimeout(function () {
+        var c = document.getElementById('fieldSlider');
+        var h = c.querySelector('.slider-handle');
+        var a = c.querySelector('.img-after');
+        if (h) h.style.left = '50%';
+        if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+      }, 200);
+    }
 
-</div>
+    var rc = document.getElementById('reTabs');
+    CASE_CONFIG.reValues.forEach(function (re) {
+      var btn = document.createElement('button');
+      btn.className = 'teaser-link' + (re === currentRe ? ' active' : '');
+      btn.textContent = CASE_CONFIG.paramLabel + ' = ' + re;
+      btn.style.fontSize = '0.7em';
+      btn.onclick = function () { switchRe(re); };
+      rc.appendChild(btn);
+    });
 
-<footer class="site-footer">
-  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
-</footer>
+    updateImages(currentRe);
+    updateStats(currentRe);
 
-<script src="assets/js/slider.js"></script>
-<script>
-const CASE_CONFIG = {
-  paramLabel: 'Re',
-  reValues: [100, 200, 400],
-  stats: {
-    100: { re: 100, cd: '--', cl: '--', st: '--', xr: '2.37' },
-    200: { re: 200, cd: '--', cl: '--', st: '--', xr: '4.00' },
-    400: { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
-  }
-};
-
-let currentRe = CASE_CONFIG.reValues[0];
-
-function imageUrl(re, type) {
-  return 'assets/images/step/re' + re + '_' + type + '.png';
-}
-
-function makePlaceholder(re, type) {
-  return 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
-    '<rect width="800" height="300" fill="#0d1117"/>' +
-    '<rect x="0" y="0" width="200" height="100" fill="#161b22" stroke="#484f58" stroke-width="1"/>' +
-    '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
-    'Step Re=' + re + ' ' + type + '</text>' +
-    '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
-    '(simulation running, placeholder)</text></svg>'
-  );
-}
-
-function updateImages(re) {
-  var before = document.getElementById('sliderImgBefore');
-  var after = document.getElementById('sliderImgAfter');
-  before.onerror = function() { this.src = makePlaceholder(re, 'contour'); };
-  after.onerror = function() { this.src = makePlaceholder(re, 'streamlines'); };
-  before.src = imageUrl(re, 'contour');
-  after.src = imageUrl(re, 'streamlines');
-}
-
-function updateStats(re) {
-  var s = CASE_CONFIG.stats[re];
-  if (!s) return;
-  document.getElementById('statRe').textContent = s.re;
-  document.getElementById('statCd').textContent = s.cd;
-  document.getElementById('statCl').textContent = s.cl;
-  document.getElementById('statSt').textContent = s.st;
-  document.getElementById('statXr').textContent = s.xr;
-}
-
-function switchRe(re) {
-  currentRe = re;
-  document.querySelectorAll('#reTabs .teaser-link').forEach(function(btn) {
-    var rm = btn.textContent.match(/\d+/);
-    var br = rm ? parseInt(rm[0]) : 0;
-    btn.classList.toggle('active', br === re);
-  });
-  updateImages(re);
-  updateStats(re);
-  setTimeout(function() {
-    var c = document.getElementById('fieldSlider');
-    var h = c.querySelector('.slider-handle');
-    var a = c.querySelector('.img-after');
-    if (h) h.style.left = '50%';
-    if (a) a.style.clipPath = 'inset(0 50% 0 0)';
-  }, 200);
-}
-
-var rc = document.getElementById('reTabs');
-CASE_CONFIG.reValues.forEach(function(re) {
-  var btn = document.createElement('button');
-  btn.className = 'teaser-link' + (re === currentRe ? ' active' : '');
-  btn.textContent = CASE_CONFIG.paramLabel + ' = ' + re;
-  btn.style.fontSize = '0.7em';
-  btn.onclick = function() { switchRe(re); };
-  rc.appendChild(btn);
-});
-
-updateImages(currentRe);
-updateStats(currentRe);
-
-document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-  document.querySelector('.sidebar').classList.toggle('open');
-  document.body.classList.toggle('sidebar-open');
-});
-</script>
+    document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.body.classList.toggle('sidebar-open');
+    });
+  </script>
 
 </body>
+
 </html>

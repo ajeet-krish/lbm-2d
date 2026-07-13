@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,155 +11,202 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+  <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
-<div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">
-      <div class="nav-heading">Project</div>
-      <a href="index.html" class="nav-item">Home</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">External Aerodynamics</div>
-      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
-      <a href="cylinder.html" class="nav-item">Cylinder</a>
-      <a href="square_cylinder.html" class="nav-item active">Square Cylinder</a>
-      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
-      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
-      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Internal Flows</div>
-      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-      <a href="step.html" class="nav-item">Backward Step</a>
-      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
-      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
-      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Urban CFD</div>
-      <a href="urban.html" class="nav-item">Urban Canyon</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Reference</div>
-      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-      <a href="implementation.html" class="nav-item">Implementation</a>
-      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
-    </div>
-  </nav>
-</div>
-
-<div class="main-content">
-
-  <h1>Square Cylinder: Sharp-Edge Separation (ERCOFTAC 043)</h1>
-
-  <p class="section-intro">
-    Flow past a square cylinder is the canonical sharp-edge separation benchmark
-    (ERCOFTAC case 043). Unlike the circular cylinder, separation is fixed at the
-    sharp corners, producing a wider wake and higher drag. This tests the solver's
-    ability to handle geometric singularities and fixed separation points.
-  </p>
-
-  <h2>Setup</h2>
-
-  <table>
-    <tr><th>Parameter</th><th>Value</th></tr>
-    <tr><td>Grid</td><td>800 &times; 300</td></tr>
-    <tr><td>Cylinder side D</td><td>60 cells (NY/5)</td></tr>
-    <tr><td>Reynolds number</td><td>200</td></tr>
-    <tr><td>Inlet velocity</td><td>u<sub>inflow</sub> = 0.1 lu/ts</td></tr>
-    <tr><td>Collision</td><td>MRT (d'Humieres 2002)</td></tr>
-    <tr><td>Boundary condition</td><td>Bounce-back (sharp corners)</td></tr>
-    <tr><td>Lattice spacing / time step</td><td>&Delta;x = 1, &Delta;t = 1</td></tr>
-  </table>
-
-  <h2>Field Viewer</h2>
-
-  <div class="comparison-slider" id="fieldSlider">
-    <img id="sliderImgBefore" src="" alt="Contour">
-    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
-    <div class="slider-handle"><div class="slider-btn"></div></div>
-    <div class="slider-label left">Contour</div>
-    <div class="slider-label right">Streamlines</div>
+  <div class="sidebar">
+    <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-heading">Project</div>
+        <a href="index.html" class="nav-item">Home</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">External Aerodynamics</div>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="square_cylinder.html" class="nav-item active">Square Cylinder</a>
+        <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+        <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+        <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Internal Flows</div>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Reference</div>
+        <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+      </div>
+    </nav>
   </div>
 
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-item"><span class="num" id="statRe">200</span><span class="lbl">Re</span></div>
-    <div class="stat-item"><span class="num" id="statCd">--</span><span class="lbl">Mean Cd</span></div>
-    <div class="stat-item"><span class="num" id="statCl">--</span><span class="lbl">Cl amp</span></div>
-    <div class="stat-item"><span class="num" id="statSt">--</span><span class="lbl">Strouhal</span></div>
+  <div class="main-content">
+
+    <h1>Square Cylinder: Sharp-Edge Separation (ERCOFTAC 043)</h1>
+
+    <p class="section-intro">
+      Flow past a square cylinder is the canonical sharp-edge separation benchmark
+      (ERCOFTAC case 043). Unlike the circular cylinder, separation is fixed at the
+      sharp corners, producing a wider wake and higher drag. This tests the solver's
+      ability to handle geometric singularities and fixed separation points.
+    </p>
+
+    <h2>Setup</h2>
+
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Grid</td>
+        <td>800 &times; 300</td>
+      </tr>
+      <tr>
+        <td>Cylinder side D</td>
+        <td>30 cells (NY/10)</td>
+      </tr>
+      <tr>
+        <td>Reynolds number</td>
+        <td>200</td>
+      </tr>
+      <tr>
+        <td>Inlet velocity</td>
+        <td>u<sub>inflow</sub> = 0.1 lu/ts</td>
+      </tr>
+      <tr>
+        <td>Tau (relaxation parameter)</td>
+        <td>0.55</td>
+      </tr>
+      <tr>
+        <td>Number of steps</td>
+        <td>80,000</td>
+      </tr>
+      <tr>
+        <td>Reference length</td>
+        <td>D = 30 cells (side length)</td>
+      </tr>
+      <tr>
+        <td>Collision</td>
+        <td>MRT (d'Humieres 2002)</td>
+      </tr>
+      <tr>
+        <td>Boundary condition</td>
+        <td>Bounce-back (sharp corners)</td>
+      </tr>
+      <tr>
+        <td>Lattice spacing / time step</td>
+        <td>&Delta;x = 1, &Delta;t = 1</td>
+      </tr>
+    </table>
+
+    <h2>Velocity Field</h2>
+
+    <p class="section-intro">
+      This case is run at a single Reynolds number (Re = 200, based on the square
+      side length). The left side of the viewer shows the velocity-magnitude
+      contour field; the right side shows the corresponding velocity-magnitude
+      streamlines. Drag the slider handle to wipe between the two.
+    </p>
+
+    <div class="comparison-slider" id="fieldSlider">
+      <img id="sliderImgBefore" src="" alt="Contour">
+      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+      <div class="slider-handle">
+        <div class="slider-btn"></div>
+      </div>
+      <div class="slider-label left">Contour</div>
+      <div class="slider-label right">Streamlines</div>
+    </div>
+
+    <h2>Validation</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Re</th>
+          <th>Computed Cd</th>
+          <th>ERCOFTAC Cd</th>
+          <th>Computed St</th>
+          <th>ERCOFTAC St</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>200</td>
+          <td>--</td>
+          <td>~2.2</td>
+          <td>--</td>
+          <td>~0.15</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      The square cylinder has higher Cd than the circular cylinder at the same Re
+      due to the fixed separation at the sharp leading edges. The wider wake
+      produces stronger vortex shedding and higher pressure drag.
+    </div>
+
+    <h2>Discussion</h2>
+
+    <p class="section-intro">
+      The square cylinder exercises the solver's handling of: (1) sharp geometric
+      corners that fix the separation point, (2) bluff-body wake dynamics, and
+      (3) periodic vortex shedding at moderate Re. Unlike the circular cylinder
+      where separation moves with Re, the square cylinder separation is geometrically
+      locked, providing a more predictable benchmark.
+    </p>
+
   </div>
 
-  <hr class="divider">
+  <footer class="site-footer">
+    <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d"
+        target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/"
+        target="_blank">LinkedIn</a></p>
+  </footer>
 
-  <h2>Validation</h2>
+  <script src="assets/js/slider.js"></script>
+  <script>
+    var imageUrl = function (type) {
+      return 'assets/images/square_cylinder/re200_' + type + '.png';
+    };
 
-  <table>
-    <thead>
-      <tr><th>Re</th><th>Computed Cd</th><th>ERCOFTAC Cd</th><th>Computed St</th><th>ERCOFTAC St</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>200</td><td>--</td><td>~2.2</td><td>--</td><td>~0.15</td></tr>
-    </tbody>
-  </table>
+    function makePlaceholder(type) {
+      return 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
+        '<rect width="800" height="300" fill="#0d1117"/>' +
+        '<rect x="180" y="120" width="60" height="60" fill="none" stroke="#484f58" stroke-width="2"/>' +
+        '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+        'Square Cylinder Re=200 ' + type + '</text>' +
+        '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+        '(simulation running, placeholder)</text></svg>'
+      );
+    }
 
-  <div class="callout">
-    The square cylinder has higher Cd than the circular cylinder at the same Re
-    due to the fixed separation at the sharp leading edges. The wider wake
-    produces stronger vortex shedding and higher pressure drag.
-  </div>
+    var before = document.getElementById('sliderImgBefore');
+    var after = document.getElementById('sliderImgAfter');
+    before.onerror = function () { this.src = makePlaceholder('contour'); };
+    after.onerror = function () { this.src = makePlaceholder('streamlines'); };
+    before.src = imageUrl('contour');
+    after.src = imageUrl('streamlines');
 
-  <hr class="divider">
-
-  <h2>Discussion</h2>
-
-  <p class="section-intro">
-    The square cylinder exercises the solver's handling of: (1) sharp geometric
-    corners that fix the separation point, (2) bluff-body wake dynamics, and
-    (3) periodic vortex shedding at moderate Re. Unlike the circular cylinder
-    where separation moves with Re, the square cylinder separation is geometrically
-    locked, providing a more predictable benchmark.
-  </p>
-
-</div>
-
-<footer class="site-footer">
-  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
-</footer>
-
-<script src="assets/js/slider.js"></script>
-<script>
-var imageUrl = function(type) {
-  return 'assets/images/square_cylinder/re200_' + type + '.png';
-};
-
-function makePlaceholder(type) {
-  return 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
-    '<rect width="800" height="300" fill="#0d1117"/>' +
-    '<rect x="180" y="120" width="60" height="60" fill="none" stroke="#484f58" stroke-width="2"/>' +
-    '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
-    'Square Cylinder Re=200 ' + type + '</text>' +
-    '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
-    '(simulation running, placeholder)</text></svg>'
-  );
-}
-
-var before = document.getElementById('sliderImgBefore');
-var after = document.getElementById('sliderImgAfter');
-before.onerror = function() { this.src = makePlaceholder('contour'); };
-after.onerror = function() { this.src = makePlaceholder('streamlines'); };
-before.src = imageUrl('contour');
-after.src = imageUrl('streamlines');
-
-document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-  document.querySelector('.sidebar').classList.toggle('open');
-  document.body.classList.toggle('sidebar-open');
-});
-</script>
+    document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.body.classList.toggle('sidebar-open');
+    });
+  </script>
 
 </body>
+
 </html>

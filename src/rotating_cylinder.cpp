@@ -7,7 +7,7 @@
 #include <random>
 
 // ==========================================================================
-// LBM-2D: Rotating Cylinder (Magnus Effect)
+// AK-Vortex: Rotating Cylinder (Magnus Effect)
 // ==========================================================================
 // Usage:
 //   ./build/LBM_RotatingCylinder 100 1.0     (Re=100, omega=1.0)
@@ -18,20 +18,14 @@
 // creates an asymmetric velocity distribution (Bernoulli), generating
 // lift perpendicular to the flow (Magnus effect).
 //
-// The rotating cylinder is the simplest demonstration of lift generation
-// without an airfoil shape. It's relevant for:
-//   - Flettner rotors (ship propulsion)
-//   - Sports ball aerodynamics (baseball, cricket, tennis)
-//   - Wind turbine concepts
-//
-// Boundary condition: interpolated bounce-back with tangential velocity
+// Boundary condition: Ladd (1994) moving boundary with tangential velocity
 // on the cylinder surface to simulate rotation.
 //
 // Parameters:
 //   Re = u_inflow * D / nu,  D = 2 * NY/10 = 60
-//   omega = angular velocity (rad/lattice-time)
-//   Surface velocity at angle theta: u_theta = omega * R
-//   Spin ratio: S = omega * R / u_inflow
+//   omega = spin ratio (dimensionless, S = u_surface / u_inflow)
+//   Lattice angular velocity: omega_lat = omega * u_inflow / R
+//   Surface velocity at angle theta: u_theta = omega_lat * R
 //
 // The lift coefficient for a rotating cylinder in inviscid flow:
 //   Cl = 2 * pi * S (Kutta-Joukowski theorem, upper bound)
@@ -58,7 +52,8 @@ RotatingParams compute_params(double Re, double omega, int steps = -1) {
 
     int cx_cyl = NX / 4;
     int cy_cyl = NY / 2;
-    double spin_ratio = omega * radius / u_inflow;
+    // omega is the dimensionless spin ratio S = u_surface / u_inflow
+    double spin_ratio = omega;
 
     int num_steps = (steps > 0) ? steps
         : std::max(4000, static_cast<int>(10.0 * NX / u_inflow));
@@ -70,8 +65,9 @@ RotatingParams compute_params(double Re, double omega, int steps = -1) {
 
 int main(int argc, char* argv[]) {
     std::cout << "==============================================" << std::endl;
-    std::cout << " LBM-2D: Rotating Cylinder (Magnus Effect)" << std::endl;
+    std::cout << " AK-Vortex: Rotating Cylinder (Magnus Effect)" << std::endl;
     std::cout << " D2Q9 | MRT | OpenMP | Cache-Optimized" << std::endl;
+    std::cout << " Ladd (1994) Moving Boundary" << std::endl;
     std::cout << "==============================================" << std::endl;
 
     double Re = 100.0;
@@ -98,6 +94,20 @@ int main(int argc, char* argv[]) {
 
     place_cylinder(system, params.cx_cyl, params.cy_cyl, params.radius);
 
+    // Configure Ladd moving boundary
+    // omega is spin ratio (user input), convert to lattice angular velocity
+    // omega_lat = omega * u_inflow / R  (so spin_ratio = omega * R / u_inflow = omega)
+    system.bb_geom.has_moving_wall = true;
+    system.bb_geom.omega = params.omega * params.u_inflow / params.radius;
+    system.bb_geom.rot_cx = static_cast<double>(params.cx_cyl);
+    system.bb_geom.rot_cy = static_cast<double>(params.cy_cyl);
+
+    // Auto-LES for high Re
+    if (params.tau < 0.55 && !g_use_les) {
+        g_use_les = true;
+        std::cout << "  Auto-LES: tau=" << params.tau << " < 0.55, enabling Smagorinsky" << std::endl;
+    }
+
     for (int n = 0; n < NX * NY; ++n) {
         double* f_node = &system.f[n * 9];
         for (int i = 0; i < 9; ++i) {
@@ -105,6 +115,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // Small asymmetric perturbation to break symmetry and seed vortex shedding
     std::mt19937 rng(42);
     std::uniform_real_distribution<double> pert_dist(-1e-4, 1e-4);
     for (int x = params.cx_cyl + 5; x < std::min(NX, params.cx_cyl + 60); ++x) {
@@ -135,7 +146,12 @@ int main(int argc, char* argv[]) {
               << "  tau = " << params.tau
               << "  steps = " << params.num_steps
               << "  D = " << 2 * params.radius
+              << "  Ladd moving boundary"
               << (g_use_les ? "  LES(Cs=" + std::to_string(g_cs) + ")" : "")
+              << std::endl;
+
+    std::cout << "  Lattice omega = " << system.bb_geom.omega
+              << "  Actual S = " << (system.bb_geom.omega * params.radius / params.u_inflow)
               << std::endl;
 
     for (int step = 0; step <= params.num_steps; ++step) {

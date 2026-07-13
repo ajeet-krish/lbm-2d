@@ -1,278 +1,380 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="AK-Vortex: Flat Plate Boundary Layer, PRIMARY validation case with Blasius solution comparison">
+  <meta name="description"
+    content="AK-Vortex: Flat Plate Boundary Layer, PRIMARY validation case with Blasius solution comparison">
   <title>Flat Plate Boundary Layer - AK-Vortex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+  <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
-<div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">
-      <div class="nav-heading">External Aerodynamics</div>
-      <a href="flat_plate.html" class="nav-item active">Flat Plate</a>
-      <a href="cylinder.html" class="nav-item">Cylinder</a>
-      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
-      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
-      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
-      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Internal Flows</div>
-      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-      <a href="step.html" class="nav-item">Backward Step</a>
-      <a href="ribs.html" class="nav-item">Ribbed Channel</a>
-      <a href="nozzle.html" class="nav-item">CD Nozzle</a>
-      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Urban CFD</div>
-      <a href="urban.html" class="nav-item">Urban Canyon</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Reference</div>
-      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-      <a href="implementation.html" class="nav-item">Implementation</a>
-      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
-    </div>
-  </nav>
-</div>
-
-<div class="main-content">
-
-  <h1>Flat Plate Boundary Layer: Primary Validation</h1>
-
-  <p class="section-intro">
-    The PRIMARY validation case for the AK-Vortex solver. Laminar boundary layer
-    over a flat plate, compared against the Blasius similarity solution.
-    AoA sweep (-10 to 15 deg) and Re sweep (500--2000) for drag polar and
-    boundary layer profiles. This case directly validates the viscous stress
-    formulation and wall treatment in the MRT collision operator.
-  </p>
-
-  <h2>Setup</h2>
-
-  <table>
-    <tr><th>Parameter</th><th>Value</th></tr>
-    <tr><td>Grid</td><td>800 &times; 300</td></tr>
-    <tr><td>Chord length</td><td>NY/2 + 5 cells</td></tr>
-    <tr><td>Reynolds number (AoA sweep)</td><td>1000</td></tr>
-    <tr><td>Reynolds number (Re sweep)</td><td>500, 1000, 2000</td></tr>
-    <tr><td>Angle of attack sweep</td><td>-10, -5, 0, 5, 10, 15 deg</td></tr>
-    <tr><td>Inlet velocity</td><td>u<sub>inflow</sub> = 0.1 lu/ts</td></tr>
-    <tr><td>Collision</td><td>MRT (d'Humieres 2002)</td></tr>
-    <tr><td>Boundary condition</td><td>Bouzidi interpolated bounce-back</td></tr>
-    <tr><td>Lattice spacing / time step</td><td>&Delta;x = 1, &Delta;t = 1</td></tr>
-  </table>
-
-  <h2>AoA Sweep: Field Viewer (Re=1000)</h2>
-
-  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="aoaTabs"></div>
-
-  <div class="comparison-slider" id="fieldSlider">
-    <img id="sliderImgBefore" src="" alt="Contour">
-    <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
-    <div class="slider-handle"><div class="slider-btn"></div></div>
-    <div class="slider-label left">Contour</div>
-    <div class="slider-label right">Streamlines</div>
+  <div class="sidebar">
+    <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-heading">External Aerodynamics</div>
+        <a href="flat_plate.html" class="nav-item active">Flat Plate</a>
+        <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+        <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+        <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+        <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Internal Flows</div>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Reference</div>
+        <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+      </div>
+    </nav>
   </div>
 
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-item"><span class="num" id="statRe">--</span><span class="lbl">Re</span></div>
-    <div class="stat-item"><span class="num" id="statAoA">--</span><span class="lbl">AoA (deg)</span></div>
-    <div class="stat-item"><span class="num" id="statCd">--</span><span class="lbl">Cd</span></div>
-    <div class="stat-item"><span class="num" id="statCl">--</span><span class="lbl">Cl</span></div>
-    <div class="stat-item"><span class="num" id="statBL">--</span><span class="lbl">BL Type</span></div>
+  <div class="main-content">
+
+    <h1>Flat Plate Boundary Layer: Primary Validation</h1>
+
+    <p class="section-intro">
+      The PRIMARY validation case for the AK-Vortex solver. Laminar boundary layer
+      over a flat plate, compared against the Blasius similarity solution.
+      AoA sweep (-10 to 15 deg) and Re sweep (500--2000) for drag polar and
+      boundary layer profiles. This case directly validates the viscous stress
+      formulation and wall treatment in the MRT collision operator.
+    </p>
+
+    <h2>Setup</h2>
+
+    <table>
+      <tr>
+        <th>Parameter</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Grid</td>
+        <td>800 &times; 300</td>
+      </tr>
+      <tr>
+        <td>Chord length</td>
+        <td>NY/2 + 5 cells</td>
+      </tr>
+      <tr>
+        <td>Reynolds number (AoA sweep)</td>
+        <td>1000</td>
+      </tr>
+      <tr>
+        <td>Reynolds number (Re sweep)</td>
+        <td>500, 1000, 2000</td>
+      </tr>
+      <tr>
+        <td>Angle of attack sweep</td>
+        <td>-10, -5, 0, 5, 10, 15 deg</td>
+      </tr>
+      <tr>
+        <td>Inlet velocity</td>
+        <td>u<sub>inflow</sub> = 0.1 lu/ts</td>
+      </tr>
+      <tr>
+        <td>Tau (relaxation parameter)</td>
+        <td>Re=500: 0.59, Re=1000: 0.55, Re=2000: 0.52</td>
+      </tr>
+      <tr>
+        <td>Number of steps</td>
+        <td>80,000</td>
+      </tr>
+      <tr>
+        <td>Reference length</td>
+        <td>Chord = 155 cells (NY/2 + 5)</td>
+      </tr>
+      <tr>
+        <td>Collision</td>
+        <td>MRT (d'Humieres 2002)</td>
+      </tr>
+      <tr>
+        <td>Boundary condition</td>
+        <td>Bouzidi interpolated bounce-back</td>
+      </tr>
+      <tr>
+        <td>Lattice spacing / time step</td>
+        <td>&Delta;x = 1, &Delta;t = 1</td>
+      </tr>
+    </table>
+
+    <h2>AoA Sweep: Velocity Field (Re=1000)</h2>
+
+    <p class="section-intro">
+      Use the tabs below to select the angle of attack (AoA), the inclination of
+      the plate relative to the free stream, at a fixed Re = 1000. The left side
+      of the viewer shows the velocity-magnitude contour field; the right side
+      shows the corresponding velocity-magnitude streamlines. Drag the slider
+      handle to wipe between the two.
+    </p>
+
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="aoaTabs"></div>
+
+    <div class="comparison-slider" id="fieldSlider">
+      <img id="sliderImgBefore" src="" alt="Contour">
+      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+      <div class="slider-handle">
+        <div class="slider-btn"></div>
+      </div>
+      <div class="slider-label left">Contour</div>
+      <div class="slider-label right">Streamlines</div>
+    </div>
+
+    <h2>AoA Sweep: Validation (Re=1000)</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>AoA (deg)</th>
+          <th>Regime</th>
+          <th>Computed Cd</th>
+          <th>Computed Cl</th>
+          <th>Blasius Cd (AoA=0)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>-10</td>
+          <td>Incidence, pressure side</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td>-5</td>
+          <td>Small incidence</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>Blasius boundary layer</td>
+          <td>--</td>
+          <td>--</td>
+          <td>1.328/&#8730;Re<sub>L</sub></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Small incidence</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td>Incidence, suction side</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td>15</td>
+          <td>Strong incidence, possible separation</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Re Sweep: Boundary Layer at AoA=0</h2>
+
+    <p class="section-intro">
+      Boundary layer development at zero angle of attack for Reynolds numbers
+      500, 1000, and 2000. The displacement thickness and momentum thickness
+      are compared against the Blasius similarity solution. The laminar
+      boundary layer thickness grows as &delta; ~ x<sup>1/2</sup>.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Re</th>
+          <th>Regime</th>
+          <th>Computed Cd</th>
+          <th>Blasius Cd</th>
+          <th>BL Thickness Trend</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>500</td>
+          <td>Low Re laminar</td>
+          <td>--</td>
+          <td>--</td>
+          <td>Thicker BL, higher skin friction</td>
+        </tr>
+        <tr>
+          <td>1000</td>
+          <td>Reference Re</td>
+          <td>--</td>
+          <td>--</td>
+          <td>Baseline for comparison</td>
+        </tr>
+        <tr>
+          <td>2000</td>
+          <td>Higher Re laminar</td>
+          <td>--</td>
+          <td>--</td>
+          <td>Thinner BL, lower skin friction</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      The Blasius solution gives C<sub>f</sub> = 1.328/&#8730;Re<sub>x</sub> for a
+      laminar flat plate boundary layer. This is the primary benchmark for validating
+      the solver's viscous stress computation. Drag polar (Cd vs AoA) will be
+      compared against thin airfoil theory at small angles.
+    </div>
+
+    <h2>Discussion</h2>
+
+    <p class="section-intro">
+      The flat plate boundary layer is the most fundamental viscous flow
+      validation case. It exercises the solver's core capabilities: accurate
+      viscous stress computation, proper wall boundary conditions, and correct
+      momentum transport in the boundary layer. The Blasius similarity solution
+      provides an exact reference for the laminar case.
+    </p>
+
+    <p class="section-intro">
+      At AoA=0, the boundary layer grows from the leading edge as
+      &delta;(x) ~ &#8730;(&nu;x/U<sub>&infin;</sub>), producing the characteristic
+      parabolic profile. The drag coefficient decreases with increasing Re as
+      C<sub>d</sub> ~ 1/&#8730;Re. At non-zero AoA, the pressure gradient modifies
+      the boundary layer development, with favorable gradients on the suction side
+      (positive AoA) and adverse gradients that can lead to separation at large
+      incidence angles.
+    </p>
+
+    <p class="section-intro">
+      The AoA sweep generates a drag polar (Cd vs AoA) that can be compared
+      against thin airfoil theory predictions for small angles. This validates
+      both the viscous and inviscid aspects of the LBM formulation. The Re
+      sweep confirms that the solver correctly captures the Reynolds number
+      scaling of boundary layer properties.
+    </p>
+
   </div>
 
-  <hr class="divider">
+  <footer class="site-footer">
+    <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d"
+        target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/"
+        target="_blank">LinkedIn</a></p>
+  </footer>
 
-  <h2>AoA Sweep: Validation (Re=1000)</h2>
+  <script src="assets/js/slider.js"></script>
+  <script>
+    const CASE_CONFIG = {
+      paramLabel: 'AoA',
+      aoaValues: [-10, -5, 0, 5, 10, 15],
+      aoaKeys: ['neg10', 'neg5', '0', '5', '10', '15'],
+      stats: {
+        '-10': { re: 1000, aoa: '-10', cd: '--', cl: '--', bl: 'Pressure side' },
+        '-5': { re: 1000, aoa: '-5', cd: '--', cl: '--', bl: 'Small incidence' },
+        '0': { re: 1000, aoa: '0', cd: '--', cl: '--', bl: 'Blasius' },
+        '5': { re: 1000, aoa: '5', cd: '--', cl: '--', bl: 'Small incidence' },
+        '10': { re: 1000, aoa: '10', cd: '--', cl: '--', bl: 'Suction side' },
+        '15': { re: 1000, aoa: '15', cd: '--', cl: '--', bl: 'Separation risk' },
+      }
+    };
 
-  <table>
-    <thead>
-      <tr><th>AoA (deg)</th><th>Regime</th><th>Computed Cd</th><th>Computed Cl</th><th>Blasius Cd (AoA=0)</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>-10</td><td>Incidence, pressure side</td><td>--</td><td>--</td><td>--</td></tr>
-      <tr><td>-5</td><td>Small incidence</td><td>--</td><td>--</td><td>--</td></tr>
-      <tr><td>0</td><td>Blasius boundary layer</td><td>--</td><td>--</td><td>1.328/&#8730;Re<sub>L</sub></td></tr>
-      <tr><td>5</td><td>Small incidence</td><td>--</td><td>--</td><td>--</td></tr>
-      <tr><td>10</td><td>Incidence, suction side</td><td>--</td><td>--</td><td>--</td></tr>
-      <tr><td>15</td><td>Strong incidence, possible separation</td><td>--</td><td>--</td><td>--</td></tr>
-    </tbody>
-  </table>
+    var currentAoA = 0;
 
-  <hr class="divider">
+    function aoaToKey(aoa) {
+      if (aoa < 0) return 'neg' + Math.abs(aoa);
+      return '' + aoa;
+    }
 
-  <h2>Re Sweep: Boundary Layer at AoA=0</h2>
+    function imageUrl(aoa, type) {
+      var key = aoaToKey(aoa);
+      return 'assets/images/flatplate/re1000_aoa' + key + '_' + type + '.png';
+    }
 
-  <p class="section-intro">
-    Boundary layer development at zero angle of attack for Reynolds numbers
-    500, 1000, and 2000. The displacement thickness and momentum thickness
-    are compared against the Blasius similarity solution. The laminar
-    boundary layer thickness grows as &delta; ~ x<sup>1/2</sup>.
-  </p>
+    function makePlaceholder(aoa, type) {
+      return 'data:image/svg+xml,' + encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
+        '<rect width="800" height="300" fill="#0d1117"/>' +
+        '<line x1="100" y1="160" x2="700" y2="160" stroke="#484f58" stroke-width="2"/>' +
+        '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
+        'Flat Plate AoA=' + aoa + ' deg ' + type + '</text>' +
+        '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
+        '(simulation running, placeholder)</text></svg>'
+      );
+    }
 
-  <table>
-    <thead>
-      <tr><th>Re</th><th>Regime</th><th>Computed Cd</th><th>Blasius Cd</th><th>BL Thickness Trend</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>500</td><td>Low Re laminar</td><td>--</td><td>--</td><td>Thicker BL, higher skin friction</td></tr>
-      <tr><td>1000</td><td>Reference Re</td><td>--</td><td>--</td><td>Baseline for comparison</td></tr>
-      <tr><td>2000</td><td>Higher Re laminar</td><td>--</td><td>--</td><td>Thinner BL, lower skin friction</td></tr>
-    </tbody>
-  </table>
+    function updateImages(aoa) {
+      var before = document.getElementById('sliderImgBefore');
+      var after = document.getElementById('sliderImgAfter');
+      before.onerror = function () { this.src = makePlaceholder(aoa, 'contour'); };
+      after.onerror = function () { this.src = makePlaceholder(aoa, 'streamlines'); };
+      before.src = imageUrl(aoa, 'contour');
+      after.src = imageUrl(aoa, 'streamlines');
+    }
 
-  <div class="callout">
-    The Blasius solution gives C<sub>f</sub> = 1.328/&#8730;Re<sub>x</sub> for a
-    laminar flat plate boundary layer. This is the primary benchmark for validating
-    the solver's viscous stress computation. Drag polar (Cd vs AoA) will be
-    compared against thin airfoil theory at small angles.
-  </div>
+    function updateStats(aoa) {
+      var key = '' + aoa;
+      var s = CASE_CONFIG.stats[key];
+    }
 
-  <hr class="divider">
+    function switchAoA(aoa) {
+      currentAoA = aoa;
+      document.querySelectorAll('#aoaTabs .teaser-link').forEach(function (btn) {
+        var text = btn.textContent;
+        var match = text.match(/(-?\d+)/);
+        var ba = match ? parseInt(match[1]) : 0;
+        btn.classList.toggle('active', ba === aoa);
+      });
+      updateImages(aoa);
+      updateStats(aoa);
+      setTimeout(function () {
+        var c = document.getElementById('fieldSlider');
+        var h = c.querySelector('.slider-handle');
+        var a = c.querySelector('.img-after');
+        if (h) h.style.left = '50%';
+        if (a) a.style.clipPath = 'inset(0 50% 0 0)';
+      }, 200);
+    }
 
-  <h2>Discussion</h2>
+    var rc = document.getElementById('aoaTabs');
+    CASE_CONFIG.aoaValues.forEach(function (aoa) {
+      var btn = document.createElement('button');
+      btn.className = 'teaser-link' + (aoa === currentAoA ? ' active' : '');
+      btn.textContent = CASE_CONFIG.paramLabel + ' = ' + aoa;
+      btn.style.fontSize = '0.7em';
+      btn.onclick = function () { switchAoA(aoa); };
+      rc.appendChild(btn);
+    });
 
-  <p class="section-intro">
-    The flat plate boundary layer is the most fundamental viscous flow
-    validation case. It exercises the solver's core capabilities: accurate
-    viscous stress computation, proper wall boundary conditions, and correct
-    momentum transport in the boundary layer. The Blasius similarity solution
-    provides an exact reference for the laminar case.
-  </p>
+    updateImages(currentAoA);
+    updateStats(currentAoA);
 
-  <p class="section-intro">
-    At AoA=0, the boundary layer grows from the leading edge as
-    &delta;(x) ~ &#8730;(&nu;x/U<sub>&infin;</sub>), producing the characteristic
-    parabolic profile. The drag coefficient decreases with increasing Re as
-    C<sub>d</sub> ~ 1/&#8730;Re. At non-zero AoA, the pressure gradient modifies
-    the boundary layer development, with favorable gradients on the suction side
-    (positive AoA) and adverse gradients that can lead to separation at large
-    incidence angles.
-  </p>
-
-  <p class="section-intro">
-    The AoA sweep generates a drag polar (Cd vs AoA) that can be compared
-    against thin airfoil theory predictions for small angles. This validates
-    both the viscous and inviscid aspects of the LBM formulation. The Re
-    sweep confirms that the solver correctly captures the Reynolds number
-    scaling of boundary layer properties.
-  </p>
-
-</div>
-
-<footer class="site-footer">
-  <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d" target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/" target="_blank">LinkedIn</a></p>
-</footer>
-
-<script src="assets/js/slider.js"></script>
-<script>
-const CASE_CONFIG = {
-  paramLabel: 'AoA',
-  aoaValues: [-10, -5, 0, 5, 10, 15],
-  aoaKeys: ['neg10', 'neg5', '0', '5', '10', '15'],
-  stats: {
-    '-10': { re: 1000, aoa: '-10', cd: '--', cl: '--', bl: 'Pressure side' },
-    '-5':  { re: 1000, aoa: '-5',  cd: '--', cl: '--', bl: 'Small incidence' },
-    '0':   { re: 1000, aoa: '0',   cd: '--', cl: '--', bl: 'Blasius' },
-    '5':   { re: 1000, aoa: '5',   cd: '--', cl: '--', bl: 'Small incidence' },
-    '10':  { re: 1000, aoa: '10',  cd: '--', cl: '--', bl: 'Suction side' },
-    '15':  { re: 1000, aoa: '15',  cd: '--', cl: '--', bl: 'Separation risk' },
-  }
-};
-
-var currentAoA = 0;
-
-function aoaToKey(aoa) {
-  if (aoa < 0) return 'neg' + Math.abs(aoa);
-  return '' + aoa;
-}
-
-function imageUrl(aoa, type) {
-  var key = aoaToKey(aoa);
-  return 'assets/images/flatplate/re1000_aoa' + key + '_' + type + '.png';
-}
-
-function makePlaceholder(aoa, type) {
-  return 'data:image/svg+xml,' + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">' +
-    '<rect width="800" height="300" fill="#0d1117"/>' +
-    '<line x1="100" y1="160" x2="700" y2="160" stroke="#484f58" stroke-width="2"/>' +
-    '<text x="400" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
-    'Flat Plate AoA=' + aoa + ' deg ' + type + '</text>' +
-    '<text x="400" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
-    '(simulation running, placeholder)</text></svg>'
-  );
-}
-
-function updateImages(aoa) {
-  var before = document.getElementById('sliderImgBefore');
-  var after = document.getElementById('sliderImgAfter');
-  before.onerror = function() { this.src = makePlaceholder(aoa, 'contour'); };
-  after.onerror = function() { this.src = makePlaceholder(aoa, 'streamlines'); };
-  before.src = imageUrl(aoa, 'contour');
-  after.src = imageUrl(aoa, 'streamlines');
-}
-
-function updateStats(aoa) {
-  var key = '' + aoa;
-  var s = CASE_CONFIG.stats[key];
-  document.getElementById('statRe').textContent = s.re;
-  document.getElementById('statAoA').textContent = s.aoa;
-  document.getElementById('statCd').textContent = s.cd;
-  document.getElementById('statCl').textContent = s.cl;
-  document.getElementById('statBL').textContent = s.bl;
-}
-
-function switchAoA(aoa) {
-  currentAoA = aoa;
-  document.querySelectorAll('#aoaTabs .teaser-link').forEach(function(btn) {
-    var text = btn.textContent;
-    var match = text.match(/(-?\d+)/);
-    var ba = match ? parseInt(match[1]) : 0;
-    btn.classList.toggle('active', ba === aoa);
-  });
-  updateImages(aoa);
-  updateStats(aoa);
-  setTimeout(function() {
-    var c = document.getElementById('fieldSlider');
-    var h = c.querySelector('.slider-handle');
-    var a = c.querySelector('.img-after');
-    if (h) h.style.left = '50%';
-    if (a) a.style.clipPath = 'inset(0 50% 0 0)';
-  }, 200);
-}
-
-var rc = document.getElementById('aoaTabs');
-CASE_CONFIG.aoaValues.forEach(function(aoa) {
-  var btn = document.createElement('button');
-  btn.className = 'teaser-link' + (aoa === currentAoA ? ' active' : '');
-  btn.textContent = CASE_CONFIG.paramLabel + ' = ' + aoa;
-  btn.style.fontSize = '0.7em';
-  btn.onclick = function() { switchAoA(aoa); };
-  rc.appendChild(btn);
-});
-
-updateImages(currentAoA);
-updateStats(currentAoA);
-
-document.getElementById('sidebarToggle')?.addEventListener('click', function() {
-  document.querySelector('.sidebar').classList.toggle('open');
-  document.body.classList.toggle('sidebar-open');
-});
-</script>
+    document.getElementById('sidebarToggle')?.addEventListener('click', function () {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.body.classList.toggle('sidebar-open');
+    });
+  </script>
 
 </body>
+
 </html>

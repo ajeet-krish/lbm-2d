@@ -33,11 +33,11 @@ target_include_directories(LBM_Step PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(LBM_Step PRIVATE OpenMP::OpenMP_CXX)
 
 # ------------------------------------------------------------------
-# Ribbed channel flow executable
+# Sports-ball surface roughness (dimpled cylinder) executable
 # ------------------------------------------------------------------
-add_executable(LBM_Ribs src/ribs.cpp src/lbm.hpp src/lbm_types.hpp)
-target_include_directories(LBM_Ribs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(LBM_Ribs PRIVATE OpenMP::OpenMP_CXX)
+add_executable(LBM_SportsBall src/sports_ball.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_SportsBall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_SportsBall PRIVATE OpenMP::OpenMP_CXX)
 
 # ------------------------------------------------------------------
 # Urban canyon flow executable
@@ -59,13 +59,6 @@ target_link_libraries(LBM_Downwash PRIVATE OpenMP::OpenMP_CXX)
 add_executable(LBM_SquareCylinder src/square_cylinder.cpp src/lbm.hpp src/lbm_types.hpp src/geometry.hpp)
 target_include_directories(LBM_SquareCylinder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(LBM_SquareCylinder PRIVATE OpenMP::OpenMP_CXX)
-
-# ------------------------------------------------------------------
-# Nozzle (converging-diverging)
-# ------------------------------------------------------------------
-add_executable(LBM_Nozzle src/nozzle.cpp src/lbm.hpp src/lbm_types.hpp)
-target_include_directories(LBM_Nozzle PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(LBM_Nozzle PRIVATE OpenMP::OpenMP_CXX)
 
 # ------------------------------------------------------------------
 # Flat plate boundary layer (primary validation case)
@@ -115,8 +108,8 @@ add_custom_target(step
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-add_custom_target(ribs
-  COMMAND LBM_Ribs
+add_custom_target(sports_ball
+  COMMAND LBM_SportsBall
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
@@ -137,11 +130,6 @@ add_custom_target(amr
 
 add_custom_target(square_cylinder
   COMMAND LBM_SquareCylinder
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-
-add_custom_target(nozzle
-  COMMAND LBM_Nozzle
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
@@ -177,6 +165,18 @@ target_link_libraries(LBM_SideBySide PRIVATE OpenMP::OpenMP_CXX)
 add_executable(LBM_RotatingCylinder src/rotating_cylinder.cpp src/lbm.hpp src/lbm_types.hpp)
 target_include_directories(LBM_RotatingCylinder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(LBM_RotatingCylinder PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Multi-stage orifice plate (staggered)
+# ------------------------------------------------------------------
+add_executable(LBM_OrificePlate src/orifice_plate.cpp src/lbm.hpp src/lbm_types.hpp)
+target_include_directories(LBM_OrificePlate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_OrificePlate PRIVATE OpenMP::OpenMP_CXX)
+
+add_custom_target(orifice
+  COMMAND LBM_OrificePlate
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
 
 add_custom_target(serve-docs
   COMMAND python3 -m http.server 8765 -d ${CMAKE_SOURCE_DIR}/docs
