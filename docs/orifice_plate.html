@@ -242,7 +242,54 @@
 
   </div>
 
-  <footer class="site-footer">
+      <h2>Interactive Flow Evolution</h2>
+
+    <p class="section-intro">
+      Interactive side-by-side of the C++ LBM solver and the PINN surrogate. The
+      LBM viewer animates the solver developing the flow from rest to steady state;
+      the PINN viewer shows the parametric surrogate prediction. Velocity magnitude
+      is rendered as a contour with streamlines overlaid.
+    </p>
+
+    <h3>LBM Evolution</h3>
+
+    <p class="section-intro">
+      The C++ MRT-LBM solver developing the flow from rest. Press Play to animate;
+      use the scrubber to inspect any frame.
+    </p>
+
+    <div class="fv-stage">
+      <canvas id="lbmCanvas" class="fv-canvas" width="100" height="38"></canvas>
+    </div>
+
+    <div class="fv-controls">
+      <button class="fv-btn" id="lbmPlay">&#9654; Play</button>
+      <input type="range" id="lbmScrubber" min="0" max="50" value="0" class="fv-slider">
+      <span class="fv-frame" id="lbmFrameLabel">Frame 0 / 50</span>
+    </div>
+
+    <div class="fv-controls" id="lbmReGroup">
+      <div class="fv-group"></div>
+    </div>
+
+    <h3>PINN Prediction</h3>
+
+    <p class="section-intro">
+      The parametric PINN surrogate predicts the steady-state flow directly from
+      position and the case parameter. Training for this case is in progress; the
+      placeholder below will be replaced by the live surrogate once trained
+      (Phase 6.8, time-parametric PINN).
+    </p>
+
+    <div class="fv-stage">
+      <canvas id="pinnCanvas" class="fv-canvas" width="100" height="38"></canvas>
+    </div>
+
+    <div class="fv-controls" id="pinnControls"></div>
+
+    <p class="fv-note" id="fvStatus"></p>
+
+    <footer class="site-footer">
     <p>AK-Vortex &middot; Built by Ajeet Krishnasamy &middot; <a href="https://github.com/ajeet-krish/lbm-2d"
         target="_blank">GitHub</a> &middot; <a href="https://www.linkedin.com/in/ajeetkrishnasamy/"
         target="_blank">LinkedIn</a></p>
@@ -336,6 +383,24 @@
       document.body.classList.toggle('sidebar-open');
     });
   </script>
+    <script src="assets/js/colormaps.js"></script>
+    <script src="assets/js/flow-viewer.js"></script>
+    <script src="assets/js/pinn-inference.js"></script>
+    <script src="assets/js/viewer-common.js"></script>
+    <script>
+      initFlowViewerSections({
+        dataDir: 'assets/data/orifice_plate',
+        paramLabel: 'Config',
+        lbmConfigs: [
+          { label: '1p1h', file: '1p1h' },
+          { label: '1p3h', file: '1p3h' },
+          { label: '2p', file: '2p' },
+          { label: '3p', file: '3p' }
+        ],
+        pinn: null
+      });
+    </script>
+
 </body>
 
 </html>

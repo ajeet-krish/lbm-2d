@@ -402,6 +402,146 @@ def total_loss_cavity_multi_re(model, colloc_by_re, sens_by_re, u_lid,
     return L, L_pde, L_pp, L_data, L_bc
 
 
+# --------------------------------------------------------------------------
+# Boundary conditions: Cavity (temporal -- Re + time independent)
+# --------------------------------------------------------------------------
+def bc_loss_cavity_temporal(model, n: int, u_lid: float, device,
+                            re_norm_vals=(0.0, 1.0), n_t: int = 4, seed: int = 3):
+    """Cavity BC (no-slip walls + moving lid) enforced across Re and time.
+
+    BCs are Re- and time-independent, so we tile wall/lid points over the given
+    Re values and n_t equally-spaced normalized times.
+
+    Input to the model is (N, 4) = (x_norm, y_norm, re_norm, t_norm).
+    """
+    x_bot = torch.linspace(-1.0, 1.0, n)
+    y_bot = torch.full_like(x_bot, -1.0)
+    x_left = torch.full_like(x_bot, -1.0)
+    y_left = torch.linspace(-1.0, 1.0, n)
+    x_right = torch.full_like(x_bot, 1.0)
+    y_right = torch.linspace(-1.0, 1.0, n)
+    x_lid = torch.linspace(-1.0, 1.0, n)
+    y_lid = torch.full_like(x_lid, 1.0)
+
+    walls = torch.cat([torch.stack([x_bot, y_bot], 1),
+                       torch.stack([x_left, y_left], 1),
+                       torch.stack([x_right, y_right], 1)], 0)
+    lid = torch.stack([x_lid, y_lid], 1)
+
+    t_vals = torch.linspace(0.0, 1.0, n_t)
+    losses = []
+    for rn in re_norm_vals:
+        for tn in t_vals:
+            re_col = torch.full((walls.shape[0], 1), rn)
+            t_col = torch.full((walls.shape[0], 1), tn)
+            xyw = _on_device(torch.cat([walls, re_col, t_col], dim=1), device)
+            uw, vw, _ = _split(model(xyw))
+            losses.append(F.mse_loss(uw, torch.zeros_like(uw)))
+            losses.append(F.mse_loss(vw, torch.zeros_like(vw)))
+
+            re_col_l = torch.full((lid.shape[0], 1), rn)
+            t_col_l = torch.full((lid.shape[0], 1), tn)
+            xyl = _on_device(torch.cat([lid, re_col_l, t_col_l], dim=1), device)
+            ul, vl, _ = _split(model(xyl))
+            losses.append(F.mse_loss(ul, torch.full_like(ul, u_lid)))
+            losses.append(F.mse_loss(vl, torch.zeros_like(vl)))
+    return torch.stack(losses).mean()
+
+
+def ic_loss_cavity_temporal(model, grid_xy: torch.Tensor, device,
+                            re_norm_vals=(0.0, 1.0)):
+    """Initial condition: at t_norm = 0, u = 0, v = 0 everywhere (rest state).
+
+    grid_xy: (N, 2) normalized spatial coords (e.g. full-grid flatten).
+    """
+    losses = []
+    for rn in re_norm_vals:
+        re_col = torch.full((grid_xy.shape[0], 1), rn, device=device)
+        t_col = torch.zeros((grid_xy.shape[0], 1), device=device)
+        xy = torch.cat([grid_xy.to(device), re_col, t_col], dim=1)
+        u, v, _ = _split(model(xy))
+        losses.append(F.mse_loss(u, torch.zeros_like(u)))
+        losses.append(F.mse_loss(v, torch.zeros_like(v)))
+    return torch.stack(losses).mean()
+
+
+# --------------------------------------------------------------------------
+# Unsteady PDE residual (time-parametric PINN, Phase 6.8)
+# --------------------------------------------------------------------------
+def unsteady_pde_loss_multi_re(model, colloc_by_re: dict, device):
+    """Unsteady incompressible NS residual, averaged across Re.
+
+    Input coords are (N, 4) = (x_norm, y_norm, re_norm, t_norm). The 4th input
+    column is normalized time; du/dt, dv/dt are obtained via autograd.
+
+        du/dt + u du/dx + v du/dy + dp/dx - nu(d2u/dx2 + d2u/dy2) = 0
+        dv/dt + u dv/dx + v dv/dy + dp/dy - nu(d2v/dx2 + d2v/dy2) = 0
+        du/dx + dv/dy = 0
+
+    nu = 1/re, where re is the dict key.
+    """
+    total = 0.0
+    for re, xy_np in colloc_by_re.items():
+        inp = torch.from_numpy(xy_np).float().to(device).clone().detach().requires_grad_(True)
+        out = model(inp)
+        u, v, p = out[:, 0], out[:, 1], out[:, 2]
+
+        du = _grad(u, inp)
+        dv = _grad(v, inp)
+        dp = _grad(p, inp)
+        u_x, u_y = du[:, 0], du[:, 1]
+        v_x, v_y = dv[:, 0], dv[:, 1]
+        p_x, p_y = dp[:, 0], dp[:, 1]
+        u_t = du[:, 3]
+        v_t = dv[:, 3]
+
+        d2u = _grad(u_x, inp)
+        d2v = _grad(v_x, inp)
+        u_xx, u_yy = d2u[:, 0], d2u[:, 1]
+        v_xx, v_yy = d2v[:, 0], d2v[:, 1]
+
+        nu = 1.0 / re
+        f_cont = u_x + v_y
+        f_x = u_t + u * u_x + v * u_y + p_x - nu * (u_xx + u_yy)
+        f_y = v_t + u * v_x + v * v_y + p_y - nu * (v_xx + v_yy)
+
+        L = (F.mse_loss(f_cont, torch.zeros_like(f_cont))
+             + F.mse_loss(f_x, torch.zeros_like(f_x))
+             + F.mse_loss(f_y, torch.zeros_like(f_y)))
+        total = total + L
+    return total / len(colloc_by_re)
+
+
+def total_loss_cavity_temporal(model, colloc_by_re, sens_by_re, grid_xy,
+                               u_lid, device, w_pde=1.0, w_data=1.0,
+                               w_bc=1.0, w_ic=1.0, re_norm_vals=(0.0, 1.0)):
+    """Combined hybrid loss for the temporal cavity PINN.
+
+    Returns (L_total, L_pde, L_data, L_bc, L_ic).
+    """
+    L_pde = unsteady_pde_loss_multi_re(model, colloc_by_re, device)
+
+    L_data = 0.0
+    for re, sens in sens_by_re.items():
+        coords_t = torch.from_numpy(sens["coords"]).float().to(device)
+        u_t = torch.from_numpy(sens["u"]).float().to(device)
+        v_t = torch.from_numpy(sens["v"]).float().to(device)
+        p_t = torch.from_numpy(sens["p"]).float().to(device)
+        u_pred, v_pred, p_pred = _split(model(coords_t))
+        L_data = (L_data
+                  + F.mse_loss(u_pred, u_t) + F.mse_loss(v_pred, v_t)
+                  + F.mse_loss(p_pred, p_t))
+    L_data = L_data / len(sens_by_re)
+
+    L_bc = bc_loss_cavity_temporal(model, 200, u_lid, device,
+                                   re_norm_vals=re_norm_vals)
+    L_ic = ic_loss_cavity_temporal(model, grid_xy, device,
+                                   re_norm_vals=re_norm_vals)
+
+    L = w_pde * L_pde + w_data * L_data + w_bc * L_bc + w_ic * L_ic
+    return L, L_pde, L_data, L_bc, L_ic
+
+
 def _split(out: torch.Tensor):
     """Split (N, 3) output into u, v, p."""
     return out[:, 0], out[:, 1], out[:, 2]

@@ -147,7 +147,8 @@ python3 train_cavity.py --single-re 100   # Cavity single Re
 - **Momentum exchange** force extraction for Cd/Cl coefficients
 - **Direct JSON output** -- per-frame velocity, pressure, vorticity fields + append-only force history. Optional `--vtk` flag for legacy Paraview export.
 - **14 simulation cases**: flat plate, cylinder, square cylinder, lid-driven cavity, backward-facing step, orifice plate, urban canyon (side + topdown vertical/horizontal), building downwash, periodic hills, cylinder near wall, side-by-side cylinders, rotating cylinder.
-- **PINN surrogate**: Fourier-feature parametric PINN (593K params) trained on cavity Re=100+400, 3-panel comparison (LBM/PINN/Error) on website, interactive Re-sweep slider.
+  - **PINN surrogate**: Fourier-feature parametric PINN (593K params) trained on cavity Re=100+400, 3-panel comparison (LBM/PINN/Error) on website, interactive Re-sweep slider.
+  - **Interactive Flow Viewer**: Per-case canvas engine (`docs/assets/js/flow-viewer.js`) streams compact float16 binary frame data (velocity magnitude + streamlines) with Play/Pause + scrubber. Live PINN tab runs the surrogate in-browser via ONNX Runtime Web.
 - **Polygon obstacle support** via point-in-polygon -- any closed 2D shape.
 - **Production-grade**: Google Test suite (12 tests), GitHub Actions CI on ubuntu + macos.
 
@@ -189,6 +190,43 @@ Velocity field error dropped 30x. Parametric Re-slider demo on `cavity.html`.
 | 6.3 | Lid-driven cavity | Re (100-400) | Exists (51 frames, 128x128) | Re slider -> vortex center shift |
 | 6.4 | Backward-facing step | Re (100-400) | Re-run Re=100 needed (no p/omega) | Re slider -> reattachment length |
 | 6.5 | Orifice plate | hole_w, n_plates | New Re+geometry sweeps needed | Diameter slider -> loss coeff K |
+| 6.8 | Time-Parametric PINN (NEW) | t + Re | LBM time-series at Re=100+400 | Watch vortex roll-up at any timestep |
+
+#### Phase 6.8: Time-Parametric PINN (Spatio-Temporal Surrogate)
+
+**Goal:** Extend the parametric PINN to a spatio-temporal surrogate that learns the
+full transient evolution of the flow, not just the steady state. Input becomes
+`(x, y, Re_n, t_n)` where `t_n = frame_index / (n_frames - 1)` is the normalized
+simulation time. The network predicts `(u, v, p)` at any point in space AND time,
+enabling true ML-powered animations: a recruiter drags a time slider and watches
+the vortex roll-up, shedding, and approach to steady state -- all from a single
+neural network, no CFD re-run.
+
+**Architecture:** Fourier features on spatial coords (x, y) only -> 512-dim, then
+concatenate `Re_n` and `t_n` -> 514-dim MLP input. MLP: 256 hidden, 8 layers, tanh
+(~600K params). Output: `(u, v, p)`.
+
+**Unsteady PDE residual (vs steady NS in 6.3):** Add the material time derivative:
+```
+du/dt + u·du/dx + v·du/dy = -dp/dx + nu*(d2u/dx2 + d2u/dy2)
+dv/dt + u·dv/dx + v·dv/dy = -dp/dy + nu*(d2v/dx2 + d2v/dy2)
+du/dx + dv/dy = 0  (continuity)
+```
+`du/dt` and `dv/dt` are computed via torch.autograd from the `t` input.
+
+**Training data:** 51-frame LBM sequences at Re=100 and Re=400 (importance-sampled
+sensors, 3000/frame). Hybrid loss = w_pde*unsteady_NS + w_data*data(u,v,p) + w_bc*BC.
+
+**Portfolio value:** The truly compelling ML story. A physics-informed network that
+learns temporal dynamics from the LBM time-series, then predicts the entire
+spatio-temporal flow field in real-time browser inference -- the solver generates
+baseline data once, the PINN provides a deployable, interactive surrogate.
+
+**Status:** Pending (architecture + training script planned; cavity first).
+
+**Web integration:** Each case page gets two separate viewer sections -- "LBM
+Evolution" (C++ solver frames) and "PINN Prediction" (surrogate) -- so the solver
+and ML results are shown side by side for direct comparison.
 
 **Key features:**
 - Trains on Apple Silicon via PyTorch MPS backend (no CUDA)
@@ -204,10 +242,21 @@ See `pinn/README.md` for setup, architecture, and the full phased plan.
 The `docs/` directory contains a 12+ page portfolio website:
 
 - **Project > Home** (index.html) -- Why build a custom LBM solver vs SU2/OpenFOAM, case table of contents
-- **Simulation > [Case]** -- Per-case dedicated pages with field viewer (comparison slider), validation tables, force plots, discussion
+- **Simulation > [Case]** -- Per-case dedicated pages with interactive flow viewers, validation tables, force plots, discussion
 - **Reference** (theory.html, implementation.html) -- LBM theory with KaTeX, code architecture with source blocks
 
-Each case page has a draggable slider to compare velocity contours against streamlines, Re/AoA selector, and validation stats.
+Each case page has two interactive viewer sections:
+
+1. **LBM Evolution** -- Animated canvas streaming the C++ solver's velocity field
+   from rest to steady state (Play/Pause + scrubber). Velocity magnitude contours
+   with overlaid streamlines.
+2. **PINN Prediction** -- The parametric surrogate (precomputed sweep or live ONNX
+   Runtime Web inference). Reynolds number slider drives the network in real-time.
+   Time-parametric PINN (Phase 6.8) will add a time scrubber here so the surrogate
+   animates the flow evolution like the LBM section.
+
+Binary frame data is exported by `pinn/export_web_data.py` to `docs/assets/data/{case}/`
+as float16 `.bin` files (gzipped for delivery).
 
 ## Architecture
 
@@ -285,8 +334,9 @@ docs/
 | 2 | Block-structured AMR (adaptive mesh refinement) | In progress |
 | 3 | Vorticity output + postprocessor | Completed |
 | 4 | Full simulation re-runs + new cases | In progress |
-| 5 | Website updates for new features | Pending |
-| 6 | Physics-Informed Neural Network (PINN) surrogate suite | In progress (cavity done, step/orifice pending) |
+| 5 | Website updates for new features | In progress (interactive viewers on all cases) |
+| 6 | Physics-Informed Neural Network (PINN) surrogate suite | In progress (cavity done, step/orifice pending, temporal PINN planned) |
+| 7 | Time-parametric PINN training (Phase 6.8) | Pending |
 
 ### Pending Fixes (Phase 4)
 

@@ -21,7 +21,7 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 | 2 | Block-structured AMR (adaptive mesh refinement) | In progress |
 | 3 | Vorticity output + postprocessor | Completed |
 | 4 | Full simulation re-runs + new cases | In progress |
-| 5 | Website updates for new features | Pending |
+| 5 | Website updates for new features | In progress (interactive LBM/PINN viewers on all cases) |
 
 ### Completed to date
 - MRT collision operator (default, BGK fallback) with tuned rates
@@ -58,6 +58,7 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 - Orifice plate: 4 configs (1p1h, 1p3h, 2p, 3p); u_inflow=0.025 + LES for single-hole jet stability
 - Periodic hills: hill height reduced to h_max=H/6 (was H/2); L changed from 9*H=1800 to NX=800 so exactly one hill period fits the domain (fixes the periodic-x BC height discontinuity that caused NaN divergence at step 2); fully-periodic streaming + force-extraction paths wired for PERIODIC_HILLS
 - Urban canyon: moved to External Aerodynamics nav. Side view = 4 cases (H/W 0.3/0.5/0.8 with 2 buildings, H/W 0.6 with 3 buildings). Top-down adds horizontal-orientation buildings (wind funneled along pedestrian, orifice-like) alongside vertical
+- Removed ribs case (deprecated) from nav and results; ribs.html deleted if present
 - Removed: nozzle (replaced by orifice plate), ahmed body (2D limitation), airfoil (replaced by flat plate), tandem cylinders (redundant), sports-bell (removed from portfolio to focus on validated cases)
 - Website: removed stats-bar from all case pages (data moved to setup/validation tables), "Field Viewer" renamed "Velocity Field" with explanatory text, deleted orphaned results.html/simulation.html
 - PINN surrogate suite (Phase 6.0-6.2): `pinn/` directory with torch-free config/loader, PINN MLP (64x8, tanh), hybrid loss (PDE residual + data + BC), MPS training on Apple Silicon, 3-panel comparison (LBM/PINN/Error), website integration on cylinder.html
@@ -131,6 +132,7 @@ This transforms the network from a single-case calculator into a continuous desi
 | 6.5 | Orifice plate parametric PINN (x,y,hole_w,n_plates) -> (u,v,p) | Pending |
 | 6.6 | ONNX export + WASM real-time inference page | Pending |
 | 6.7 | Ablation study (data/PDE/BC terms), methodology write-up | Pending |
+| 6.8 | Time-parametric PINN (spatio-temporal surrogate) | Pending |
 
 #### Phase 6.3: Cavity Parametric PINN (FIRST)
 
@@ -222,6 +224,119 @@ pinn/
 ```
 
 **Website integration:** Keep existing LBM slider (contour | streamline). Add below it a 3-panel static comparison (C++ LBM / PINN surrogate / absolute error delta). Later add a live ONNX Runtime Web inference page (PINN-only; no C++ WASM rebuild) with a frame slider and field selector.
+
+#### Phase 6.6: Interactive Flow Viewer (Canvas Engine)
+
+**Goal:** Replace the static LBM/PINN "parametric interpolation" section with an
+interactive, animated flow viewer on every case page. The viewer streams compact
+binary frame data exported from the LBM solver and renders velocity-magnitude
+contours with overlaid streamlines directly on a `<canvas>` (no images, no WASM
+C++ rebuild).
+
+**Files created:**
+```
+docs/assets/js/colormaps.js      # viridis/RdBu/jet LUTs, paintField() (flipY-aware)
+docs/assets/js/flow-viewer.js     # FlowViewer class: LBM time-series canvas engine
+docs/assets/js/pinn-inference.js  # PinnSurrogate: precomputed sweep + ONNX upgrade
+docs/assets/js/vendor/onnxruntime-web/dist/  # vendored ort.min.js + wasm (numThreads=1)
+pinn/export_web_data.py           # LBM frames -> float16 .bin (gz), PINN sweep, ONNX model
+docs/assets/data/{case}/          # lbm_re{val}.bin (+ gz), pinn_*.bin, pinn_model.onnx
+```
+
+**Binary format** (`pinn/export_web_data.py`): header magic `0x4C424D31` + uint32
+n_frames, nx, ny, n_chan, dtype_flag, then float16 (or float32) little-endian data
+in `[frame][channel][y][x]` order. JS parser at `window.FlowData.parseBinary()`.
+
+**Viewer layout (per case page):** Two SEPARATE sections (not tabs):
+1. **LBM Evolution** -- canvas + Play/Pause + scrubber + frame counter. Auto-plays
+   the solver's 51-200 frames from rest to steady state.
+2. **PINN Prediction** -- canvas + Re slider + inference-time readout. Uses the
+   precomputed PINN Re-sweep (`pinn_sweep.bin`) by default; upgrades to live ONNX
+   Runtime Web inference of the trained ParametricPINN when `pinn_model.onnx` exists.
+
+**Orientation note:** LBM frame data is stored y-up (y=0 = bottom wall, y=NY-1 =
+lid/top). `paintField()` uses `flipY=true` so the lid renders at the canvas TOP.
+Streamlines must be drawn with the same transform: `canvas_y = ny - 1 - data_y`.
+
+**Current bug (to fix):** Streamlines in `flow-viewer.js` + `pinn-inference.js` are
+drawn in raw data-y (canvas top = bottom wall), so they appear flipped relative to
+the contour. Fix: transform y-coordinates in `ctx.moveTo/lineTo`.
+
+**Colormap + layout convention (new):**
+- Per-case colormap: every plot AND animation on a case uses ONE colormap
+  for visual consistency. Static PNGs get it from `postprocess.py` `CASE_CMAPS`
+  (keyed by shape); the animation gets it from `FlowViewer({ cmap })` in the
+  page init. Cavity = `viridis`; Backward-Step = `coolwarm` (another, so
+  cases read differently at a glance).
+- `FlowViewer` now takes a `cmap` option (default `viridis`) used by both
+  `_render` (contour) and `_drawStreamlines` (speed-colored streamlines).
+- In `cavity.html` the LBM Evolution animation was moved INTO the
+  **Velocity Field** section, directly below the static contour/streamline
+  comparison slider, so the reader sees the steady field first, then watches
+  the flow develop. The PINN Prediction (temporal) section stays separate.
+- Static slider + animation share footprint: `.comparison-slider` is now
+  `aspect-ratio: 1/1; max-width: 560px` (same as `.fv-stage`) and its
+  images use `object-fit: cover`, so both render square at the same width. The
+  cavity slider PNGs were regenerated square (`scripts/gen_cavity_slider.py`).
+
+**Status:** In progress. Cavity page has the 5-tab viewer (LBM/Compare/Particles/Error/
+Live PINN); simplify to the two-section layout and velocity-only, fix orientation,
+then replicate on all case pages.
+
+#### Phase 6.8: Time-Parametric PINN (Spatio-Temporal Surrogate)
+
+**Goal:** Extend the parametric PINN to learn the FULL transient evolution, not just
+steady state. This is the highest-impact ML deliverable: a single network predicts
+`(u, v, p)` at any `(x, y, Re, t)`, enabling true ML-powered animation that the LBM
+section cannot match in interactivity.
+
+**Architecture:** Input `(x, y, Re_n, t_n)` where `t_n = frame_index/(n_frames-1)`
+is normalized simulation time. Fourier features on (x, y) only -> 512-dim, then
+concatenate `Re_n` and `t_n` -> 514-dim MLP input. MLP: 256 hidden, 8 layers, tanh
+(~600K params). Output `(u, v, p)`.
+
+**Unsteady PDE residual:** Add material time derivative to the steady NS used in 6.3:
+```
+du/dt + u·du/dx + v·du/dy = -dp/dx + nu*(d2u/dx2 + d2u/dy2)
+dv/dt + u·dv/dx + v·dv/dy = -dp/dy + nu*(d2v/dx2 + d2v/dy2)
+du/dx + dv/dy = 0
+```
+`du/dt`, `dv/dt` via torch.autograd on the `t` input.
+
+**Training data:** 51-frame LBM sequences at Re=100 and Re=400 (importance-sampled
+sensors, 3000/frame). Hybrid loss = w_pde*unsteady_NS + w_data*data(u,v,p) + w_bc*BC.
+
+**Files to create:**
+```
+pinn/data/temporal_loader.py   # Load LBM frames -> (x,y,Re_n,t_n) -> (u,v,p) samples
+pinn/train_temporal.py          # Multi-Re temporal training loop (MPS)
+pinn/export_temporal.py         # ONNX + precomputed temporal sweep binaries
+```
+
+**Web integration:** Add a time scrubber (or auto-play) to the PINN Prediction
+section. The surrogate then animates flow evolution frame-by-frame, matching the
+LBM Evolution section for direct solver-vs-ML comparison.
+
+**Implementation status (done):**
+- `pinn/data/temporal_loader.py`: loads 51-frame LBM sequences at Re=100/400,
+  emits importance-sampled `(x,y,Re_n,t_n) -> (u,v,p)` sensors + collocation.
+- `pinn/models/losses.py`: added `unsteady_pde_loss_multi_re`,
+  `bc_loss_cavity_temporal`, `ic_loss_cavity_temporal`, `total_loss_cavity_temporal`
+  (IC enforces rest state at t_n=0 across Re).
+- `pinn/train_temporal.py`: multi-Re temporal training loop (Adam + L-BFGS),
+  `ParametricPINN(n_params=2)` (Fourier on x,y, then Re_n + t_n -> 514-dim input).
+- `pinn/export_temporal.py`: writes `pinn_temporal_re{re}.bin` (+ `.gz`) per-Re
+  frame sequences (same binary format as LBM viewer) + `pinn_temporal_model.onnx`.
+- `docs/assets/js/flow-viewer.js`: added `filePrefix` option (loads
+  `pinn_temporal_re{re}.bin`) + graceful `_showMissing()` placeholder when the
+  surrogate binary is absent.
+- `docs/cavity.html`: PINN Prediction section now drives a second FlowViewer over
+  the temporal binary, with its own Re buttons + play/pause + time scrubber
+  (`pinnReGroup`, `pinnPlay`, `pinnScrubber`, `pinnFrameLabel`).
+
+**Status:** In progress. Code + web wiring complete; training and binary export
+pending (torch not yet installed on this machine; `python3 train_temporal.py`
+then `python3 export_temporal.py` light it up).
 
 ### Phase 1: Smagorinsky LES Turbulence Model
 
@@ -404,10 +519,13 @@ lbm-2d/
     requirements.txt           # torch, numpy, matplotlib, scipy, onnx, onnxruntime
     config.py                  # CaseConfig + convenience constructors (cavity, step, orifice)
     data/loader.py             # Read frame*.json + forces.jsonl -> numpy arrays
+    data/temporal_loader.py    # Load LBM frames -> (x,y,Re_n,t_n) -> (u,v,p) samples
     models/pinn.py             # PINN + ParametricPINN MLP architectures
     models/losses.py           # PDE residual, BC loss (cavity/cylinder), data loss
     train.py                   # Cylinder Re=100 training loop
     train_cavity.py            # Cavity parametric PINN (single-Re + multi-Re)
+    train_temporal.py          # Time-parametric PINN (multi-Re + time)
+    export_temporal.py         # Temporal PINN -> ONNX + frame binaries
     evaluate.py                # Inference on full grid -> numpy fields
     export_onnx.py             # torch.onnx.export -> model.onnx
     plot_results.py            # 3-panel (LBM / PINN / Error delta)
@@ -506,4 +624,5 @@ sensor = sqrt(du_dx^2 + du_dy^2 + dv_dx^2 + dv_dy^2) * dx
 2. **Phase 2: Block-Structured AMR**, In progress (restriction operator needs fix)
 3. **Phase 3: Vorticity + Postprocessor**, Completed
 4. **Phase 4: Full Re-Runs + New Cases**, In progress (17 simulations pending)
-5. **Phase 5: Website Updates**, Pending (4 new pages + navigation updates)
+5. **Phase 5: Website Updates**, In progress (interactive LBM/PINN viewers on all cases)
+6. **Phase 6.8: Time-Parametric PINN**, In progress (code + web wiring done; training/export pending torch install)

@@ -47,7 +47,7 @@
     </nav>
   </div>
 
-<div class="main-content">
+  <div class="main-content">
 
     <h1>Lid-Driven Cavity Benchmark</h1>
 
@@ -107,23 +107,42 @@
     <h2>Velocity Field</h2>
 
     <p class="section-intro">
-      Use the tabs below to select a Reynolds number (Re = U<sub>lid</sub>&middot;L/&nu;,
-      based on the lid velocity and cavity width L). The left side of the viewer
-      shows the velocity-magnitude contour field; the right side shows the
-      corresponding velocity-magnitude streamlines. Drag the slider handle to
-      wipe between the two.
+      The C++ solver develops the cavity vortex from rest.Select a Reynolds number (Re = U<sub>lid</sub>&middot;L/&nu;,
+      based on the
+      lid velocity and cavity width L) to view the flow behaviour. The flow at steady-state can be seen on the left,
+      with an interactive slider to change between the velocity field contour and the streamline plot. On the right, the
+      flow development can be observed as the simulation progresses. Watch how the vortex develops over time as it
+      reaches steady-state.
     </p>
 
     <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
 
-    <div class="comparison-slider" id="fieldSlider">
-      <img id="sliderImgBefore" src="" alt="Contour">
-      <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
-      <div class="slider-handle">
-        <div class="slider-btn"></div>
+    <div class="vf-split">
+      <div class="vf-col">
+        <h4>Steady-State Comparison</h4>
+        <div class="comparison-slider" id="fieldSlider">
+          <img id="sliderImgBefore" src="" alt="Contour">
+          <img id="sliderImgAfter" class="img-after" src="" alt="Streamlines">
+          <div class="slider-handle">
+            <div class="slider-btn"></div>
+          </div>
+          <div class="slider-label left">Contour</div>
+          <div class="slider-label right">Streamlines</div>
+        </div>
+        <p class="fv-note">Drag the handle to wipe between the velocity-magnitude contour and the streamline plot.</p>
       </div>
-      <div class="slider-label left">Contour</div>
-      <div class="slider-label right">Streamlines</div>
+
+      <div class="vf-col">
+        <h4>Flow Evolution</h4>
+        <div class="fv-stage">
+          <canvas id="lbmCanvas" class="fv-canvas" width="96" height="96"></canvas>
+        </div>
+        <div class="fv-controls">
+          <button class="fv-btn" id="lbmPlay">&#9654; Play</button>
+          <input type="range" id="lbmScrubber" min="0" max="50" value="0" class="fv-slider">
+          <span class="fv-frame" id="lbmFrameLabel">Frame 0 / 50</span>
+        </div>
+      </div>
     </div>
 
     <h2>Validation</h2>
@@ -167,14 +186,38 @@
     <h3>Architecture</h3>
 
     <table>
-      <tr><th>Component</th><th>Detail</th></tr>
-      <tr><td>Fourier features</td><td>m=128, &sigma;=5.0 (frozen random sinusoids on x,y only)</td></tr>
-      <tr><td>MLP</td><td>8 layers &times; 256 hidden, tanh activation</td></tr>
-      <tr><td>Total parameters</td><td>593,489</td></tr>
-      <tr><td>Input</td><td>(x, y, Re<sub>n</sub>) &mdash; 513 dimensions after Fourier lift</td></tr>
-      <tr><td>Output</td><td>(u, v, p)</td></tr>
-      <tr><td>Training data</td><td>Re=100 + Re=400, 3000 importance-sampled sensors each</td></tr>
-      <tr><td>Training time</td><td>177 min (Apple M5, MPS backend)</td></tr>
+      <tr>
+        <th>Component</th>
+        <th>Detail</th>
+      </tr>
+      <tr>
+        <td>Fourier features</td>
+        <td>m=128, &sigma;=5.0 (frozen random sinusoids on x,y only)</td>
+      </tr>
+      <tr>
+        <td>MLP</td>
+        <td>8 layers &times; 256 hidden, tanh activation</td>
+      </tr>
+      <tr>
+        <td>Total parameters</td>
+        <td>593,489</td>
+      </tr>
+      <tr>
+        <td>Input</td>
+        <td>(x, y, Re<sub>n</sub>) &mdash; 513 dimensions after Fourier lift</td>
+      </tr>
+      <tr>
+        <td>Output</td>
+        <td>(u, v, p)</td>
+      </tr>
+      <tr>
+        <td>Training data</td>
+        <td>Re=100 + Re=400, 3000 importance-sampled sensors each</td>
+      </tr>
+      <tr>
+        <td>Training time</td>
+        <td>177 min (Apple M5, MPS backend)</td>
+      </tr>
     </table>
 
     <h3>Results: Re=100</h3>
@@ -186,9 +229,8 @@
     </p>
 
     <div class="chart-container" style="height:320px;">
-      <img src="assets/images/cavity/pinn_comparison_re100.png"
-           alt="PINN vs LBM comparison at Re=100"
-           style="width:100%;height:100%;object-fit:contain;">
+      <img src="assets/images/cavity/pinn_comparison_re100.png" alt="PINN vs LBM comparison at Re=100"
+        style="width:100%;height:100%;object-fit:contain;">
     </div>
 
     <h3>Results: Re=400</h3>
@@ -200,35 +242,75 @@
     </p>
 
     <div class="chart-container" style="height:320px;">
-      <img src="assets/images/cavity/pinn_comparison_re400.png"
-           alt="PINN vs LBM comparison at Re=400"
-           style="width:100%;height:100%;object-fit:contain;">
+      <img src="assets/images/cavity/pinn_comparison_re400.png" alt="PINN vs LBM comparison at Re=400"
+        style="width:100%;height:100%;object-fit:contain;">
     </div>
 
-    <h3>Parametric Interpolation</h3>
+    <h3>PINN Temporal Surrogate</h3>
 
     <p class="section-intro">
-      The key advantage of a parametric PINN: drag the Reynolds number slider to
-      watch the primary vortex center migrate downward as Re increases. Re=200
-      (centre) was <strong>not</strong> present in the training data &mdash; the network
-      generalizes to intermediate Re values. The vortex core shifts from
-      y/H &asymp; 0.64 at Re=100 to y/H &asymp; 0.58 at Re=400.
+      The time-parametric PINN surrogate predicts the full cavity evolution from
+      a single network: (x, y, Re, t) &rarr; (u, v, p). Press Play to watch the
+      surrogate's transient vortex roll-up, or scrub to any instant. Trained
+      once on the Re=100 and Re=400 LBM time-series, it interpolates
+      continuously across Reynolds number and time &mdash; rendered with the same
+      colormap as the static field and the LBM animation above.
     </p>
 
-    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="pinnReTabs"></div>
+    <h4>PINN Prediction</h4>
 
-    <div class="chart-container" style="height:400px;">
-      <img id="pinnParamImg" src="assets/images/cavity/pinn_parametric_re100.png"
-           alt="PINN parametric velocity field"
-           style="width:100%;height:100%;object-fit:contain;">
+    <p class="section-intro">
+      The time-parametric PINN surrogate predicts the full cavity evolution from
+      a single network: (x, y, Re, t) &rarr; (u, v, p). Press Play to watch the
+      surrogate's transient vortex roll-up, or scrub to any instant. The model is
+      trained once on the Re=100 and Re=400 LBM time-series and interpolates
+      continuously across Reynolds number and time.
+    </p>
+
+    <div class="fv-stage">
+      <canvas id="pinnCanvas" class="fv-canvas" width="96" height="96"></canvas>
     </div>
+
+    <div class="fv-controls">
+      <button class="fv-btn" id="pinnPlay">&#9654; Play</button>
+      <input type="range" id="pinnScrubber" min="0" max="50" value="0" class="fv-slider">
+      <span class="fv-frame" id="pinnFrameLabel">Frame 0 / 50</span>
+    </div>
+
+    <div class="fv-controls">
+      <div class="fv-group" id="pinnReGroup">
+        <span class="fv-label-txt">Re</span>
+        <button class="fv-btn fv-re active" data-re="100">100</button>
+        <button class="fv-btn fv-re" data-re="400">400</button>
+      </div>
+    </div>
+
+    <p class="fv-note" id="fvStatus"></p>
 
     <h3>Accuracy Summary</h3>
 
     <table>
-      <tr><th>Re</th><th>L2 u-velocity</th><th>L2 v-velocity</th><th>u<sub>max</sub> ratio</th><th>Vortex center y/H</th></tr>
-      <tr><td>100</td><td>23.7%</td><td>29.3%</td><td>1.24</td><td>0.64 (Ghia: 0.73)</td></tr>
-      <tr><td>400</td><td>24.4%</td><td>30.0%</td><td>1.10</td><td>0.58</td></tr>
+      <tr>
+        <th>Re</th>
+        <th>L2 u-velocity</th>
+        <th>L2 v-velocity</th>
+        <th>u<sub>max</sub> ratio</th>
+        <th>Vortex center y/H</th>
+      </tr>
+      <tr>
+        <td>100</td>
+        <td>23.7%</td>
+        <td>29.3%</td>
+        <td>1.24</td>
+        <td>0.64 (Ghia: 0.73)</td>
+      </tr>
+      <tr>
+        <td>400</td>
+        <td>24.4%</td>
+        <td>30.0%</td>
+        <td>1.10</td>
+        <td>0.58</td>
+      </tr>
     </table>
 
     <p class="section-intro" style="margin-top:1rem;">
@@ -247,10 +329,13 @@
   </footer>
 
   <script src="assets/js/slider.js"></script>
+  <script src="assets/js/colormaps.js"></script>
+  <script src="assets/js/flow-viewer.js"></script>
+  <script src="assets/js/pinn-inference.js"></script>
   <script>
     const CASE_CONFIG = {
       paramLabel: 'Re',
-      reValues: [100, 400, 1000],
+      reValues: [100, 400],
       stats: {
         100: { re: 100, cd: '--', cl: '--', st: '--', xr: '--' },
         400: { re: 400, cd: '--', cl: '--', st: '--', xr: '--' },
@@ -259,6 +344,8 @@
     };
 
     let currentRe = CASE_CONFIG.reValues[0];
+    // Hook the unified Re selector uses to drive the LBM evolution animation.
+    let vfOnReChange = null;
 
     function imageUrl(re, type) {
       return 'assets/images/cavity/re' + re + '_' + type + '.png';
@@ -306,6 +393,8 @@
         if (h) h.style.left = '50%';
         if (a) a.style.clipPath = 'inset(0 50% 0 0)';
       }, 200);
+      // Drive the LBM evolution animation from the same selector and auto-play.
+      if (vfOnReChange) vfOnReChange(re);
     }
 
     var rc = document.getElementById('reTabs');
@@ -326,34 +415,102 @@
       document.body.classList.toggle('sidebar-open');
     });
 
-    /* PINN parametric Re tabs */
-    var pinnReValues = [100, 200, 400];
-    var pinnCurrentRe = 100;
+    /* ---- Interactive Flow Viewer (LBM Evolution + PINN Prediction) ---- */
+    (function () {
+      // Single colormap for EVERY plot + animation on this case, so the
+      // static field, the LBM evolution, and the PINN prediction all read
+      // the same way. (Backward-step etc. will use another cmap.)
+      var CASE_CMAP = 'viridis';
+      var DATA_DIR = 'assets/data/cavity';
+      var lbmCanvas = document.getElementById('lbmCanvas');
+      var pinnCanvas = document.getElementById('pinnCanvas');
+      var viewer = new FlowViewer(lbmCanvas, DATA_DIR, { cmap: CASE_CMAP });
+      // Temporal PINN surrogate: same FlowViewer engine over the
+      // pinn_temporal_re{re}.bin binary exported by export_temporal.py.
+      var pinnViewer = new FlowViewer(pinnCanvas, DATA_DIR,
+        { filePrefix: 'pinn_temporal', cmap: CASE_CMAP });
 
-    function pinnImageUrl(re) {
-      return 'assets/images/cavity/pinn_parametric_re' + re + '.png';
-    }
+      var statusEl = document.getElementById('fvStatus');
+      viewer.onStatus = function (m) { if (statusEl) statusEl.textContent = m; };
+      pinnViewer.onStatus = function (m) { if (statusEl) statusEl.textContent = m; };
 
-    function switchPinnRe(re) {
-      pinnCurrentRe = re;
-      document.getElementById('pinnParamImg').src = pinnImageUrl(re);
-      document.querySelectorAll('#pinnReTabs .teaser-link').forEach(function (btn) {
-        var rm = btn.textContent.match(/\d+/);
-        var br = rm ? parseInt(rm[0]) : 0;
-        btn.classList.toggle('active', br === re);
+      viewer.onFrameChange = function (f) {
+        var lbl = document.getElementById('lbmFrameLabel');
+        if (lbl && viewer.cache[viewer.re]) {
+          lbl.textContent = 'Frame ' + f + ' / ' + (viewer.cache[viewer.re].lbm.n_frames - 1);
+          var scr = document.getElementById('lbmScrubber');
+          if (scr) { scr.max = viewer.cache[viewer.re].lbm.n_frames - 1; scr.value = f; }
+        }
+      };
+
+      pinnViewer.onFrameChange = function (f) {
+        var lbl = document.getElementById('pinnFrameLabel');
+        if (lbl && pinnViewer.cache[pinnViewer.re]) {
+          lbl.textContent = 'Frame ' + f + ' / ' + (pinnViewer.cache[pinnViewer.re].lbm.n_frames - 1);
+          var scr = document.getElementById('pinnScrubber');
+          if (scr) { scr.max = pinnViewer.cache[pinnViewer.re].lbm.n_frames - 1; scr.value = f; }
+        }
+      };
+
+      // Unified Re selector (Velocity Field) drives the LBM evolution: load the
+      // matching frame set and auto-play so the animation tracks the static plot.
+      vfOnReChange = function (re) {
+        viewer.setRe(re).then(function () {
+          if (!viewer.playing) viewer.play();
+          var pb = document.getElementById('lbmPlay');
+          if (pb) pb.innerHTML = '&#10074;&#10074; Pause';
+        });
+      };
+
+      // Re selector (PINN section)
+      document.querySelectorAll('#pinnReGroup .fv-re').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('#pinnReGroup .fv-re').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          pinnViewer.setRe(parseInt(btn.getAttribute('data-re'), 10));
+        });
       });
-    }
 
-    var prc = document.getElementById('pinnReTabs');
-    pinnReValues.forEach(function (re) {
-      var btn = document.createElement('button');
-      btn.className = 'teaser-link' + (re === pinnCurrentRe ? ' active' : '');
-      btn.textContent = 'Re = ' + re;
-      if (re === 200) btn.textContent += ' (interpolated)';
-      btn.style.fontSize = '0.7em';
-      btn.onclick = function () { switchPinnRe(re); };
-      prc.appendChild(btn);
-    });
+      // LBM play / pause
+      document.getElementById('lbmPlay').addEventListener('click', function () {
+        var playing = viewer.togglePlay();
+        this.innerHTML = playing ? '&#10074;&#10074; Pause' : '&#9654; Play';
+      });
+
+      // LBM scrubber
+      document.getElementById('lbmScrubber').addEventListener('input', function () {
+        viewer.pause();
+        var pb = document.getElementById('lbmPlay');
+        if (pb) pb.innerHTML = '&#9654; Play';
+        viewer.setFrame(parseInt(this.value, 10));
+      });
+
+      // PINN play / pause
+      document.getElementById('pinnPlay').addEventListener('click', function () {
+        var playing = pinnViewer.togglePlay();
+        this.innerHTML = playing ? '&#10074;&#10074; Pause' : '&#9654; Play';
+      });
+
+      // PINN scrubber
+      document.getElementById('pinnScrubber').addEventListener('input', function () {
+        pinnViewer.pause();
+        var pb = document.getElementById('pinnPlay');
+        if (pb) pb.innerHTML = '&#9654; Play';
+        pinnViewer.setFrame(parseInt(this.value, 10));
+      });
+
+      // Boot
+      viewer.init(100).then(function () {
+        viewer.play();
+        document.getElementById('lbmPlay').innerHTML = '&#10074;&#10074; Pause';
+        viewer.load(400);  // preload Re=400
+      });
+      pinnViewer.init(100).then(function () {
+        pinnViewer.play();
+        document.getElementById('pinnPlay').innerHTML = '&#10074;&#10074; Pause';
+        pinnViewer.load(400);  // preload Re=400
+      });
+    })();
   </script>
 
 </body>
