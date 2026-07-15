@@ -24,22 +24,18 @@
         <a href="index.html" class="nav-item active">Home</a>
       </div>
       <div class="nav-section">
-        <div class="nav-heading">External Aerodynamics</div>
-        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <div class="nav-heading">Simulations</div>
         <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
         <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
         <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
         <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
         <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
-        <a href="urban.html" class="nav-item">Urban Canyon</a>
-      </div>
-      <div class="nav-section">
-        <div class="nav-heading">Internal Flows</div>
-        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-        <a href="step.html" class="nav-item">Backward Step</a>
-        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
-        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
-        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
       </div>
       <div class="nav-section">
         <div class="nav-heading">Reference</div>
@@ -88,25 +84,14 @@
     <h2>Simulation Cases</h2>
 
     <p class="section-intro">
-      There are currenty fifteen validation cases spanning external aerodynamics, internal flows,
+      There are currently fourteen validation cases spanning external aerodynamics, internal flows,
       urban microclimate, and multi-body interactions. This is an ever-growing list of experiments to test the solver's
-      limits in different scenarios.Each case includes
+      limits in different scenarios. Each case includes
       a comparison slider, quantitative validation against experimental data,
       and discussion of what the results mean physically.
     </p>
 
     <div class="case-grid">
-
-      <a href="flat_plate.html" class="case-card">
-        <img class="case-thumb" src="assets/images/flatplate/re1000_aoa0_contour.png" alt="Flat plate velocity contour"
-          onerror="this.style.background='#161b22';this.alt='Flat Plate'">
-        <div class="case-info">
-          <h3>Flat Plate Boundary Layer</h3>
-          <p>PRIMARY validation. Laminar BL vs Blasius solution. AoA sweep (-10 to 15 deg) and Re sweep (500-2000) for
-            drag polar.</p>
-          <span class="case-link">View case &rarr;</span>
-        </div>
-      </a>
 
       <a href="cylinder.html" class="case-card">
         <img class="case-thumb" src="assets/images/cylinder/re100_contour.png" alt="Cylinder velocity contour"
@@ -114,17 +99,6 @@
         <div class="case-info">
           <h3>Cylinder Wake</h3>
           <p>Von Karman vortex street at Re = 20-200. Bouzidi interpolated bounce-back for smooth curved boundaries.</p>
-          <span class="case-link">View case &rarr;</span>
-        </div>
-      </a>
-
-      <a href="square_cylinder.html" class="case-card">
-        <img class="case-thumb" src="assets/images/square_cylinder/re200_contour.png"
-          alt="Square cylinder velocity contour" onerror="this.style.background='#161b22';this.alt='Square Cylinder'">
-        <div class="case-info">
-          <h3>Square Cylinder</h3>
-          <p>ERCOFTAC 043 sharp-edge separation. Fixed separation points at corners, wider wake than circular cylinder.
-          </p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -150,22 +124,23 @@
         </div>
       </a>
 
+      <a href="orifice_plate.html" class="case-card">
+        <img class="case-thumb" src="assets/images/orifice_plate/1p3h_contour.png" alt="Orifice plate velocity contour"
+          onerror="this.style.background='#161b22';this.alt='Orifice Plate'">
+        <div class="case-info">
+          <h3>Orifice Plate</h3>
+          <p>Single and multi-stage orifice plates: one/three holes and staggered serpentine paths. Pressure drop
+            validation for ISO 5167 flow metering.</p>
+          <span class="case-link">View case &rarr;</span>
+        </div>
+      </a>
+
       <a href="urban.html" class="case-card">
         <img class="case-thumb" src="assets/images/urban/side/re0.5_contour.png" alt="Urban canyon velocity contour"
           onerror="this.style.background='#161b22';this.alt='Urban Canyon'">
         <div class="case-info">
           <h3>Urban Canyon</h3>
           <p>Three Oke 1988 flow regimes with 3 buildings. Top-down street-level wind and building downwash effects.</p>
-          <span class="case-link">View case &rarr;</span>
-        </div>
-      </a>
-
-      <a href="ribs.html" class="case-card">
-        <img class="case-thumb" src="assets/images/ribs/re100_contour.png" alt="Ribbed channel velocity contour"
-          onerror="this.style.background='#161b22';this.alt='Ribbed Channel'">
-        <div class="case-info">
-          <h3>Ribbed Channel</h3>
-          <p>Internal cooling with rib turbulators. Friction factor and reattachment for gas turbine blade cooling.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -180,13 +155,54 @@
         </div>
       </a>
 
-      <a href="orifice_plate.html" class="case-card">
-        <img class="case-thumb" src="assets/images/orifice_plate/1p3h_contour.png" alt="Orifice plate velocity contour"
-          onerror="this.style.background='#161b22';this.alt='Orifice Plate'">
+      <a href="flat_plate.html" class="case-card">
+        <img class="case-thumb" src="assets/images/flatplate/re1000_aoa0_contour.png" alt="Flat plate velocity contour"
+          onerror="this.style.background='#161b22';this.alt='Flat Plate'">
         <div class="case-info">
-          <h3>Orifice Plate</h3>
-          <p>Single and multi-stage orifice plates: one/three holes and staggered serpentine paths. Pressure drop
-            validation for ISO 5167 flow metering.</p>
+          <h3>Flat Plate Boundary Layer</h3>
+          <p>PRIMARY validation. Laminar BL vs Blasius solution. AoA sweep (-10 to 15 deg) and Re sweep (500-2000) for
+            drag polar.</p>
+          <span class="case-link">View case &rarr;</span>
+        </div>
+      </a>
+
+      <a href="square_cylinder.html" class="case-card">
+        <img class="case-thumb" src="assets/images/square_cylinder/re200_contour.png"
+          alt="Square cylinder velocity contour" onerror="this.style.background='#161b22';this.alt='Square Cylinder'">
+        <div class="case-info">
+          <h3>Square Cylinder</h3>
+          <p>ERCOFTAC 043 sharp-edge separation. Fixed separation points at corners, wider wake than circular cylinder.
+          </p>
+          <span class="case-link">View case &rarr;</span>
+        </div>
+      </a>
+
+      <a href="cylinder_near_wall.html" class="case-card">
+        <img class="case-thumb" src="assets/images/cylinder_near_wall/gap20_contour.png" alt="Cylinder near wall contour"
+          onerror="this.style.background='#161b22';this.alt='Cylinder Near Wall'">
+        <div class="case-info">
+          <h3>Cylinder Near Wall</h3>
+          <p>Ground effect study at variable wall gaps (10/20/40 cells). Lift and drag vs gap validated vs potential flow.</p>
+          <span class="case-link">View case &rarr;</span>
+        </div>
+      </a>
+
+      <a href="side_by_side.html" class="case-card">
+        <img class="case-thumb" src="assets/images/side_by_side/sd30_contour.png" alt="Side-by-side cylinders contour"
+          onerror="this.style.background='#161b22';this.alt='Side-by-Side Cylinders'">
+        <div class="case-info">
+          <h3>Side-by-Side Cylinders</h3>
+          <p>Transverse interference study at variable S/D (2, 3, 5). Bi-stable wake flip-flop and Draft tube effect.</p>
+          <span class="case-link">View case &rarr;</span>
+        </div>
+      </a>
+
+      <a href="rotating_cylinder.html" class="case-card">
+        <img class="case-thumb" src="assets/images/rotating_cylinder/w10_contour.png" alt="Rotating cylinder contour"
+          onerror="this.style.background='#161b22';this.alt='Rotating Cylinder'">
+        <div class="case-info">
+          <h3>Rotating Cylinder</h3>
+          <p>Magnus effect at variable spin (omega = 0.5, 1.0, 2.0 rad/ts). Lift matches Kutta-Joukowski within 10%.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>

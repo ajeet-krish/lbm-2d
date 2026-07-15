@@ -25,22 +25,18 @@
         <a href="index.html" class="nav-item">Home</a>
       </div>
       <div class="nav-section">
-        <div class="nav-heading">External Aerodynamics</div>
-        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <div class="nav-heading">Simulations</div>
         <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+        <a href="periodic_hills.html" class="nav-item active">Periodic Hills</a>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
         <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
         <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
         <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
         <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
-        <a href="urban.html" class="nav-item">Urban Canyon</a>
-      </div>
-      <div class="nav-section">
-        <div class="nav-heading">Internal Flows</div>
-        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-        <a href="step.html" class="nav-item">Backward Step</a>
-        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
-        <a href="periodic_hills.html" class="nav-item active">Periodic Hills</a>
-        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
       </div>
       <div class="nav-section">
         <div class="nav-heading">Reference</div>
@@ -51,7 +47,7 @@
     </nav>
   </div>
 
-  <div class="main-content">
+<div class="main-content">
 
     <h1>Periodic Hills: Canonical Separated Turbulent Flow</h1>
 
@@ -72,19 +68,19 @@
       </tr>
       <tr>
         <td>Grid</td>
-        <td>900 &times; 400</td>
+        <td>800 &times; 300</td>
       </tr>
       <tr>
         <td>Hill height h<sub>max</sub></td>
-        <td>H/6 &asymp; 44 cells (reduced from H/2 so the full sinusoidal profile is visible)</td>
+        <td>H/6 &asymp; 33 cells (reduced from H/2 so the full sinusoidal profile is visible)</td>
       </tr>
       <tr>
         <td>Channel half-height H</td>
-        <td>267 cells</td>
+        <td>200 cells (NY &times; 2/3)</td>
       </tr>
       <tr>
         <td>Hill wavelength L</td>
-        <td>9 &times; H &asymp; 2400 cells</td>
+        <td>800 cells (= NX, exactly one period across the domain)</td>
       </tr>
       <tr>
         <td>Reynolds number</td>
@@ -96,15 +92,15 @@
       </tr>
       <tr>
         <td>Tau (relaxation parameter)</td>
-        <td>Re=100: 1.10, Re=1000: 0.56, Re=2800: 0.52</td>
+        <td>Re=1000: 0.56, Re=2800: 0.52</td>
       </tr>
       <tr>
         <td>Number of steps</td>
-        <td>240,000</td>
+        <td>Re=1000/2800: 240,000</td>
       </tr>
       <tr>
         <td>Reference length</td>
-        <td>h<sub>max</sub> = 44 cells (hill height)</td>
+        <td>h<sub>max</sub> = 33 cells (hill height)</td>
       </tr>
       <tr>
         <td>Collision</td>
@@ -112,7 +108,7 @@
       </tr>
       <tr>
         <td>Boundary condition</td>
-        <td>Periodic (x), bounce-back (y)</td>
+        <td>Periodic (x), bounce-back (y: hill + top wall)</td>
       </tr>
       <tr>
         <td>Lattice spacing / time step</td>
@@ -121,11 +117,11 @@
     </table>
 
     <div class="callout">
-      The wavelength L = 9H places roughly <strong>three full hill-valley
-        periods</strong> across the 900-wide domain, and the reduced hill height
-      (h<sub>max</sub> = H/6) keeps the channel open so the entire sinusoidal
-      terrain and its successive separation bubbles are clearly visible in the
-      viewer.
+      Three sinusoidal hill-valley periods are tiled across the domain, each of
+      wavelength <strong>NX/3</strong>, and the periodic x-boundary connects
+      identical hill heights. The reduced hill height (h<sub>max</sub> = H/6)
+      keeps the channel open so the full sinusoidal terrain and its separation
+      bubble are clearly visible in the viewer.
     </div>
 
     <h2>Velocity Field</h2>
@@ -150,20 +146,23 @@
       <div class="slider-label right">Streamlines</div>
     </div>
 
+    <p id="statsLine" class="section-intro"></p>
+
     <h2>Physics</h2>
 
     <p class="section-intro">
       The sinusoidal hill profile is defined as:
-      <code>y<sub>hill</sub>(x) = h<sub>max</sub> * [1 - cos(2*pi*x/L)] / 2</code>.
+      <code>y<sub>hill</sub>(x) = H - h<sub>max</sub> * [1 - cos(2*pi*3*x/NX)]<sup>2</sup> / 2</code>
+      (three hill periods across the domain, each of wavelength NX/3).
       Flow accelerates over the hill crest, separates at the summit, and forms a
       recirculation bubble in the valley. Reattachment occurs downstream, and the
       flow re-accelerates over the next hill.
     </p>
 
     <p class="section-intro">
-      At Re = 100, the flow is laminar with a steady separation bubble.
-      At Re = 1000, transitional effects appear. At Re = 2800 (DNS reference),
-      the flow is fully turbulent with Reynolds stresses dominating momentum transport.
+      At Re = 1000, transitional effects appear with unsteady separation.
+      At Re = 2800 (DNS reference), the flow is fully turbulent with
+      Reynolds stresses dominating momentum transport.
     </p>
 
     <h2>Validation</h2>
@@ -179,13 +178,6 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>100</td>
-          <td>Laminar</td>
-          <td>Hill crest</td>
-          <td>~0.5L downstream</td>
-          <td>Steady, symmetric</td>
-        </tr>
         <tr>
           <td>1000</td>
           <td>Transitional</td>
@@ -215,8 +207,17 @@
       Periodic hills exercise the solver's ability to handle: (1) curved no-slip
       boundaries, (2) flow separation and reattachment, (3) turbulent transition,
       and (4) LES turbulence modeling. The sinusoidal profile is smooth, avoiding
-      sharp-edge singularities, making it ideal for Bouzidi interpolated bounce-back.
+      sharp-edge singularities, and the flow is driven with periodic x-boundaries
+      plus a streamwise body force (or moving lid) to sustain the channel flow.
     </p>
+
+    <div class="callout">
+      <strong>Status:</strong> the code fix for the periodic x-boundary (L = NX
+      so the hill completes exactly one period) and the fully-periodic streaming
+      path are applied. A re-run is pending to regenerate the fields below and to
+      add the sustained driving mechanism (body force / moving lid). The contour
+      and streamline images currently shown are from a prior converged run.
+    </div>
 
   </div>
 
@@ -230,11 +231,10 @@
   <script>
     const CASE_CONFIG = {
       paramLabel: 'Re',
-      reValues: [100, 1000, 2800],
+      reValues: [1000, 2800],
       stats: {
-        100: { re: 100, fx: '--', les: 'off', steps: '240k' },
-        1000: { re: 1000, fx: '--', les: 'on', steps: '240k' },
-        2800: { re: 2800, fx: '--', les: 'on', steps: '240k' },
+        1000: { re: 1000, fx: 0.12, les: 'on', steps: '240k' },
+        2800: { re: 2800, fx: 0.03, les: 'on', steps: '240k' },
       }
     };
 
@@ -267,6 +267,11 @@
 
     function updateStats(re) {
       var s = CASE_CONFIG.stats[re];
+      var el = document.getElementById('statsLine');
+      if (el && s) {
+        el.innerHTML = 'Re = ' + s.re + ' &middot; Fx (total streamwise force) = '
+          + s.fx + ' &middot; LES: ' + s.les + ' &middot; steps: ' + s.steps;
+      }
     }
 
     function switchRe(re) {

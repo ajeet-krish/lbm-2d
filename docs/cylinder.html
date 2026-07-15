@@ -25,22 +25,18 @@
         <a href="index.html" class="nav-item">Home</a>
       </div>
       <div class="nav-section">
-        <div class="nav-heading">External Aerodynamics</div>
-        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <div class="nav-heading">Simulations</div>
         <a href="cylinder.html" class="nav-item active">Cylinder</a>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+        <a href="urban.html" class="nav-item">Urban Canyon</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
         <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
         <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
         <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
         <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
-        <a href="urban.html" class="nav-item">Urban Canyon</a>
-      </div>
-      <div class="nav-section">
-        <div class="nav-heading">Internal Flows</div>
-        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-        <a href="step.html" class="nav-item">Backward Step</a>
-        <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
-        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
-        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
       </div>
       <div class="nav-section">
         <div class="nav-heading">Reference</div>
@@ -51,7 +47,7 @@
     </nav>
   </div>
 
-  <div class="main-content">
+<div class="main-content">
 
     <h1>Cylinder Wake: Laminar Vortex Shedding</h1>
 
@@ -88,7 +84,7 @@
       </tr>
       <tr>
         <td>Tau (relaxation parameter)</td>
-        <td>Re=20: 1.40, Re=40: 0.95, Re=100: 0.68, Re=200: 0.59</td>
+        <td>Re=100: 0.68, Re=200: 0.59</td>
       </tr>
       <tr>
         <td>Number of steps</td>
@@ -149,35 +145,19 @@
       </thead>
       <tbody>
         <tr>
-          <td>20</td>
-          <td>Steady attached</td>
-          <td>--</td>
-          <td>--</td>
-          <td>--</td>
-          <td>~2.0</td>
-        </tr>
-        <tr>
-          <td>40</td>
-          <td>Steady recirculating</td>
-          <td>--</td>
-          <td>--</td>
-          <td>--</td>
-          <td>~1.5</td>
-        </tr>
-        <tr>
           <td>100</td>
           <td>Laminar shedding</td>
-          <td>--</td>
+          <td>0.188</td>
           <td>0.164-0.172</td>
-          <td>--</td>
+          <td>1.77</td>
           <td>~1.4</td>
         </tr>
         <tr>
           <td>200</td>
           <td>Laminar shedding</td>
-          <td>--</td>
+          <td>0.220</td>
           <td>0.180-0.195</td>
-          <td>--</td>
+          <td>1.49</td>
           <td>~1.3</td>
         </tr>
       </tbody>
@@ -205,6 +185,119 @@
       between LBM on Cartesian grids and FV on body-fitted meshes.
     </p>
 
+    <h2>Physics-Informed Neural Network (PINN) Surrogate</h2>
+
+    <p class="section-intro">
+      A mesh-free Physics-Informed Neural Network trains on C++ LBM output as a
+      hybrid data-physics surrogate. The PINN maps spatial coordinates
+      (<em>x</em>, <em>y</em>) to velocity and pressure fields (<em>u</em>,
+      <em>v</em>, <em>p</em>) using a fully-connected MLP with 8 hidden layers
+      &times; 64 neurons (29,507 parameters). Training uses a <strong>hybrid
+      loss</strong>: data loss on sparse solver measurements + PDE residual
+      (steady incompressible Navier-Stokes via <code>torch.autograd</code>) +
+      boundary condition enforcement (no-slip walls and cylinder surface).
+    </p>
+
+    <h3>PINN vs LBM Comparison</h3>
+
+    <p class="section-intro">
+      The 3-panel comparison below shows the C++ LBM baseline (left), the trained
+      PINN surrogate (center), and the absolute error delta map (right). The PINN
+      is trained on <strong>all 3,755 fluid grid points</strong> from
+      <code>frame_18000.json</code> (fully developed wake) plus 10,000 interior
+      collocation points for the PDE residual. Importance sampling places 40% of
+      collocation points within 3&times; the cylinder radius to resolve the
+      near-field gradients.
+    </p>
+
+    <div style="text-align:center;margin:1.5rem 0;">
+      <img src="assets/images/cylinder/pinn_steady_comparison.png"
+           alt="PINN vs LBM comparison: C++ solver, PINN surrogate, error delta"
+           style="max-width:100%;border-radius:6px;border:1px solid #30363d;">
+    </div>
+
+    <h3>Training Convergence</h3>
+
+    <div style="text-align:center;margin:1.5rem 0;">
+      <img src="assets/images/cylinder/pinn_loss_history.png"
+           alt="PINN training loss convergence: total, PDE residual, data, boundary"
+           style="max-width:600px;border-radius:6px;border:1px solid #30363d;">
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>C++ LBM Solver</th>
+          <th>PINN Surrogate (PyTorch)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Method</td>
+          <td>D2Q9 MRT Lattice Boltzmann</td>
+          <td>Fully-connected MLP (8&times;64, tanh)</td>
+        </tr>
+        <tr>
+          <td>Grid / Domain</td>
+          <td>800&times;300 (downsampled 100&times;38)</td>
+          <td>Mesh-free: 3,755 sensor points + 10,000 collocation</td>
+        </tr>
+        <tr>
+          <td>Boundary conditions</td>
+          <td>Bouzidi interpolated bounce-back</td>
+          <td>No-slip (analytical): u=v=0 on walls &amp; cylinder</td>
+        </tr>
+        <tr>
+          <td>Training time</td>
+          <td>~10 s (parallelized C++)</td>
+          <td>~550 s (PyTorch, Apple MPS backend)</td>
+        </tr>
+        <tr>
+          <td>Inference latency</td>
+          <td>4.1 ms per timestep</td>
+          <td>&lt;1 ms per full field (29k params)</td>
+        </tr>
+        <tr>
+          <td>L<sub>2</sub> relative error (u)</td>
+          <td>Baseline (reference)</td>
+          <td>36.3%</td>
+        </tr>
+        <tr>
+          <td>Loss weights</td>
+          <td>--</td>
+          <td>w<sub>pde</sub>=1.0, w<sub>data</sub>=10.0, w<sub>bc</sub>=5.0</td>
+        </tr>
+        <tr>
+          <td>Optimizer</td>
+          <td>--</td>
+          <td>Adam (lr=1e-3) + CosineAnnealingLR (15k epochs)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>Engineering discussion:</strong> The 36.3% L<sub>2</sub> error
+      reflects the fundamental spectral bias of fully-connected networks with
+      tanh activation: they struggle to resolve the sharp velocity gradients in
+      the cylinder boundary layer and near-wake. The wake structure (low-velocity
+      region behind the cylinder) is captured in the correct spatial location, but
+      the PINN under-predicts the peak velocities and over-smooths the shear
+      layers. This is a well-known limitation of standard MLPs for CFD
+      &mdash;active research areas include Fourier feature networks, domain
+      decomposition (e.g., XPINNs), and adaptive collocation sampling to improve
+      convergence on high-gradient regions.
+    </div>
+
+    <p class="section-intro">
+      The PINN is trained on the Apple M5 MacBook Pro using the PyTorch MPS
+      (Metal Performance Shaders) backend. The full training run (15,000 Adam
+      epochs with cosine-annealing LR schedule) completes in ~9 minutes. Once
+      trained, the network evaluates the entire flow field in &lt;1 ms &mdash;
+      enabling real-time interactive inference in the browser via ONNX Runtime Web
+      (Phase 6.5 of the PINN roadmap).
+    </p>
+
   </div>
 
   <footer class="site-footer">
@@ -217,12 +310,10 @@
   <script>
     const CASE_CONFIG = {
       paramLabel: 'Re',
-      reValues: [20, 40, 100, 200],
+      reValues: [100, 200],
       stats: {
-        20: { re: 20, cd: '--', cl: '--', st: '--', xr: '--' },
-        40: { re: 40, cd: '--', cl: '--', st: '--', xr: '--' },
-        100: { re: 100, cd: '1.88', cl: '0.43', st: '0.188', xr: '--' },
-        200: { re: 200, cd: '1.85', cl: '0.94', st: '0.220', xr: '--' },
+        100: { re: 100, cd: '1.77', cl: '0.00', st: '0.188', xr: '--' },
+        200: { re: 200, cd: '1.49', cl: '0.00', st: '0.220', xr: '--' },
       }
     };
 

@@ -86,9 +86,13 @@ int main(int argc, char* argv[]) {
     place_polygon(system, sq_poly);
 
     for (int n = 0; n < NX * NY; ++n) {
+        int x = n % NX, y = n / NX;
+        // Symmetry-breaking vertical perturbation to trigger vortex shedding
+        // (square cylinder at Re>=47 is linearly unstable but needs a seed).
+        double v_pert = 1e-4 * std::sin(2.0 * M_PI * x / static_cast<double>(NX));
         double* f_node = &system.f[n * 9];
         for (int i = 0; i < 9; ++i) {
-            f_node[i] = compute_equilibrium(i, 1.0, params.u_inflow, 0.0);
+            f_node[i] = compute_equilibrium(i, 1.0, params.u_inflow, v_pert);
         }
     }
 

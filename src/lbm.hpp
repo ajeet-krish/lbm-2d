@@ -327,7 +327,7 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
                 }
             }
         }
-    } else if (g_case == CaseType::RIBS) {
+    } else if (g_case == CaseType::RIBS || g_case == CaseType::PERIODIC_HILLS) {
         #pragma omp parallel for collapse(2)
         for (int y = 0; y < NY; ++y) {
             for (int x = 0; x < NX; ++x) {
@@ -388,11 +388,11 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
     } else if (g_case == CaseType::STEP) {
         enforce_step_inflow(sys, NY / 3, NY - 1 - NY / 3, u_inflow);
         enforce_outflow(sys);
-    } else if (g_case != CaseType::RIBS) {
+    } else if (g_case != CaseType::RIBS && g_case != CaseType::PERIODIC_HILLS) {
         enforce_inflow(sys, u_inflow);
         enforce_outflow(sys);
     }
-    // RIBS has periodic x/y -- no BC enforcement needed
+    // RIBS and PERIODIC_HILLS have periodic x -- no BC enforcement needed
 
     // --- Force extraction (all non-cavity cases) ---
     if (g_case != CaseType::CAVITY) {
@@ -405,8 +405,8 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
                 for (int i = 0; i < 9; ++i) {
                     int nx = x + cx[i];
                     int ny = y + cy[i];
-                    if (g_case == CaseType::RIBS) {
-                        // Periodic in x and y for ribbed channel
+                    if (g_case == CaseType::RIBS || g_case == CaseType::PERIODIC_HILLS) {
+                        // Periodic in x (and y) for ribbed channel / periodic hills
                         if (ny < 0) ny += NY;
                         if (ny >= NY) ny -= NY;
                         if (nx < 0) nx += NX;

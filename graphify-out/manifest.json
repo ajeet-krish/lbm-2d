@@ -1,0 +1,807 @@
+{
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/data/force_re100.json": {
+    "mtime": 1783647397.2387223,
+    "ast_hash": "19dbcf05a913764a3897a181af446af6",
+    "semantic_hash": "19dbcf05a913764a3897a181af446af6"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/data/force_re20.json": {
+    "mtime": 1783647397.184863,
+    "ast_hash": "d8dbedf0ab1cece8154b7844d7070434",
+    "semantic_hash": "d8dbedf0ab1cece8154b7844d7070434"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/data/force_re200.json": {
+    "mtime": 1783647397.2637508,
+    "ast_hash": "de1744714951644e2a61bad5e5ba562f",
+    "semantic_hash": "de1744714951644e2a61bad5e5ba562f"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/data/force_re40.json": {
+    "mtime": 1783647397.2046025,
+    "ast_hash": "100bb091268499974aa188b02675f375",
+    "semantic_hash": "100bb091268499974aa188b02675f375"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/data/sim_re100.json": {
+    "mtime": 1783649313.2631824,
+    "ast_hash": "2a6f145d4ab24c0676b3a421ef570229",
+    "semantic_hash": "2a6f145d4ab24c0676b3a421ef570229"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/data/sim_re20.json": {
+    "mtime": 1783649306.4354293,
+    "ast_hash": "0626623ba6c875385800d51e9062b9cf",
+    "semantic_hash": "0626623ba6c875385800d51e9062b9cf"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/data/sim_re200.json": {
+    "mtime": 1783649316.6832018,
+    "ast_hash": "dcea56bf642727d2bf8af14967a6b030",
+    "semantic_hash": "dcea56bf642727d2bf8af14967a6b030"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/data/sim_re40.json": {
+    "mtime": 1783649309.8332613,
+    "ast_hash": "ae4e99f843ee7ff9efea87a627e80edf",
+    "semantic_hash": "ae4e99f843ee7ff9efea87a627e80edf"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/js/slider.js": {
+    "mtime": 1783733542.475487,
+    "ast_hash": "00f2e4701db7df4e4347e3bfb6aa5bcb",
+    "semantic_hash": "00f2e4701db7df4e4347e3bfb6aa5bcb"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/config.py": {
+    "mtime": 1784046437.3211882,
+    "ast_hash": "857a2507c4551fcdcd660770ebe5597e",
+    "semantic_hash": "857a2507c4551fcdcd660770ebe5597e"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/data/loader.py": {
+    "mtime": 1784046481.3276644,
+    "ast_hash": "8ea1dc1e6f07f45589324b9a5afffb8a",
+    "semantic_hash": "8ea1dc1e6f07f45589324b9a5afffb8a"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/evaluate.py": {
+    "mtime": 1784050929.7842035,
+    "ast_hash": "af4bdae684d5bf9bfa54155dc2b00926",
+    "semantic_hash": "af4bdae684d5bf9bfa54155dc2b00926"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/models/__init__.py": {
+    "mtime": 1784048674.8783588,
+    "ast_hash": "e0a16d6a074335fe282817ef62cd90ca",
+    "semantic_hash": "e0a16d6a074335fe282817ef62cd90ca"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/models/losses.py": {
+    "mtime": 1784048657.0833127,
+    "ast_hash": "beee2b3ac9816bdf948c06d8727b93bd",
+    "semantic_hash": "beee2b3ac9816bdf948c06d8727b93bd"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/models/pinn.py": {
+    "mtime": 1784048339.5493722,
+    "ast_hash": "299b85095b843ec3f61013087e86a723",
+    "semantic_hash": "299b85095b843ec3f61013087e86a723"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/plot_results.py": {
+    "mtime": 1784049006.6024046,
+    "ast_hash": "6929cfb6430cf214c8bd53c21d82d7d6",
+    "semantic_hash": "6929cfb6430cf214c8bd53c21d82d7d6"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/train.py": {
+    "mtime": 1784048711.0374732,
+    "ast_hash": "5b67a4e52942fc5ec02ae36996c00f14",
+    "semantic_hash": "5b67a4e52942fc5ec02ae36996c00f14"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/batch_postprocess.sh": {
+    "mtime": 1784064454.5743084,
+    "ast_hash": "290b847eb055d0af2848f4a88c7db1de",
+    "semantic_hash": "290b847eb055d0af2848f4a88c7db1de"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/extract_forces.py": {
+    "mtime": 1784064766.9563582,
+    "ast_hash": "a0e9c621ccd09a62c21977cd027e4fc0",
+    "semantic_hash": "a0e9c621ccd09a62c21977cd027e4fc0"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/plot_airfoil.py": {
+    "mtime": 1783655165.692393,
+    "ast_hash": "e9c3f2d9c91fa2b9db45ce554f939c42",
+    "semantic_hash": "e9c3f2d9c91fa2b9db45ce554f939c42"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/postprocess.py": {
+    "mtime": 1784059416.9124613,
+    "ast_hash": "737016469c9628c805c3821f31ea3ad2",
+    "semantic_hash": "737016469c9628c805c3821f31ea3ad2"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/run_ahmed.sh": {
+    "mtime": 1783733668.2662053,
+    "ast_hash": "7788375b5612a4cfac759533ec4fc11c",
+    "semantic_hash": "7788375b5612a4cfac759533ec4fc11c"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/run_all_cases.sh": {
+    "mtime": 1783733671.8086686,
+    "ast_hash": "e3c36c7f69547c411e5399858811a0b5",
+    "semantic_hash": "e3c36c7f69547c411e5399858811a0b5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/run_downwash.sh": {
+    "mtime": 1783733665.71281,
+    "ast_hash": "42eb0cad8e15c1f7108d868d406a75a6",
+    "semantic_hash": "42eb0cad8e15c1f7108d868d406a75a6"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/run_ribs.sh": {
+    "mtime": 1783732774.6358914,
+    "ast_hash": "aac674337ddb83134566a948b2b8e070",
+    "semantic_hash": "aac674337ddb83134566a948b2b8e070"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/run_step.sh": {
+    "mtime": 1783732770.3381214,
+    "ast_hash": "07335f067da5003fb84eeb5fa704fc5b",
+    "semantic_hash": "07335f067da5003fb84eeb5fa704fc5b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/scripts/run_urban.sh": {
+    "mtime": 1783733663.3574073,
+    "ast_hash": "3b18959f33b665914748941fd0b3984b",
+    "semantic_hash": "3b18959f33b665914748941fd0b3984b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/amr.hpp": {
+    "mtime": 1783826194.5909631,
+    "ast_hash": "81677f158d9e16ef919030d307469230",
+    "semantic_hash": "81677f158d9e16ef919030d307469230"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/amr_test.cpp": {
+    "mtime": 1783826268.855298,
+    "ast_hash": "69297ca75a021ee967799ed7af5c3cbd",
+    "semantic_hash": "69297ca75a021ee967799ed7af5c3cbd"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/archive/lbm_solver.js": {
+    "mtime": 1783657434.2507088,
+    "ast_hash": "b4f9fcd7caf9f4ad2b02dc20d1d24ae8",
+    "semantic_hash": "b4f9fcd7caf9f4ad2b02dc20d1d24ae8"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/archive/viewer.js": {
+    "mtime": 1783693853.1641738,
+    "ast_hash": "8c91f3c07fc205854a93630d4ff9d32f",
+    "semantic_hash": "8c91f3c07fc205854a93630d4ff9d32f"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/archive/wasm_main.cpp": {
+    "mtime": 1783693853.1614316,
+    "ast_hash": "9b03b473d2630a4a5fc3f0d30e29a6c7",
+    "semantic_hash": "9b03b473d2630a4a5fc3f0d30e29a6c7"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/archive/wasm_sim.js": {
+    "mtime": 1783693853.1671412,
+    "ast_hash": "e36bc5ccb16fba280a20244fa495042b",
+    "semantic_hash": "e36bc5ccb16fba280a20244fa495042b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/cavity.cpp": {
+    "mtime": 1783833768.281062,
+    "ast_hash": "f2620137cbad3b3a0e60458dafbcc5d2",
+    "semantic_hash": "f2620137cbad3b3a0e60458dafbcc5d2"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/cylinder_near_wall.cpp": {
+    "mtime": 1783962666.0488286,
+    "ast_hash": "c19c2b43cfb7d09a91a85f536823284b",
+    "semantic_hash": "c19c2b43cfb7d09a91a85f536823284b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/downwash.cpp": {
+    "mtime": 1783833066.5489035,
+    "ast_hash": "294df0cf48ce17a92260ad3b18acff13",
+    "semantic_hash": "294df0cf48ce17a92260ad3b18acff13"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/flat_plate.cpp": {
+    "mtime": 1783840755.3389258,
+    "ast_hash": "d460c55d2916200832714e50b2419127",
+    "semantic_hash": "d460c55d2916200832714e50b2419127"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/geometry.hpp": {
+    "mtime": 1783653806.6056092,
+    "ast_hash": "92257d73bb763eeb84d8159ba75ad1df",
+    "semantic_hash": "92257d73bb763eeb84d8159ba75ad1df"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/lbm.hpp": {
+    "mtime": 1784041717.2091086,
+    "ast_hash": "fb4345fcd04dd6650864498af26c192a",
+    "semantic_hash": "fb4345fcd04dd6650864498af26c192a"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/lbm_test.cpp": {
+    "mtime": 1783818943.2521183,
+    "ast_hash": "d34322a493b84fe0268503e1282e82e1",
+    "semantic_hash": "d34322a493b84fe0268503e1282e82e1"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/lbm_types.hpp": {
+    "mtime": 1783967345.8646092,
+    "ast_hash": "6b14f476e4044a491f4971ad723379a9",
+    "semantic_hash": "6b14f476e4044a491f4971ad723379a9"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/main.cpp": {
+    "mtime": 1784061023.1376867,
+    "ast_hash": "e61be46274324de2eedc1c4f6d55ed4c",
+    "semantic_hash": "e61be46274324de2eedc1c4f6d55ed4c"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/orifice_plate.cpp": {
+    "mtime": 1783963329.841241,
+    "ast_hash": "75c2ac001e9f69363a2ff117fb24f9bb",
+    "semantic_hash": "75c2ac001e9f69363a2ff117fb24f9bb"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/periodic_hills.cpp": {
+    "mtime": 1784062168.3395782,
+    "ast_hash": "bc29fe4a82caf4208a1740b1ae2928a5",
+    "semantic_hash": "bc29fe4a82caf4208a1740b1ae2928a5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/rotating_cylinder.cpp": {
+    "mtime": 1783916062.5019574,
+    "ast_hash": "358cf301f433e069e42053f1b046475b",
+    "semantic_hash": "358cf301f433e069e42053f1b046475b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/side_by_side_cylinders.cpp": {
+    "mtime": 1783962641.7470012,
+    "ast_hash": "850b3b579b88d135e10e2cc4d82a6e7f",
+    "semantic_hash": "850b3b579b88d135e10e2cc4d82a6e7f"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/square_cylinder.cpp": {
+    "mtime": 1784060640.3472402,
+    "ast_hash": "0f72e91842d6e782cceede79edefe847",
+    "semantic_hash": "0f72e91842d6e782cceede79edefe847"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/step.cpp": {
+    "mtime": 1783822453.900782,
+    "ast_hash": "8cb10836841e126ed106cc2e7f62295b",
+    "semantic_hash": "8cb10836841e126ed106cc2e7f62295b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/src/urban_canyon.cpp": {
+    "mtime": 1784062737.7675953,
+    "ast_hash": "85909bf2c0b4bfcf6ed90bec5f2a1cb0",
+    "semantic_hash": "85909bf2c0b4bfcf6ed90bec5f2a1cb0"
+  },
+  "/Users/ajeet/Projects/lbm-2d/.github/workflows/ci.yml": {
+    "mtime": 1783643070.2029128,
+    "ast_hash": "b09ab44285e651065cd692ad71f89226",
+    "semantic_hash": "b09ab44285e651065cd692ad71f89226"
+  },
+  "/Users/ajeet/Projects/lbm-2d/AGENTS.md": {
+    "mtime": 1784062847.9097524,
+    "ast_hash": "e572d129e830955aa8c824e3196b7002",
+    "semantic_hash": "e572d129e830955aa8c824e3196b7002"
+  },
+  "/Users/ajeet/Projects/lbm-2d/CMakeLists.txt": {
+    "mtime": 1784059363.6030133,
+    "ast_hash": "6d8be5a6b72b762580e51304442f45c0",
+    "semantic_hash": "6d8be5a6b72b762580e51304442f45c0"
+  },
+  "/Users/ajeet/Projects/lbm-2d/README.md": {
+    "mtime": 1784059462.9028816,
+    "ast_hash": "256426de73c3c437eeca712e5e687c08",
+    "semantic_hash": "256426de73c3c437eeca712e5e687c08"
+  },
+  "/Users/ajeet/Projects/lbm-2d/TECHNICAL_REPORT.md": {
+    "mtime": 1783913890.434569,
+    "ast_hash": "11a92f4d31a03bddd7eccd2ca4c7a93e",
+    "semantic_hash": "11a92f4d31a03bddd7eccd2ca4c7a93e"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/cavity.html": {
+    "mtime": 1784065441.7378623,
+    "ast_hash": "b5f2121eef5042e731dd46ae29b28f9b",
+    "semantic_hash": "b5f2121eef5042e731dd46ae29b28f9b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/cylinder.html": {
+    "mtime": 1784065571.8198178,
+    "ast_hash": "a142965c8fec5e0a2832399a386742a8",
+    "semantic_hash": "a142965c8fec5e0a2832399a386742a8"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/cylinder_near_wall.html": {
+    "mtime": 1784065441.7383509,
+    "ast_hash": "3fc938f59410986dc4d73c0d46b53c51",
+    "semantic_hash": "3fc938f59410986dc4d73c0d46b53c51"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/flat_plate.html": {
+    "mtime": 1784065620.6689746,
+    "ast_hash": "88289a8843a691badc70bc2572c2b0fa",
+    "semantic_hash": "88289a8843a691badc70bc2572c2b0fa"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/implementation.html": {
+    "mtime": 1784065441.7389452,
+    "ast_hash": "f6a54a55ee96cc9bf9b95332ef9e2456",
+    "semantic_hash": "f6a54a55ee96cc9bf9b95332ef9e2456"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/index.html": {
+    "mtime": 1784065035.3639565,
+    "ast_hash": "0b028d4cca760c1d94f8eff720ee188f",
+    "semantic_hash": "0b028d4cca760c1d94f8eff720ee188f"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/orifice_plate.html": {
+    "mtime": 1784065441.7391334,
+    "ast_hash": "0e5410836dfe70b149f907748dbe17b5",
+    "semantic_hash": "0e5410836dfe70b149f907748dbe17b5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/periodic_hills.html": {
+    "mtime": 1784065602.7509897,
+    "ast_hash": "e9e190278993e47e6f42e2f74a1f6963",
+    "semantic_hash": "e9e190278993e47e6f42e2f74a1f6963"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/rotating_cylinder.html": {
+    "mtime": 1784065441.7395165,
+    "ast_hash": "a27479ced92fcb7f2ae4978c5cdd68d7",
+    "semantic_hash": "a27479ced92fcb7f2ae4978c5cdd68d7"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/side_by_side.html": {
+    "mtime": 1784065441.7397041,
+    "ast_hash": "45026be9ebe4db04d05e59d59091a9eb",
+    "semantic_hash": "45026be9ebe4db04d05e59d59091a9eb"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/square_cylinder.html": {
+    "mtime": 1784065441.7399075,
+    "ast_hash": "40026a828d9f5c744624605a56137294",
+    "semantic_hash": "40026a828d9f5c744624605a56137294"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/step.html": {
+    "mtime": 1784065441.7400923,
+    "ast_hash": "9366bd56d514b2f5c62991cb292f9807",
+    "semantic_hash": "9366bd56d514b2f5c62991cb292f9807"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/test_slider.html": {
+    "mtime": 1784059588.2935913,
+    "ast_hash": "ad3c12aeaf0603b14e514075f98c132b",
+    "semantic_hash": "ad3c12aeaf0603b14e514075f98c132b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/theory.html": {
+    "mtime": 1784065441.7402854,
+    "ast_hash": "4305820caafcb9fbab298f9cebd83bec",
+    "semantic_hash": "4305820caafcb9fbab298f9cebd83bec"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/urban.html": {
+    "mtime": 1784065441.7405825,
+    "ast_hash": "62158f804d470a493352dcbb8d41c668",
+    "semantic_hash": "62158f804d470a493352dcbb8d41c668"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/README.md": {
+    "mtime": 1784046511.4059165,
+    "ast_hash": "1dad81225682967b27b355ae361cf31f",
+    "semantic_hash": "1dad81225682967b27b355ae361cf31f"
+  },
+  "/Users/ajeet/Projects/lbm-2d/pinn/requirements.txt": {
+    "mtime": 1784046493.3120983,
+    "ast_hash": "1efb5c08484361b010ef4b0f41e06fe5",
+    "semantic_hash": "1efb5c08484361b010ef4b0f41e06fe5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cavity/profiles.png": {
+    "mtime": 1783652918.2190843,
+    "ast_hash": "595f10b92312868869e410e5ebe3fa94",
+    "semantic_hash": "595f10b92312868869e410e5ebe3fa94"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cavity/re1000_contour.png": {
+    "mtime": 1784064478.3289208,
+    "ast_hash": "b1548f86379f929a5087a7f1799dda0d",
+    "semantic_hash": "b1548f86379f929a5087a7f1799dda0d"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cavity/re1000_streamlines.png": {
+    "mtime": 1784064478.3312309,
+    "ast_hash": "e6c6d3e35c83629f6ccb779ddf02ae49",
+    "semantic_hash": "e6c6d3e35c83629f6ccb779ddf02ae49"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cavity/re100_contour.png": {
+    "mtime": 1784064476.8586547,
+    "ast_hash": "fe850351faae74df917b95ff8a9f5dde",
+    "semantic_hash": "fe850351faae74df917b95ff8a9f5dde"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cavity/re100_streamlines.png": {
+    "mtime": 1784064476.860507,
+    "ast_hash": "fb049068aea9f525965c330c40e1cfeb",
+    "semantic_hash": "fb049068aea9f525965c330c40e1cfeb"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cavity/re400_contour.png": {
+    "mtime": 1784064477.5925012,
+    "ast_hash": "15898aef19291143e96fee2605e22330",
+    "semantic_hash": "15898aef19291143e96fee2605e22330"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cavity/re400_streamlines.png": {
+    "mtime": 1784064477.5949094,
+    "ast_hash": "cb5ce2c1db6229f2c7207ca61c50c56c",
+    "semantic_hash": "cb5ce2c1db6229f2c7207ca61c50c56c"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder/pinn_loss_history.png": {
+    "mtime": 1784050856.2763944,
+    "ast_hash": "3cddd797b380021c9a1f9609a5b246d5",
+    "semantic_hash": "3cddd797b380021c9a1f9609a5b246d5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder/pinn_steady_comparison.png": {
+    "mtime": 1784050856.2740571,
+    "ast_hash": "8e3926c9f763e2ca3b37e9d8e679de83",
+    "semantic_hash": "8e3926c9f763e2ca3b37e9d8e679de83"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder/re100_contour.png": {
+    "mtime": 1784064475.2710295,
+    "ast_hash": "958daf8cd3c99ee3a555572f7e3d6a19",
+    "semantic_hash": "958daf8cd3c99ee3a555572f7e3d6a19"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder/re100_streamlines.png": {
+    "mtime": 1784064475.2726238,
+    "ast_hash": "555aaf4f7f57d7a9eb8f90096327e5e0",
+    "semantic_hash": "555aaf4f7f57d7a9eb8f90096327e5e0"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder/re200_contour.png": {
+    "mtime": 1784064476.1101396,
+    "ast_hash": "67f449fc0703d7645b0e962e40a829af",
+    "semantic_hash": "67f449fc0703d7645b0e962e40a829af"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder/re200_streamlines.png": {
+    "mtime": 1784064476.1120012,
+    "ast_hash": "14280abfa2da2e7559037448057d2c76",
+    "semantic_hash": "14280abfa2da2e7559037448057d2c76"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder_near_wall/gap10_contour.png": {
+    "mtime": 1784064493.1292024,
+    "ast_hash": "87fb242c9bb84b993ac477ab6a5e2118",
+    "semantic_hash": "87fb242c9bb84b993ac477ab6a5e2118"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder_near_wall/gap10_streamlines.png": {
+    "mtime": 1784064493.1306732,
+    "ast_hash": "61c93905dcfb2a107853f6be1257a881",
+    "semantic_hash": "61c93905dcfb2a107853f6be1257a881"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder_near_wall/gap20_contour.png": {
+    "mtime": 1784064493.8664503,
+    "ast_hash": "ad28151899eeb1fac4e95eb7712522bf",
+    "semantic_hash": "ad28151899eeb1fac4e95eb7712522bf"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder_near_wall/gap20_streamlines.png": {
+    "mtime": 1784064493.8678942,
+    "ast_hash": "1fabcb40f049a10d266023a39d4a7a63",
+    "semantic_hash": "1fabcb40f049a10d266023a39d4a7a63"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder_near_wall/gap40_contour.png": {
+    "mtime": 1784064494.6161056,
+    "ast_hash": "57deeb25e934556707fdb20ee83ef966",
+    "semantic_hash": "57deeb25e934556707fdb20ee83ef966"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/cylinder_near_wall/gap40_streamlines.png": {
+    "mtime": 1784064494.6183507,
+    "ast_hash": "c0ea678c2d5976ed31de4ec453e4eaa6",
+    "semantic_hash": "c0ea678c2d5976ed31de4ec453e4eaa6"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa-10_contour.png": {
+    "mtime": 1784064479.735528,
+    "ast_hash": "f10a4b4326a4ebfd9c0c108ca0f1cccb",
+    "semantic_hash": "f10a4b4326a4ebfd9c0c108ca0f1cccb"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa-10_streamlines.png": {
+    "mtime": 1784064479.73722,
+    "ast_hash": "17904e850aa001e2627313e964723837",
+    "semantic_hash": "17904e850aa001e2627313e964723837"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa-5_contour.png": {
+    "mtime": 1784064480.5493298,
+    "ast_hash": "b775ea15d1c4a6ddaab9a176877569f1",
+    "semantic_hash": "b775ea15d1c4a6ddaab9a176877569f1"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa-5_streamlines.png": {
+    "mtime": 1784064480.550881,
+    "ast_hash": "4d780d850665735556d0c03674cd798d",
+    "semantic_hash": "4d780d850665735556d0c03674cd798d"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa0_contour.png": {
+    "mtime": 1784064481.2704136,
+    "ast_hash": "5124814e32c970e9193087a79f8cfa19",
+    "semantic_hash": "5124814e32c970e9193087a79f8cfa19"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa0_streamlines.png": {
+    "mtime": 1784064481.2723203,
+    "ast_hash": "b0a03a0c20ea92a21373f31249009836",
+    "semantic_hash": "b0a03a0c20ea92a21373f31249009836"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa10_contour.png": {
+    "mtime": 1784064482.7021577,
+    "ast_hash": "23f4dd245c756afc782baf5d9c15ecd0",
+    "semantic_hash": "23f4dd245c756afc782baf5d9c15ecd0"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa10_streamlines.png": {
+    "mtime": 1784064482.7037804,
+    "ast_hash": "b1389306fbfb6e6221db00e071e3eabd",
+    "semantic_hash": "b1389306fbfb6e6221db00e071e3eabd"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa15_contour.png": {
+    "mtime": 1784064483.477292,
+    "ast_hash": "78eb3d644a8740f89ad5454c7315bcd2",
+    "semantic_hash": "78eb3d644a8740f89ad5454c7315bcd2"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa15_streamlines.png": {
+    "mtime": 1784064483.4789348,
+    "ast_hash": "e43511a753b5b55d7b2cf49303e83edf",
+    "semantic_hash": "e43511a753b5b55d7b2cf49303e83edf"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa5_contour.png": {
+    "mtime": 1784064481.9788275,
+    "ast_hash": "c76736bf795a78cecaf8554392182d13",
+    "semantic_hash": "c76736bf795a78cecaf8554392182d13"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re1000_aoa5_streamlines.png": {
+    "mtime": 1784064481.9803016,
+    "ast_hash": "3a94a0f3d1c1ddfd4c85d3e78ec76d5d",
+    "semantic_hash": "3a94a0f3d1c1ddfd4c85d3e78ec76d5d"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re2000_aoa0_contour.png": {
+    "mtime": 1784064484.197544,
+    "ast_hash": "d75081ec0043f15821ba16e691619742",
+    "semantic_hash": "d75081ec0043f15821ba16e691619742"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re2000_aoa0_streamlines.png": {
+    "mtime": 1784064484.1991777,
+    "ast_hash": "4f1f89c034296cd3b30e646207afdaa5",
+    "semantic_hash": "4f1f89c034296cd3b30e646207afdaa5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re500_aoa0_contour.png": {
+    "mtime": 1784064479.0082428,
+    "ast_hash": "b0487001bddac00caf9c0c4ab52f6bb7",
+    "semantic_hash": "b0487001bddac00caf9c0c4ab52f6bb7"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/flatplate/re500_aoa0_streamlines.png": {
+    "mtime": 1784064479.009871,
+    "ast_hash": "a3db32ecf6da529a74461d64bb4bd160",
+    "semantic_hash": "a3db32ecf6da529a74461d64bb4bd160"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/orifice_plate/1p1h_contour.png": {
+    "mtime": 1784064487.9241407,
+    "ast_hash": "82e23e9fc348773c985a642aafa0b9f2",
+    "semantic_hash": "82e23e9fc348773c985a642aafa0b9f2"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/orifice_plate/1p1h_streamlines.png": {
+    "mtime": 1784064487.9261317,
+    "ast_hash": "4e7cd58e610cbd685943b626ae6a3e18",
+    "semantic_hash": "4e7cd58e610cbd685943b626ae6a3e18"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/orifice_plate/1p3h_contour.png": {
+    "mtime": 1784064488.734316,
+    "ast_hash": "6d1240e95b047ec60f8b977b33a22c09",
+    "semantic_hash": "6d1240e95b047ec60f8b977b33a22c09"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/orifice_plate/1p3h_streamlines.png": {
+    "mtime": 1784064488.7364104,
+    "ast_hash": "fcc5d55e6a258941343a9a854ee870db",
+    "semantic_hash": "fcc5d55e6a258941343a9a854ee870db"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/orifice_plate/2p_contour.png": {
+    "mtime": 1784064489.5563128,
+    "ast_hash": "c92fbd33ed45ce3cef90b1318b921f03",
+    "semantic_hash": "c92fbd33ed45ce3cef90b1318b921f03"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/orifice_plate/2p_streamlines.png": {
+    "mtime": 1784064489.5579004,
+    "ast_hash": "b7d5dc3ebeb49ca594bfa4116c8eb3ec",
+    "semantic_hash": "b7d5dc3ebeb49ca594bfa4116c8eb3ec"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/orifice_plate/3p_contour.png": {
+    "mtime": 1784064490.3645203,
+    "ast_hash": "0853293dd582ac42d35541f776e75541",
+    "semantic_hash": "0853293dd582ac42d35541f776e75541"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/orifice_plate/3p_streamlines.png": {
+    "mtime": 1784064490.3662477,
+    "ast_hash": "abba43a6a4b7f48e96ed0f5efe8133e6",
+    "semantic_hash": "abba43a6a4b7f48e96ed0f5efe8133e6"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/periodic_hills/re1000_contour.png": {
+    "mtime": 1784064491.6822622,
+    "ast_hash": "038ed602548e2a13005a94017ae8805f",
+    "semantic_hash": "038ed602548e2a13005a94017ae8805f"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/periodic_hills/re1000_streamlines.png": {
+    "mtime": 1784064491.6839013,
+    "ast_hash": "2f7bb69676592b1d31b7d8fcc6e101df",
+    "semantic_hash": "2f7bb69676592b1d31b7d8fcc6e101df"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/periodic_hills/re100_contour.png": {
+    "mtime": 1784064490.9925838,
+    "ast_hash": "c677da127a06af316cb7483a450d3510",
+    "semantic_hash": "c677da127a06af316cb7483a450d3510"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/periodic_hills/re100_streamlines.png": {
+    "mtime": 1784064490.9940906,
+    "ast_hash": "a2de9d47f34574962103987d447f0263",
+    "semantic_hash": "a2de9d47f34574962103987d447f0263"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/periodic_hills/re2800_contour.png": {
+    "mtime": 1784064492.374261,
+    "ast_hash": "ce08939b8c43c716e7162bd52f427915",
+    "semantic_hash": "ce08939b8c43c716e7162bd52f427915"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/periodic_hills/re2800_streamlines.png": {
+    "mtime": 1784064492.3757603,
+    "ast_hash": "fd11057ec09a5b3fe2a7ad0a838ced7f",
+    "semantic_hash": "fd11057ec09a5b3fe2a7ad0a838ced7f"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/reference/validation.png": {
+    "mtime": 1783648440.2063777,
+    "ast_hash": "f87c5c3bdc15d1273c8ddd0d58bd8bc6",
+    "semantic_hash": "f87c5c3bdc15d1273c8ddd0d58bd8bc6"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/ribs/re100_contour.png": {
+    "mtime": 1784064506.0578883,
+    "ast_hash": "0a691c8d30af8bdae00e11410587f28d",
+    "semantic_hash": "0a691c8d30af8bdae00e11410587f28d"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/ribs/re100_streamlines.png": {
+    "mtime": 1784064506.0593498,
+    "ast_hash": "5a3cb29742100b6951fffb94a4344c13",
+    "semantic_hash": "5a3cb29742100b6951fffb94a4344c13"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/ribs/re200_contour.png": {
+    "mtime": 1784064506.7668488,
+    "ast_hash": "9d97ec3185edae12a54bf2f38f974904",
+    "semantic_hash": "9d97ec3185edae12a54bf2f38f974904"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/ribs/re200_streamlines.png": {
+    "mtime": 1784064506.7683613,
+    "ast_hash": "daadce1af360c8014985041e88b8b3fe",
+    "semantic_hash": "daadce1af360c8014985041e88b8b3fe"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/ribs/re50_contour.png": {
+    "mtime": 1784064505.3725471,
+    "ast_hash": "79a20398ccfd309977d3d7d78d4ae2ce",
+    "semantic_hash": "79a20398ccfd309977d3d7d78d4ae2ce"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/ribs/re50_streamlines.png": {
+    "mtime": 1784064505.3739882,
+    "ast_hash": "0631b654944f213a4670103bc6587fb4",
+    "semantic_hash": "0631b654944f213a4670103bc6587fb4"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/rotating_cylinder/w10_contour.png": {
+    "mtime": 1784064498.5460544,
+    "ast_hash": "cd2c430fa8f3375a08e371efbd457a2e",
+    "semantic_hash": "cd2c430fa8f3375a08e371efbd457a2e"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/rotating_cylinder/w10_streamlines.png": {
+    "mtime": 1784064498.5478244,
+    "ast_hash": "23d31b1a5e9a3c2f8d6f61046ee229e4",
+    "semantic_hash": "23d31b1a5e9a3c2f8d6f61046ee229e4"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/rotating_cylinder/w20_contour.png": {
+    "mtime": 1784064499.3230646,
+    "ast_hash": "abbfeeff569e5b9f3b0da1077234c39c",
+    "semantic_hash": "abbfeeff569e5b9f3b0da1077234c39c"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/rotating_cylinder/w20_streamlines.png": {
+    "mtime": 1784064499.3247468,
+    "ast_hash": "e30701fe2fc3b8da55efb783bb9b01be",
+    "semantic_hash": "e30701fe2fc3b8da55efb783bb9b01be"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/rotating_cylinder/w5_contour.png": {
+    "mtime": 1784064497.7620013,
+    "ast_hash": "507c6a739d95206a7d2d5c381ab65c95",
+    "semantic_hash": "507c6a739d95206a7d2d5c381ab65c95"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/rotating_cylinder/w5_streamlines.png": {
+    "mtime": 1784064497.7636716,
+    "ast_hash": "d53ed45a2ccc5db688a48160b4fad588",
+    "semantic_hash": "d53ed45a2ccc5db688a48160b4fad588"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/side_by_side/sd20_contour.png": {
+    "mtime": 1784064495.3874154,
+    "ast_hash": "06b6ddffe94616d07bfc7b67a873210e",
+    "semantic_hash": "06b6ddffe94616d07bfc7b67a873210e"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/side_by_side/sd20_streamlines.png": {
+    "mtime": 1784064495.3890343,
+    "ast_hash": "339914ebb59670411b478d53f87ff716",
+    "semantic_hash": "339914ebb59670411b478d53f87ff716"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/side_by_side/sd30_contour.png": {
+    "mtime": 1784064496.1696713,
+    "ast_hash": "805f8848738548711834e1a7223fefa5",
+    "semantic_hash": "805f8848738548711834e1a7223fefa5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/side_by_side/sd30_streamlines.png": {
+    "mtime": 1784064496.171188,
+    "ast_hash": "77cec06c228f6428a1ae7a9faa464392",
+    "semantic_hash": "77cec06c228f6428a1ae7a9faa464392"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/side_by_side/sd50_contour.png": {
+    "mtime": 1784064496.9539142,
+    "ast_hash": "0c649e130fc0a6377d968a3dcb428cd5",
+    "semantic_hash": "0c649e130fc0a6377d968a3dcb428cd5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/side_by_side/sd50_streamlines.png": {
+    "mtime": 1784064496.955481,
+    "ast_hash": "447c3710415d02b3879573fd979a9540",
+    "semantic_hash": "447c3710415d02b3879573fd979a9540"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/square_cylinder/re200_contour.png": {
+    "mtime": 1784064487.15653,
+    "ast_hash": "bd6a8416100a68a58dfa1d891f9a977d",
+    "semantic_hash": "bd6a8416100a68a58dfa1d891f9a977d"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/square_cylinder/re200_streamlines.png": {
+    "mtime": 1784064487.1582062,
+    "ast_hash": "4e35d92fb254a8349b49059a7c28f725",
+    "semantic_hash": "4e35d92fb254a8349b49059a7c28f725"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/step/re100_contour.png": {
+    "mtime": 1784064484.9270709,
+    "ast_hash": "e016b4920ba81fb25e1d3e37a397380e",
+    "semantic_hash": "e016b4920ba81fb25e1d3e37a397380e"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/step/re100_streamlines.png": {
+    "mtime": 1784064484.929234,
+    "ast_hash": "36fd33ff54f02d06d37047e4155876c1",
+    "semantic_hash": "36fd33ff54f02d06d37047e4155876c1"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/step/re200_contour.png": {
+    "mtime": 1784064485.6642988,
+    "ast_hash": "1fee7c32a96df54de4351148de3027d5",
+    "semantic_hash": "1fee7c32a96df54de4351148de3027d5"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/step/re200_streamlines.png": {
+    "mtime": 1784064485.666118,
+    "ast_hash": "f2240926c5a9cebfecde2c30727438a9",
+    "semantic_hash": "f2240926c5a9cebfecde2c30727438a9"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/step/re400_contour.png": {
+    "mtime": 1784064486.395302,
+    "ast_hash": "4e637243bdfd44a60315489a4b808101",
+    "semantic_hash": "4e637243bdfd44a60315489a4b808101"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/step/re400_streamlines.png": {
+    "mtime": 1784064486.396766,
+    "ast_hash": "61036aa825260c949d55c8b9c704ccc2",
+    "semantic_hash": "61036aa825260c949d55c8b9c704ccc2"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/downwash/re100_contour.png": {
+    "mtime": 1784064504.664743,
+    "ast_hash": "6cd636993998bf9e95578cade53b778f",
+    "semantic_hash": "6cd636993998bf9e95578cade53b778f"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/downwash/re100_streamlines.png": {
+    "mtime": 1784064504.666586,
+    "ast_hash": "bc7d232bf2aae71419eb8991db6cf070",
+    "semantic_hash": "bc7d232bf2aae71419eb8991db6cf070"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/side/re0.3_contour.png": {
+    "mtime": 1784064500.0562992,
+    "ast_hash": "96e40a9d04fb031f42acd0a45b360811",
+    "semantic_hash": "96e40a9d04fb031f42acd0a45b360811"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/side/re0.3_streamlines.png": {
+    "mtime": 1784064500.0578058,
+    "ast_hash": "f8773d4f77149beed46e5529e6867bb9",
+    "semantic_hash": "f8773d4f77149beed46e5529e6867bb9"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/side/re0.5_contour.png": {
+    "mtime": 1784064500.8240938,
+    "ast_hash": "a72cff222f89ee2af365c65ecab5fd17",
+    "semantic_hash": "a72cff222f89ee2af365c65ecab5fd17"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/side/re0.5_streamlines.png": {
+    "mtime": 1784064500.8258421,
+    "ast_hash": "f02e8720ce5ba12bb5614f597716c810",
+    "semantic_hash": "f02e8720ce5ba12bb5614f597716c810"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/side/re0.6_3b_contour.png": {
+    "mtime": 1784064501.5631123,
+    "ast_hash": "ef01115e7b93762bf34a56cee4aa047d",
+    "semantic_hash": "ef01115e7b93762bf34a56cee4aa047d"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/side/re0.6_3b_streamlines.png": {
+    "mtime": 1784064501.5647933,
+    "ast_hash": "88a83a8dddd1b951e59db650472f1af2",
+    "semantic_hash": "88a83a8dddd1b951e59db650472f1af2"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/side/re0.8_contour.png": {
+    "mtime": 1784064502.3139443,
+    "ast_hash": "0d040a2d5272b438c53bfde07041ba2d",
+    "semantic_hash": "0d040a2d5272b438c53bfde07041ba2d"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/side/re0.8_streamlines.png": {
+    "mtime": 1784064502.316248,
+    "ast_hash": "561fd5d3e80721258a54459e6bcfccf8",
+    "semantic_hash": "561fd5d3e80721258a54459e6bcfccf8"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/topdown/re100_contour.png": {
+    "mtime": 1784064503.124377,
+    "ast_hash": "32dc0bfd41ce6cbf5fedd1e7d996e239",
+    "semantic_hash": "32dc0bfd41ce6cbf5fedd1e7d996e239"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/topdown/re100_streamlines.png": {
+    "mtime": 1784064503.1257803,
+    "ast_hash": "b8d1992ff48aab7f5ffc6477e57daf7b",
+    "semantic_hash": "b8d1992ff48aab7f5ffc6477e57daf7b"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/topdown_h/re100_contour.png": {
+    "mtime": 1784064503.8956256,
+    "ast_hash": "e800b662172bca9025e611ab00d83747",
+    "semantic_hash": "e800b662172bca9025e611ab00d83747"
+  },
+  "/Users/ajeet/Projects/lbm-2d/docs/assets/images/urban/topdown_h/re100_streamlines.png": {
+    "mtime": 1784064503.8974147,
+    "ast_hash": "1d1af4376d773910b6e318bac1af153d",
+    "semantic_hash": "1d1af4376d773910b6e318bac1af153d"
+  }
+}

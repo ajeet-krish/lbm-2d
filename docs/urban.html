@@ -14,39 +14,35 @@
 
 <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
 
-<div class="sidebar">
-  <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">
-      <div class="nav-heading">Project</div>
-      <a href="index.html" class="nav-item">Home</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">External Aerodynamics</div>
-      <a href="flat_plate.html" class="nav-item">Flat Plate</a>
-      <a href="cylinder.html" class="nav-item">Cylinder</a>
-      <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
-      <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
-      <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
-      <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
-      <a href="urban.html" class="nav-item active">Urban Canyon</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Internal Flows</div>
-      <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
-      <a href="step.html" class="nav-item">Backward Step</a>
-      <a href="sports_ball.html" class="nav-item">Sports-Ball Roughness</a>
-      <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
-      <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
-    </div>
-    <div class="nav-section">
-      <div class="nav-heading">Reference</div>
-      <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-      <a href="implementation.html" class="nav-item">Implementation</a>
-      <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
-    </div>
-  </nav>
-</div>
+  <div class="sidebar">
+    <div class="sidebar-brand"><a href="index.html">AK-Vortex</a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-heading">Project</div>
+        <a href="index.html" class="nav-item">Home</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Simulations</div>
+        <a href="cylinder.html" class="nav-item">Cylinder</a>
+        <a href="cavity.html" class="nav-item">Lid-Driven Cavity</a>
+        <a href="step.html" class="nav-item">Backward Step</a>
+        <a href="orifice_plate.html" class="nav-item">Orifice Plate</a>
+        <a href="urban.html" class="nav-item active">Urban Canyon</a>
+        <a href="periodic_hills.html" class="nav-item">Periodic Hills</a>
+        <a href="flat_plate.html" class="nav-item">Flat Plate</a>
+        <a href="square_cylinder.html" class="nav-item">Square Cylinder</a>
+        <a href="cylinder_near_wall.html" class="nav-item">Cylinder Near Wall</a>
+        <a href="side_by_side.html" class="nav-item">Side-by-Side Cylinders</a>
+        <a href="rotating_cylinder.html" class="nav-item">Rotating Cylinder</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-heading">Reference</div>
+        <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
+        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
+      </div>
+    </nav>
+  </div>
 
 <div class="main-content">
 
@@ -209,7 +205,13 @@ function makeSliderGroup(opts) {
   var beforeId = opts.beforeId, afterId = opts.afterId;
   var sliderId = opts.sliderId;
   var label = opts.label, values = opts.values, prefix = opts.prefix;
+  var buttonLabels = opts.buttonLabels || null;
   var currentVal = values[0];
+
+  function buttonText(v) {
+    if (buttonLabels && buttonLabels[v] !== undefined) return buttonLabels[v];
+    return label + ' = ' + v;
+  }
 
   function imageUrl(v, type) {
     var key = (opts.imageMap && opts.imageMap[v] !== undefined) ? opts.imageMap[v] : v;
@@ -221,7 +223,7 @@ function makeSliderGroup(opts) {
       '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300">' +
       '<rect width="600" height="300" fill="#0d1117"/>' +
       '<text x="300" y="140" fill="#484f58" font-family="monospace" font-size="14" text-anchor="middle">' +
-      label + ' ' + v + ' ' + type + '</text>' +
+      buttonText(v) + ' ' + type + '</text>' +
       '<text x="300" y="160" fill="#30363d" font-family="monospace" font-size="11" text-anchor="middle">' +
       '(simulation running, placeholder)</text></svg>'
     );
@@ -239,9 +241,7 @@ function makeSliderGroup(opts) {
   function switchVal(v) {
     currentVal = v;
     document.querySelectorAll('#' + tabId + ' .teaser-link').forEach(function(btn) {
-      var vm = btn.textContent.match(/\d+\.?\d*/);
-      var bv = vm ? parseFloat(vm[0]) : 0;
-      btn.classList.toggle('active', bv === v);
+      btn.classList.toggle('active', btn.dataset.val === v);
     });
     updateImages(v);
     setTimeout(function() {
@@ -257,7 +257,8 @@ function makeSliderGroup(opts) {
   values.forEach(function(v) {
     var btn = document.createElement('button');
     btn.className = 'teaser-link' + (v === currentVal ? ' active' : '');
-    btn.textContent = label + ' = ' + v;
+    btn.textContent = buttonText(v);
+    btn.dataset.val = v;
     btn.style.fontSize = '0.7em';
     btn.onclick = function() { switchVal(v); };
     rc.appendChild(btn);
@@ -273,7 +274,13 @@ makeSliderGroup({
   sliderId: 'sideSlider',
   label: 'H/W', values: ['0.3', '0.5', '0.6', '0.8'],
   prefix: 'urban/side',
-  imageMap: { '0.3': '0.3', '0.5': '0.5', '0.6': '0.6_3b', '0.8': '0.8' }
+  imageMap: { '0.3': '0.3', '0.5': '0.5', '0.6': '0.6_3b', '0.8': '0.8' },
+  buttonLabels: {
+    '0.3': '2 Bldgs / H/W = 0.3',
+    '0.5': '2 Bldgs / H/W = 0.5',
+    '0.6': '3 Bldgs / H/W = 0.6',
+    '0.8': '2 Bldgs / H/W = 0.8'
+  }
 });
 
 // Section 2: Top-Down Vertical Buildings

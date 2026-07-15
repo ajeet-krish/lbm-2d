@@ -33,13 +33,6 @@ target_include_directories(LBM_Step PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(LBM_Step PRIVATE OpenMP::OpenMP_CXX)
 
 # ------------------------------------------------------------------
-# Sports-ball surface roughness (dimpled cylinder) executable
-# ------------------------------------------------------------------
-add_executable(LBM_SportsBall src/sports_ball.cpp src/lbm.hpp src/lbm_types.hpp)
-target_include_directories(LBM_SportsBall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(LBM_SportsBall PRIVATE OpenMP::OpenMP_CXX)
-
-# ------------------------------------------------------------------
 # Urban canyon flow executable
 # ------------------------------------------------------------------
 add_executable(LBM_UrbanCanyon src/urban_canyon.cpp src/lbm.hpp src/lbm_types.hpp)
@@ -105,11 +98,6 @@ add_custom_target(cavity
 
 add_custom_target(step
   COMMAND LBM_Step
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-
-add_custom_target(sports_ball
-  COMMAND LBM_SportsBall
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 

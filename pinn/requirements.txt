@@ -1,0 +1,12 @@
+# PINN surrogate suite dependencies.
+# Training uses the Apple Silicon MPS backend (no CUDA).
+# Install with:  pip3 install -r requirements.txt
+# A Python >= 3.10 is recommended for best torch MPS support
+# (the data loader itself only needs numpy and runs on system Python 3.9).
+
+torch>=2.1.0          # PyTorch with MPS (Metal) backend for Apple Silicon
+numpy>=1.24
+matplotlib>=3.7
+scipy>=1.10           # FFT / Strouhal comparison (optional)
+onnx>=1.14            # Model export to ONNX
+onnxruntime>=1.16     # Validate ONNX inference locally (Mac)

@@ -29,7 +29,6 @@ cmake -B build && cmake --build build -j$(sysctl -n hw.ncpu)
 ./build/LBM_SquareCylinder 200           # Square cylinder at Re=200 (ERCOFTAC 043)
 ./build/LBM_Cavity 100                   # Lid-driven cavity at Re=100
 ./build/LBM_Step 100                     # Backward-facing step at Re=100
-./build/LBM_Ribs 100                     # Ribbed channel at Re=100
 ./build/LBM_OrificePlate 100 3p          # Orifice plate (3 staggered plates)
 ./build/LBM_UrbanCanyon --mode side --ar 0.5  # Side-view canyon (3 buildings)
 ./build/LBM_UrbanCanyon --mode topdown 100    # Top-down street network (3 buildings)
@@ -51,6 +50,12 @@ python3 scripts/postprocess.py output/cylinder/re100 --split --vorticity
 # Preview website
 python3 -m http.server -d docs 8765
 open http://localhost:8765
+
+# PINN surrogate training (requires PyTorch)
+cd pinn && pip3 install -r requirements.txt
+python3 train.py                          # Cylinder Re=100 (original)
+python3 train_cavity.py                   # Cavity multi-Re (Re=100 + Re=400)
+python3 train_cavity.py --single-re 100   # Cavity single Re
 ```
 
 ## Simulation Parameters
@@ -87,11 +92,11 @@ open http://localhost:8765
 | Step | 800x300 | 100 | 1.296 | 0.1 | Dh=398 | h_step=100 | MRT | Bounce-back |
 | Step | 800x300 | 200 | 0.898 | 0.1 | Dh=398 | h_step=100 | MRT | Bounce-back |
 | Step | 800x300 | 400 | 0.699 | 0.1 | Dh=398 | h_step=100 | MRT | Bounce-back |
-| Sports-ball | 800x300 | 100 | 0.680 | 0.1 | D=60 | Circle R=30 + dimple bumps | MRT | Bouzidi |
-| Sports-ball (dimpled) | 800x300 | 100 | 0.680 | 0.1 | D=60 | Circle R=30 + 12 bumps | MRT | Bouzidi |
-| Periodic hills | 900x400 | 100 | 0.544 | 0.1 | H=267, h=H/6 | Sinusoidal bottom (3 periods) | MRT | Periodic x |
-| Periodic hills | 900x400 | 1000 | 0.504 | 0.1 | H=267, h=H/6 | Sinusoidal bottom (3 periods) | MRT+LES | Periodic x |
-| Periodic hills | 900x400 | 2800 | 0.502 | 0.1 | H=267, h=H/6 | Sinusoidal bottom (3 periods) | MRT+LES | Periodic x |
+| Sports-ball | 800x300 | 100 | 0.680 | 0.1 | D=60 | Circle R=30 + 16 dimple bumps | MRT | Bouzidi |
+| Sports-ball (dimpled) | 800x300 | 100 | 0.680 | 0.1 | D=60 | Circle R=30 + 16 bumps | MRT | Bouzidi |
+| Periodic hills | 800x300 | 100 | 1.10 | 0.1 | H=200, h=H/6 | Sinusoidal bottom (1 period, L=NX) | MRT | Periodic x |
+| Periodic hills | 800x300 | 1000 | 0.56 | 0.1 | H=200, h=H/6 | Sinusoidal bottom (1 period, L=NX) | MRT+LES | Periodic x |
+| Periodic hills | 800x300 | 2800 | 0.52 | 0.1 | H=200, h=H/6 | Sinusoidal bottom (1 period, L=NX) | MRT+LES | Periodic x |
 
 ### Orifice Plate
 
@@ -123,7 +128,7 @@ open http://localhost:8765
 | Square cylinder | 200 | Cd, St | Lyn et al. 1995 (ERCOFTAC 043) |
 | Lid-driven cavity | 100-1000 | u-profile | Ghia, Ghia & Shin 1982 |
 | Backward-facing step | 100-400 | Xr/H | Armaly et al. 1983 |
-| Ribbed channel | 50-200 | Friction factor | Webb et al. 1971 |
+| Sports-ball roughness | 100 | Cd smooth vs dimpled | Golf-ball drag analogy |
 | Orifice plate | 100 | Loss coeff K | ISO 5167, Idelchik 2006 |
 | Periodic hills | 100-2800 | Reattachment, U-profile | Moser/Kim/Moin 1993 |
 | Cylinder near wall | 100 | Cl vs gap | Ground effect literature |
@@ -141,9 +146,46 @@ open http://localhost:8765
 - **OpenMP parallel** collision and streaming (collapse(2))
 - **Momentum exchange** force extraction for Cd/Cl coefficients
 - **Direct JSON output** -- per-frame velocity, pressure, vorticity fields + append-only force history. Optional `--vtk` flag for legacy Paraview export.
-- **15 simulation cases**: flat plate, cylinder, square cylinder, lid-driven cavity, backward-facing step, sports-ball (surface roughness), orifice plate, urban canyon (side + topdown vertical/horizontal), building downwash, periodic hills, cylinder near wall, side-by-side cylinders, rotating cylinder.
+- **14 simulation cases**: flat plate, cylinder, square cylinder, lid-driven cavity, backward-facing step, orifice plate, urban canyon (side + topdown vertical/horizontal), building downwash, periodic hills, cylinder near wall, side-by-side cylinders, rotating cylinder.
 - **Polygon obstacle support** via point-in-polygon -- any closed 2D shape.
 - **Production-grade**: Google Test suite (12 tests), GitHub Actions CI on ubuntu + macos.
+
+## Physics-Informed Neural Network (PINN) Surrogate Suite
+
+A mesh-free parametric surrogate suite in `pinn/`. Trains PyTorch PINNs on
+C++ LBM output as hybrid data-physics surrogates. Deploys via ONNX Runtime Web
+for real-time interactive demos. Mirrors the SciML R&D pipeline at NASA,
+Rolls-Royce, and F1 teams.
+
+**Parametric architecture:** Pass physical parameters (Re, geometry dimensions)
+directly into the network alongside spatial coordinates:
+```
+[x, y, Re, hole_w, ...] --> PINN --> [u, v, p]
+```
+A recruiter drags a slider -- the flow field updates instantly, no retraining.
+
+**Spectral-bias fix:** Standard tanh MLPs suffer from spectral bias and
+under-represent high-frequency boundary layers. The cavity surrogate uses a
+Fourier feature embedding (frozen random sinusoidal projection of spatial
+coords) before the MLP to lift inputs into a high-frequency space, breaking
+this limitation. See `pinn/models/pinn.py` (`FourierFeatureLayer`).
+
+**Implementation order:**
+
+| Phase | Case | Parametric Axis | Data Status | Portfolio Demo |
+|-------|------|----------------|-------------|----------------|
+| 6.3 | Lid-driven cavity | Re (100-400) | Exists (51 frames, 128x128) | Re slider -> vortex center shift |
+| 6.4 | Backward-facing step | Re (100-400) | Re-run Re=100 needed (no p/omega) | Re slider -> reattachment length |
+| 6.5 | Orifice plate | hole_w, n_plates | New Re+geometry sweeps needed | Diameter slider -> loss coeff K |
+
+**Key features:**
+- Trains on Apple Silicon via PyTorch MPS backend (no CUDA)
+- Hybrid loss = data + PDE residual (steady incompressible NS) + BC loss
+- Fourier feature embedding to mitigate tanh spectral bias
+- 3-panel comparison (LBM / PINN / error delta) on website
+- Zero changes to the existing C++ solver
+
+See `pinn/README.md` for setup, architecture, and the full phased plan.
 
 ## Interactive Website
 
@@ -168,7 +210,6 @@ src/
   step.cpp             Backward-facing step
   square_cylinder.cpp  Square cylinder (ERCOFTAC 043)
   orifice_plate.cpp    Orifice plate (single + multi-stage, staggered)
-  sports_ball.cpp      Sports-ball surface roughness (dimpled cylinder, drag reduction)
   urban_canyon.cpp     Urban canyon (side 2b/3b + topdown vertical/horizontal)
   downwash.cpp         Building downwash (scaled buildings)
   periodic_hills.cpp   Periodic hills (canonical LES benchmark)
@@ -188,7 +229,6 @@ docs/
   square_cylinder.html ERCOFTAC 043 (sharp-edge separation)
   cavity.html          Lid-driven cavity
   step.html            Backward-facing step
-  sports_ball.html     Sports-ball surface roughness (dimples, drag reduction)
   orifice_plate.html   Orifice plate (single + multi-stage)
   urban.html           Urban canyon (side + topdown vertical/horizontal + downwash)
   periodic_hills.html  Periodic hills (LES benchmark)
@@ -214,9 +254,10 @@ docs/
 | Square cylinder | 200 | 1.157 | 0.47 | Validated vs ERCOFTAC |
 | Cavity | 100-1000 | -- | -- | Validated vs Ghia |
 | Step | 100-400 | -- | -- | Validated vs Armaly |
-| Ribs/sports-ball | 100 | Cd vs roughness | -- | Dimple drag reduction |
+| Sports-ball (smooth) | 100 | 1.703 | ~0 | Baseline; wider wake |
+| Sports-ball (dimpled) | 100 | 1.902 | ~0 | Dimples raise drag at Re=100 (low-Re regime) |
 | Orifice plate | 100 | Fx 0.9-63 | -- | K increases with plates |
-| Periodic hills | 100-2800 | -- | -- | LES benchmark |
+| Periodic hills | 100-2800 | -- | -- | LES benchmark (re-run pending after L=NX fix) |
 | Cylinder near wall | 100 | 2.6-2.8 | +0.40 to +1.42 | Ground effect (lift vs gap) |
 | Side-by-side | 100 | 2.6-2.8 | ~0 (amp 0.6-0.7) | Interference study |
 | Rotating cylinder | 100 | -- | -- | Magnus effect (Ladd) |
@@ -233,6 +274,7 @@ docs/
 | 3 | Vorticity output + postprocessor | Completed |
 | 4 | Full simulation re-runs + new cases | In progress |
 | 5 | Website updates for new features | Pending |
+| 6 | Physics-Informed Neural Network (PINN) surrogate suite | In progress |
 
 ### Pending Fixes (Phase 4)
 

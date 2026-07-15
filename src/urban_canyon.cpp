@@ -49,6 +49,8 @@ struct UrbanParams {
     int bldg2_x0_td;
     int bldg3_x0_td;
     int bldg_y0, bldg_y1;
+    int bldg1_y0_td, bldg2_y0_td, bldg3_y0_td;  // per-building y (horizontal mode)
+    int bldg_x0_td, bldg_x1_td;                   // shared x range (horizontal mode)
 };
 
 // Place n buildings of width bw with equal canyons (n-1 gaps) centred.
@@ -101,32 +103,46 @@ UrbanParams compute_side_params(double Re, double ar, int n_bldg) {
 }
 
 UrbanParams compute_topdown_params(double Re, TDOrient orient) {
-    int w_bldg = 80;
+    int w_bldg_nominal = 80;
     double u_ref = 0.1;
-    double length_scale = static_cast<double>(w_bldg);
+    double length_scale = static_cast<double>(w_bldg_nominal);
     double nu = u_ref * length_scale / Re;
     double tau = 0.5 + 3.0 * nu;
 
+    int w_bldg = w_bldg_nominal;
     int b1_x0, b2_x0, b3_x0, bldg_y0, bldg_y1, l_bldg;
+    int bldg1_y0_td = 0, bldg2_y0_td = 0, bldg3_y0_td = 0;
+    int bldg_x0_td = 0, bldg_x1_td = 0;
     if (orient == TDOrient::VERTICAL) {
         // 3 tall buildings (long in y), wide street spacing
+        w_bldg = 100;
         int canyon = 2 * w_bldg;
         l_bldg = NY / 2;
-        b1_x0 = NX * 3 / 8 - w_bldg / 2;
+        int total_w = 3 * w_bldg + 2 * canyon;
+        int start_x = (NX - total_w) / 2;
+        b1_x0 = start_x;
         b2_x0 = b1_x0 + w_bldg + canyon;
         b3_x0 = b2_x0 + w_bldg + canyon;
         bldg_y0 = NY / 2 - l_bldg / 2;
         bldg_y1 = bldg_y0 + l_bldg;
+        bldg1_y0_td = bldg_y0; bldg2_y0_td = bldg_y0; bldg3_y0_td = bldg_y0;
+        bldg_x0_td = b1_x0; bldg_x1_td = b1_x0 + w_bldg;
     } else {
-        // 3 long buildings (long in x), short in y -> wind funneled through gaps
-        int h_bldg = NY / 8;
-        int gap = 2 * h_bldg;
-        l_bldg = h_bldg;
-        b1_x0 = NX * 3 / 8 - w_bldg / 2;
-        b2_x0 = b1_x0 + w_bldg + gap;
-        b3_x0 = b2_x0 + w_bldg + gap;
-        bldg_y0 = NY / 2 - h_bldg / 2;
-        bldg_y1 = bldg_y0 + h_bldg;
+        // 3 long buildings (long in x), stacked in y -> wind funneled
+        // through the horizontal canyons between them (same x, changing y)
+        w_bldg = NX / 3;     // elongated in x, clearly "long" rectangles
+        l_bldg = NY / 10;    // short in y
+        int gap = 2 * l_bldg;
+        int total = 3 * l_bldg + 2 * gap;
+        int y0 = (NY - total) / 2;
+        int x0 = (NX - w_bldg) / 2;
+        bldg1_y0_td = y0;
+        bldg2_y0_td = y0 + l_bldg + gap;
+        bldg3_y0_td = y0 + 2 * (l_bldg + gap);
+        bldg_x0_td = x0;
+        bldg_x1_td = x0 + w_bldg;
+        b1_x0 = x0; b2_x0 = x0; b3_x0 = x0;
+        bldg_y0 = 0; bldg_y1 = 0;
     }
 
     int num_steps = std::max(20000, static_cast<int>(15.0 * NX / u_ref));
@@ -134,7 +150,8 @@ UrbanParams compute_topdown_params(double Re, TDOrient orient) {
 
     return {tau, u_ref, num_steps, save_interval, length_scale,
             UrbanMode::TOPDOWN, orient, 0.0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            w_bldg, l_bldg, b1_x0, b2_x0, b3_x0, bldg_y0, bldg_y1};
+            w_bldg, l_bldg, b1_x0, b2_x0, b3_x0, bldg_y0, bldg_y1,
+            bldg1_y0_td, bldg2_y0_td, bldg3_y0_td, bldg_x0_td, bldg_x1_td};
 }
 
 void place_side_obstacles(LBMCapabilities& system, const UrbanParams& p) {
@@ -157,15 +174,24 @@ void place_topdown_obstacles(LBMCapabilities& system, const UrbanParams& p) {
     for (int y = 0; y < NY; ++y) {
         for (int x = 0; x < NX; ++x) {
             if (y == 0 || y == NY - 1) system.obstacle[node_index(x, y)] = true;
-            if (x >= p.bldg1_x0_td && x < p.bldg1_x0_td + p.w_bldg
-                && y >= p.bldg_y0 && y < p.bldg_y1)
-                system.obstacle[node_index(x, y)] = true;
-            if (x >= p.bldg2_x0_td && x < p.bldg2_x0_td + p.w_bldg
-                && y >= p.bldg_y0 && y < p.bldg_y1)
-                system.obstacle[node_index(x, y)] = true;
-            if (x >= p.bldg3_x0_td && x < p.bldg3_x0_td + p.w_bldg
-                && y >= p.bldg_y0 && y < p.bldg_y1)
-                system.obstacle[node_index(x, y)] = true;
+            bool hit = false;
+            if (p.orient == TDOrient::HORIZONTAL) {
+                // 3 long slabs at the same x, stacked in y with canyons between
+                if (x >= p.bldg_x0_td && x < p.bldg_x1_td) {
+                    if (y >= p.bldg1_y0_td && y < p.bldg1_y0_td + p.l_bldg) hit = true;
+                    else if (y >= p.bldg2_y0_td && y < p.bldg2_y0_td + p.l_bldg) hit = true;
+                    else if (y >= p.bldg3_y0_td && y < p.bldg3_y0_td + p.l_bldg) hit = true;
+                }
+            } else {
+                // 3 tall pillars at the same y, spread along x with canyons between
+                if (x >= p.bldg1_x0_td && x < p.bldg1_x0_td + p.w_bldg
+                    && y >= p.bldg_y0 && y < p.bldg_y1) hit = true;
+                else if (x >= p.bldg2_x0_td && x < p.bldg2_x0_td + p.w_bldg
+                    && y >= p.bldg_y0 && y < p.bldg_y1) hit = true;
+                else if (x >= p.bldg3_x0_td && x < p.bldg3_x0_td + p.w_bldg
+                    && y >= p.bldg_y0 && y < p.bldg_y1) hit = true;
+            }
+            if (hit) system.obstacle[node_index(x, y)] = true;
         }
     }
 }

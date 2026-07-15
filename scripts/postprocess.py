@@ -55,7 +55,6 @@ CASE_CMAPS = {
     'side-by-side':          ('jet', 'jet'),
     'rotating-cylinder':     ('jet', 'jet'),
     'orifice-plate':         ('coolwarm', 'coolwarm'),
-    'sports-ball':           ('jet', 'jet'),
 }
 
 # Detect shape type from meta.json or directory name
@@ -94,8 +93,6 @@ def _detect_shape(meta, output_dir=None):
             return 'rotating-cylinder'
         if pname == 'orifice_plate':
             return 'orifice-plate'
-        if pname == 'sports_ball':
-            return 'sports-ball'
         if pname == 'urban':
             if 'side' in dname:
                 return 'urban-side'

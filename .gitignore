@@ -1,6 +1,17 @@
 build/
 output/
 docs/assets/videos/*.mp4
-.DS_Store
+**/.DS_Store
+
+# Transient simulation/run logs (per-case .log files + DONE markers)
+logs/
+*.log
+
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+pinn/.venv/
+*.onnx
+*.pt
+*.npz

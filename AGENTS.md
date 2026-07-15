@@ -27,7 +27,7 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 - MRT collision operator (default, BGK fallback) with tuned rates
 - Bouzidi interpolated bounce-back for cylinders (q_cylinder) and polygons (q_polygon)
 - JSON output pipeline (meta.json, forces.jsonl, frame_*.json) with pressure field
-- 15 simulation cases: cylinder, cavity, step, sports-ball, urban (side+topdown), downwash, square cylinder, flat plate, orifice plate, periodic hills, cylinder near wall, side-by-side cylinders, rotating cylinder
+- 14 simulation cases: cylinder, cavity, step, urban (side+topdown), downwash, square cylinder, flat plate, orifice plate, periodic hills, cylinder near wall, side-by-side cylinders, rotating cylinder
 - 12 Google Test suite tests, GitHub Actions CI
 - Postprocess.py with --split, --cmap, --strouhal, --video, obstacle overlay, pressure contour
 - Comparison slider (contour vs streamline), slider.js
@@ -56,11 +56,14 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 - Ladd (1994) moving boundary: omega_lat = omega_user * u_inflow / R, f_bb correction term
 - Cylinder near wall: physical wall at y=0, force extraction filtered to cylinder only
 - Orifice plate: 4 configs (1p1h, 1p3h, 2p, 3p); u_inflow=0.025 + LES for single-hole jet stability
-- Periodic hills: hill height reduced to h_max=H/6 (was H/2) so the full sinusoidal profile (3 hill-valley periods) is visible; L=9H unchanged
+- Periodic hills: hill height reduced to h_max=H/6 (was H/2); L changed from 9*H=1800 to NX=800 so exactly one hill period fits the domain (fixes the periodic-x BC height discontinuity that caused NaN divergence at step 2); fully-periodic streaming + force-extraction paths wired for PERIODIC_HILLS
 - Urban canyon: moved to External Aerodynamics nav. Side view = 4 cases (H/W 0.3/0.5/0.8 with 2 buildings, H/W 0.6 with 3 buildings). Top-down adds horizontal-orientation buildings (wind funneled along pedestrian, orifice-like) alongside vertical
-- Ribbed channel repurposed to sports-ball surface roughness (dimpled cylinder, drag reduction at low resolution)
-- Removed: nozzle (replaced by orifice plate), ahmed body (2D limitation), airfoil (replaced by flat plate), tandem cylinders (redundant)
+- Removed: nozzle (replaced by orifice plate), ahmed body (2D limitation), airfoil (replaced by flat plate), tandem cylinders (redundant), sports-bell (removed from portfolio to focus on validated cases)
 - Website: removed stats-bar from all case pages (data moved to setup/validation tables), "Field Viewer" renamed "Velocity Field" with explanatory text, deleted orphaned results.html/simulation.html
+- PINN surrogate suite (Phase 6.0-6.2): `pinn/` directory with torch-free config/loader, PINN MLP (64x8, tanh), hybrid loss (PDE residual + data + BC), MPS training on Apple Silicon, 3-panel comparison (LBM/PINN/Error), website integration on cylinder.html
+- PINN training: Cylinder Re=100 steady-state, 15k Adam epochs + cosine annealing, importance sampling near cylinder, L2 u=36.3% vs LBM baseline
+- PINN parametric cavity (Phase 6.3): `ParametricPINN` (spatial + Re_n input), multi-Re training (Re=100+400), importance-sampled sensors (3000), hybrid loss with pressure (data_loss_full), v2 trained (462K params, HIDDEN=256, N_LAYERS=8) -- u L2 56.1%/41.8%, v L2 34.7%/33.0%, p L2 12.6%/12.6% for Re=100/400
+- PINN Fourier feature layer (`FourierFeatureLayer`, in progress): frozen random sinusoidal projection (m=128, sigma=5.0) applied to spatial coords only, lifting (x,y) to 512-dim frequency space to break tanh spectral bias; MLP input becomes 513-dim (512 fourier + 1 Re_n)
 
 ### Simulation Results (Phase 4)
 
@@ -72,13 +75,12 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 | Square cylinder | 200 | 1.157 | 0.47 | Validated vs ERCOFTAC |
 | Cavity | 100-1000 |, |, | Validated vs Ghia |
 | Step | 100-400 |, |, | Validated vs Armaly |
-| Ribs | 50-200 | 0.26-0.64 | 0 | Validated |
 | Orifice plate | 100 | Fx 0.9 (1p3h) to 63 (3p) |, | ISO 5167 loss validation |
-| Periodic hills | 100-2800 |, |, | LES benchmark |
+| Periodic hills | 100-2800 |, |, | LES benchmark (re-run pending after L=NX fix) |
 | Cylinder near wall | 100 | 2.56-2.75 | +0.40 to +1.42 | Ground effect (lift vs gap) |
 | Side-by-side | 100 | 2.57-2.82 | ~0 (amp 0.6-0.7) | Interference study |
 | Rotating cylinder | 100 | Cd~2-7, Cl~-1.5 to -7.4 |, | Magnus effect (Ladd) |
-| Urban canyon | 100 |, |, | Oke 1988 regimes |
+| Urban canyon | 100 | Cd 0.37 (AR0.3) to 55 (topdown) | Cl 6.9 (AR0.5) to 20.2 (AR0.8) | Oke 1988 regimes; topdown vertical vs horizontal |
 | Downwash | 100 |, |, | Hunt 1984 |
 
 ### Failed / Known Issues
@@ -87,6 +89,9 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 - Rotating cylinder: Ladd (1994) implemented, Cl~50-60% of Kutta-Joukowski prediction (viscous effects)
 - Cylinder near wall: Wall effect working, Cd~2.6 (vs 1.77 isolated), Cl +0.4 to +1.4 (upward, scales with gap)
 - Orifice 3p: Diverged at step 58500 at 60k steps with u_inflow=0.025+LES; rerun at 50k steps completed clean.
+- Periodic hills: L>NX periodic-x discontinuity fixed in code (L=NX, 3 hill cycles via n_cycles=3, fully-periodic streaming + force extraction). Body-force driving implemented (compute_body_force, ×28 safety factor); re-run Re=100 (40k steps), Re=1000/2800 (240k steps) completed clean, images regenerated, docs updated (3-cycle callout + Fx table).
+- Flat plate AoA force extraction: at AoA=5 deg the computed streamwise Cd (0.046) is lower than at AoA=0 (0.105), which is physically wrong (drag should rise with incidence). The momentum-exchange extraction reports the global x/y force correctly, so this points to a drag/lift decomposition issue under rotation that needs review. AoA=0 (Re-sweep) and the Cd reference-area convention (Cd = 2·Cf on planform area) are validated.
+- Urban topdown horizontal: 3 long slabs (long in x, stacked in y) develop shear-layer (Kelvin-Helmholtz) instability in the canyons that grows until NaN divergence (~step 40k) without dissipation. Forcing Smagorinsky LES (--use-les) stabilizes it; appropriate since the separated canyon flow is turbulent.
 
 ### Pending Fixes (Phase 4)
 
@@ -94,9 +99,103 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 |-----|---------|----------|-------|----------|
 | Ladd moving boundary | Rotating cylinder has no tangential velocity (Cl~0) | Implement Ladd (1994) bounce-back with wall velocity: f_bb = f_opp - 2*w_i*rho*(e_i.u_wall)/c_s^2 | `lbm_types.hpp`, `lbm.hpp`, `rotating_cylinder.cpp` | **Completed** |
 | Cylinder near wall | Wall not affecting flow (Cd identical to isolated cylinder) | Add obstacle nodes at y=0 to create physical wall, filter force extraction to cylinder only | `cylinder_near_wall.cpp`, `lbm.hpp` | **Completed** |
-| Cylinder Re=1000 | Diverged at step 16k before auto-LES was available | Add auto-LES guard to cylinder entry point and rerun | `main.cpp` | High |
+| Periodic hills re-run | Code fix applied (L=NX, periodic streaming); driving mechanism missing; images stale | Body-force driving implemented; 3 hill cycles (n_cycles=3); re-run Re=100/1000/2800, regenerated images, updated docs (3-cycle + Fx table) | `periodic_hills.cpp`, `lbm.hpp`, `docs/periodic_hills.html` | **Completed** |
+| Cylinder Re=1000 | Diverged at step 16k on coarse 800x300 grid (tau=0.518 < 0.55) | Stable on fine grid (NX=2400, NY=900, tau=0.554, no LES) but unsteady (vortex shedding); 20000 steps not fully converged. Documented as known limitation; website surfaces Re=20/40/100/200 only | `main.cpp` (--nx/--ny override added) | **Deferred** |
 
 ## Roadmap
+
+### Phase 6: Physics-Informed Neural Network (PINN) Surrogate Suite
+
+**Goal:** Build a parametric PINN surrogate suite that generalizes across multiple LBM cases and physical parameters. Start with single-case steady-state (cylinder), then parametric (cavity Re-sweep), then multi-case (step, orifice geometry). This mirrors the SciML R&D pipeline at NASA, Rolls-Royce, and F1 teams: a high-performance physics engine generates baseline data, a PINN provides a real-time, deployable surrogate.
+
+**Hardware:** Apple M5 MacBook Pro. Use `torch.device("mps")` for training. No CUDA.
+
+**Parametric PINN architecture:** Pass geometric or fluid parameters directly into the network alongside space and time:
+```
+[x, y, Re, hole_w, n_plates, ...] --> [Neural Network] --> [u, v, p]
+```
+This transforms the network from a single-case calculator into a continuous design-space surrogate. A recruiter can drag a parameter slider and see the flow field update instantly.
+
+**Code location:** `pinn/` directory. Zero changes to existing C++ solver.
+
+**Phases / timeline:**
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 6.0 | Environment setup: `pinn/` dir, requirements.txt, data/loader.py | Completed |
+| 6.1 | Steady-state hybrid PINN (Cylinder Re=100), 3-panel comparison PNG | Completed |
+| 6.2 | Website: add PINN section + error delta map to cylinder.html | Completed |
+| 6.3 | Cavity parametric PINN (x,y,Re) -> (u,v,p), Re=100/400 | **In progress** |
+| 6.4 | Backward-facing step PINN (x,y,Re) -> (u,v,p) | Pending |
+| 6.5 | Orifice plate parametric PINN (x,y,hole_w,n_plates) -> (u,v,p) | Pending |
+| 6.6 | ONNX export + WASM real-time inference page | Pending |
+| 6.7 | Ablation study (data/PDE/BC terms), methodology write-up | Pending |
+
+#### Phase 6.3: Cavity Parametric PINN (FIRST)
+
+**Why cavity first:** Zero new simulations needed. Data exists for Re=100 (steady, 51 frames at 128x128 with p+omega) and Re=400 (steady). Geometry is trivially simple (all no-slip walls + moving lid). Ghia 1982 validation data available. Lowest risk path to demonstrating parametric capability.
+
+**Architecture:** Input extends from 2 to 3 dims: `(x, y, Re_n)` where `Re_n = (Re - 100) / 900` normalizes [100, 1000] to [0, 1]. Network is a `ParametricPINN`: spatial coords (x, y) pass through a frozen random Fourier feature layer (m=128, sigma=5.0) before the MLP, lifting inputs to a 512-dim frequency space to break tanh spectral bias. MLP has 256 hidden units, 8 layers (462K params). Physical params (Re_n) are concatenated after Fourier features (513-dim MLP input).
+
+**Training strategy:** Multi-Re training: sample collocation points at both Re=100 and Re=400 in each epoch. Sensor data from both frames (importance-sampled, 3000 sensors). BC losses for walls + moving lid (BCs are Re-independent). Hybrid loss = w_pde*PDE + w_data*data(u,v,p) + w_bc*BC.
+
+**Training results:**
+- v1 (64-wide, 116K params, no Fourier): u L2 73.5%/52.6%, v L2 45.6%/38.8%, p L2 107%/108% (Re=100/400)
+- v2 (256-wide, 462K params, no Fourier): u L2 56.1%/41.8%, v L2 34.7%/33.0%, p L2 12.6%/12.6%
+- **Fourier feature (v3, in progress):** expected u L2 15-25%, p captures vortex pressure variation
+
+**Key diagnostics:** v2 still shows spectral bias -- u_max predicted only 39% of true (0.038 vs 0.097), pressure span only 1.7% of true, error concentrated at lid boundary layer. L-BFGS fine-tune gave only 0.2% improvement, confirming the issue is model representation, not optimization.
+
+**Parametric demo:** "Drag Re slider from 100 to 400, watch vortex center migrate from y/H ~ 0.70 to ~ 0.68."
+
+#### Phase 6.4: Backward-Facing Step (SECOND)
+
+**Data requirement:** Re-run Re=100 with p/omega output (current frames lack pressure). Code exists, ~2hr run. Use Re=400 data as fallback (has p/omega but under-converged).
+
+**Architecture:** Same 3-input (x, y, Re_n) as cavity. Add parabolic inlet BC loss. Encode step geometry via obstacle mask.
+
+**Parametric demo:** "Drag Re slider, watch reattachment length Xr/H grow from 2.4 to 4.0+."
+
+#### Phase 6.5: Orifice Plate Parametric (THIRD)
+
+**Data requirement:** New simulations needed -- Re sweep (50, 100, 200, 500) for 1p1h config, plus hole-width sweep (10, 20, 50, 80) at Re=100. Only 1p1h needed for initial training.
+
+**Architecture:** Input: `(x, y, Re_n, hole_w_n)` where hole_w is normalized. Encode rectangular plate geometry analytically (step function in obstacle mask).
+
+**Parametric demo:** "Drag orifice diameter slider, see loss coefficient K change in real-time." Highest portfolio impact.
+
+**Steady-state PINN architecture:**
+```
+Input: (x, y) normalized to [-1, 1]
+  FC 2 -> 64 (x8 hidden, tanh) -> 3
+Output: (u, v, p)
+```
+
+**Hybrid loss:**
+```
+L_total = w_data * MSE(u_pred, u_lbm) + MSE(v_pred, v_lbm)
+        + w_pde  * PDE_residual(u, v, p)
+        + w_bc   * BC_loss(inflow=u_inflow, walls=no-slip, outlet=zero-grad)
+```
+PDE residual = steady incompressible Navier-Stokes (continuity + 2 momentum eqns), derivatives via torch.autograd.
+
+**Files to create (no C++ changes):**
+```
+pinn/
+  README.md              # Setup, architecture, usage
+  requirements.txt       # torch, numpy, matplotlib, scipy, onnx, onnxruntime
+  config.py              # Case params (nx, ny, obstacle, Re, tau, u_inflow)
+  data/loader.py         # Read frame*.json + forces.jsonl -> numpy arrays
+  models/pinn.py         # PINN MLP + forward
+  models/losses.py       # PDE residual, BC loss, data loss
+  train.py               # MPS training loop (Adam + L-BFGS)
+  evaluate.py            # Inference on full grid -> numpy fields
+  export_onnx.py         # torch.onnx.export -> model.onnx
+  plot_results.py        # 3-panel (LBM / PINN / Error delta)
+  wasm/static/infer.html # ONNX Runtime Web canvas inference
+```
+
+**Website integration:** Keep existing LBM slider (contour | streamline). Add below it a 3-panel static comparison (C++ LBM / PINN surrogate / absolute error delta). Later add a live ONNX Runtime Web inference page (PINN-only; no C++ WASM rebuild) with a frame slider and field selector.
 
 ### Phase 1: Smagorinsky LES Turbulence Model
 
@@ -227,7 +326,6 @@ lbm-2d/
     step.cpp                   # Backward-facing step entry point
     square_cylinder.cpp          # Square cylinder (ERCOFTAC 043), sharp-edge separation
     orifice_plate.cpp            # Orifice plate (single + multi-stage, staggered)
-    sports_ball.cpp              # Sports-ball surface roughness (dimpled cylinder)
     urban_canyon.cpp           # Urban canyon (--mode side|topdown), 3 buildings
     downwash.cpp               # Building downwash entry point (scaled up buildings)
     periodic_hills.cpp         # Periodic hills (canonical LES benchmark)
@@ -251,7 +349,6 @@ lbm-2d/
     square_cylinder.html       # ERCOFTAC 043 (sharp-edge separation)
     cavity.html                # Lid-driven cavity
     step.html                  # Backward-facing step
-    sports_ball.html           # Sports-ball surface roughness (dimples, drag reduction)
     orifice_plate.html           # Orifice plate (single + multi-stage)
     urban.html                   # Urban canyon (side + topdown + downwash)
     periodic_hills.html        # Periodic hills (LES benchmark)
@@ -275,7 +372,20 @@ lbm-2d/
       images/                  # Contour + streamline renders per case
 
   output/                      # JSON frames + forces (gitignored)
-```
+
+  pinn/                        # Physics-Informed Neural Network surrogate suite (NEW)
+    README.md                  # Setup, architecture, roadmap
+    requirements.txt           # torch, numpy, matplotlib, scipy, onnx, onnxruntime
+    config.py                  # CaseConfig + convenience constructors (cavity, step, orifice)
+    data/loader.py             # Read frame*.json + forces.jsonl -> numpy arrays
+    models/pinn.py             # PINN + ParametricPINN MLP architectures
+    models/losses.py           # PDE residual, BC loss (cavity/cylinder), data loss
+    train.py                   # Cylinder Re=100 training loop
+    train_cavity.py            # Cavity parametric PINN (single-Re + multi-Re)
+    evaluate.py                # Inference on full grid -> numpy fields
+    export_onnx.py             # torch.onnx.export -> model.onnx
+    plot_results.py            # 3-panel (LBM / PINN / Error delta)
+    wasm/static/infer.html     # ONNX Runtime Web canvas inference
 
 ## Smagorinsky LES Reference
 
