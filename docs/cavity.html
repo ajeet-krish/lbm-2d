@@ -40,7 +40,8 @@
       <div class="nav-section">
         <div class="nav-heading">Reference</div>
         <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="implementation.html" class="nav-item">C++ Implementation</a>
+        <a href="pinn.html" class="nav-item">Physics-Informed Neural Networks</a>
         <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
       </div>
     </nav>
@@ -150,6 +151,93 @@
       enforcement at the lid and the bounce-back on stationary walls.
     </p>
 
+    <!-- ============================================================ -->
+    <h2>Physics-Informed Neural Network</h2>
+
+    <p class="section-intro">
+      A parametric PINN surrogate learns the cavity flow field as a continuous
+      function of position <strong>(x, y)</strong> and Reynolds number <strong>(Re)</strong>,
+      enabling real-time interpolation across the design space. The architecture uses
+      <strong>Fourier feature embedding</strong> (m=128 random sinusoidal projections, &sigma;=5.0)
+      to break the spectral bias of tanh activations, followed by an 8-layer MLP
+      (256 hidden units, 593K parameters). Trained on Re=100 and Re=400 simultaneously
+      with a hybrid loss: PDE residual + sparse sensor data + boundary conditions.
+    </p>
+
+    <h3>Architecture</h3>
+
+    <table>
+      <tr><th>Component</th><th>Detail</th></tr>
+      <tr><td>Fourier features</td><td>m=128, &sigma;=5.0 (frozen random sinusoids on x,y only)</td></tr>
+      <tr><td>MLP</td><td>8 layers &times; 256 hidden, tanh activation</td></tr>
+      <tr><td>Total parameters</td><td>593,489</td></tr>
+      <tr><td>Input</td><td>(x, y, Re<sub>n</sub>) &mdash; 513 dimensions after Fourier lift</td></tr>
+      <tr><td>Output</td><td>(u, v, p)</td></tr>
+      <tr><td>Training data</td><td>Re=100 + Re=400, 3000 importance-sampled sensors each</td></tr>
+      <tr><td>Training time</td><td>177 min (Apple M5, MPS backend)</td></tr>
+    </table>
+
+    <h3>Results: Re=100</h3>
+
+    <p class="section-intro">
+      Side-by-side comparison of the C++ LBM baseline and the PINN surrogate at
+      Re=100. The velocity field is well captured across the entire cavity, with the
+      primary vortex structure and wall-bounded shear layers reproduced accurately.
+    </p>
+
+    <div class="chart-container" style="height:320px;">
+      <img src="assets/images/cavity/pinn_comparison_re100.png"
+           alt="PINN vs LBM comparison at Re=100"
+           style="width:100%;height:100%;object-fit:contain;">
+    </div>
+
+    <h3>Results: Re=400</h3>
+
+    <p class="section-intro">
+      At Re=400, the flow develops a stronger primary vortex and incipient corner
+      eddies. The PINN captures the tighter velocity gradients near the walls
+      and the shifted vortex center.
+    </p>
+
+    <div class="chart-container" style="height:320px;">
+      <img src="assets/images/cavity/pinn_comparison_re400.png"
+           alt="PINN vs LBM comparison at Re=400"
+           style="width:100%;height:100%;object-fit:contain;">
+    </div>
+
+    <h3>Parametric Interpolation</h3>
+
+    <p class="section-intro">
+      The key advantage of a parametric PINN: drag the Reynolds number slider to
+      watch the primary vortex center migrate downward as Re increases. Re=200
+      (centre) was <strong>not</strong> present in the training data &mdash; the network
+      generalizes to intermediate Re values. The vortex core shifts from
+      y/H &asymp; 0.64 at Re=100 to y/H &asymp; 0.58 at Re=400.
+    </p>
+
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="pinnReTabs"></div>
+
+    <div class="chart-container" style="height:400px;">
+      <img id="pinnParamImg" src="assets/images/cavity/pinn_parametric_re100.png"
+           alt="PINN parametric velocity field"
+           style="width:100%;height:100%;object-fit:contain;">
+    </div>
+
+    <h3>Accuracy Summary</h3>
+
+    <table>
+      <tr><th>Re</th><th>L2 u-velocity</th><th>L2 v-velocity</th><th>u<sub>max</sub> ratio</th><th>Vortex center y/H</th></tr>
+      <tr><td>100</td><td>23.7%</td><td>29.3%</td><td>1.24</td><td>0.64 (Ghia: 0.73)</td></tr>
+      <tr><td>400</td><td>24.4%</td><td>30.0%</td><td>1.10</td><td>0.58</td></tr>
+    </table>
+
+    <p class="section-intro" style="margin-top:1rem;">
+      The Fourier feature embedding eliminates the spectral bias that caused v2
+      (plain tanh) to overshoot u<sub>max</sub> by 3.5&times;. The u<sub>max</sub> ratio
+      improved from 3.50 (v2) to 1.24 (v3, Fourier), and the field-mean absolute
+      velocity error dropped 30&times;.
+    </p>
+
   </div>
 
   <footer class="site-footer">
@@ -236,6 +324,35 @@
     document.getElementById('sidebarToggle')?.addEventListener('click', function () {
       document.querySelector('.sidebar').classList.toggle('open');
       document.body.classList.toggle('sidebar-open');
+    });
+
+    /* PINN parametric Re tabs */
+    var pinnReValues = [100, 200, 400];
+    var pinnCurrentRe = 100;
+
+    function pinnImageUrl(re) {
+      return 'assets/images/cavity/pinn_parametric_re' + re + '.png';
+    }
+
+    function switchPinnRe(re) {
+      pinnCurrentRe = re;
+      document.getElementById('pinnParamImg').src = pinnImageUrl(re);
+      document.querySelectorAll('#pinnReTabs .teaser-link').forEach(function (btn) {
+        var rm = btn.textContent.match(/\d+/);
+        var br = rm ? parseInt(rm[0]) : 0;
+        btn.classList.toggle('active', br === re);
+      });
+    }
+
+    var prc = document.getElementById('pinnReTabs');
+    pinnReValues.forEach(function (re) {
+      var btn = document.createElement('button');
+      btn.className = 'teaser-link' + (re === pinnCurrentRe ? ' active' : '');
+      btn.textContent = 'Re = ' + re;
+      if (re === 200) btn.textContent += ' (interpolated)';
+      btn.style.fontSize = '0.7em';
+      btn.onclick = function () { switchPinnRe(re); };
+      prc.appendChild(btn);
     });
   </script>
 

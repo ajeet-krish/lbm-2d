@@ -38,6 +38,8 @@ EPOCHS_LBFGS = 1000     # 2x longer L-BFGS
 W_PDE       = 5.0       # PDE was underweighted vs data/bc; rebalanced
 W_DATA      = 5.0       # stronger data supervision, capped to avoid overfit
 W_BC        = 5.0       # stronger BC enforcement
+W_PP        = 2.0       # pressure-Poisson auxiliary (couples p to velocity)
+W_P         = 5.0       # pressure data weight (force p variation, fix flat-p)
 U_LID       = 0.1
 FRAME_NAME  = "frame_12800.json"
 HIDDEN      = 256       # 2x wider network
@@ -104,6 +106,7 @@ def train_single_re(args):
     sens_coords_t = to_device(torch.from_numpy(data["sens"]["coords"]), device)
     sens_u_t = to_device(torch.from_numpy(data["sens"]["u"]), device)
     sens_v_t = to_device(torch.from_numpy(data["sens"]["v"]), device)
+    sens_p_t = to_device(torch.from_numpy(data["sens"]["p"]), device)
 
     re_norm = normalize_re(cfg.re)
     print(f"Cavity Re={cfg.re} (Re_norm={re_norm:.3f})")
@@ -111,6 +114,10 @@ def train_single_re(args):
 
     model = ParametricPINN(n_params=1, hidden=HIDDEN, n_layers=N_LAYERS,
                            n_freqs=N_FREQS, sigma=SIGMA).to(device)
+    if args.resume:
+        ckpt = torch.load(args.resume, map_location=device)
+        model.load_state_dict(ckpt["state_dict"])
+        print(f"Resumed from {args.resume}")
     n_params = sum(p.numel() for p in model.parameters())
     print(f"Model params: {n_params}")
 
@@ -129,15 +136,15 @@ def train_single_re(args):
     sens_aug_t = to_device(torch.from_numpy(sens_aug), device)
 
     t0 = time.time()
-    history = {"epoch": [], "loss": [], "pde": [], "data": [], "bc": []}
+    history = {"epoch": [], "loss": [], "pde": [], "pp": [], "data": [], "bc": []}
 
     print(f"\n--- Adam training ({EPOCHS_ADAM} epochs) ---")
     for ep in range(1, EPOCHS_ADAM + 1):
         optimizer_adam.zero_grad()
-        L, Lpde, Ldata, Lbc = total_loss_cavity(
-            model, colloc_aug_t, sens_aug_t, sens_u_t, sens_v_t,
+        L, Lpde, Lpp, Ldata, Lbc = total_loss_cavity(
+            model, colloc_aug_t, sens_aug_t, sens_u_t, sens_v_t, sens_p_t,
             re=cfg.re, u_lid=U_LID, device=device,
-            w_pde=W_PDE, w_data=W_DATA, w_bc=W_BC,
+            w_pde=W_PDE, w_data=W_DATA, w_bc=W_BC, w_pp=W_PP, w_p=W_P,
             re_norm=re_norm,
         )
         L.backward()
@@ -148,11 +155,12 @@ def train_single_re(args):
         if ep % 200 == 0 or ep == 1:
             lr = optimizer_adam.param_groups[0]["lr"]
             print(f"  epoch {ep:5d}  loss={L.item():.6f}  "
-                  f"pde={Lpde.item():.6f}  data={Ldata.item():.6f}  "
-                  f"bc={Lbc.item():.6f}  lr={lr:.2e}")
+                  f"pde={Lpde.item():.6f}  pp={Lpp.item():.6f}  "
+                  f"data={Ldata.item():.6f}  bc={Lbc.item():.6f}  lr={lr:.2e}")
             history["epoch"].append(ep)
             history["loss"].append(L.item())
             history["pde"].append(Lpde.item())
+            history["pp"].append(Lpp.item())
             history["data"].append(Ldata.item())
             history["bc"].append(Lbc.item())
 
@@ -170,10 +178,10 @@ def train_single_re(args):
 
     def closure():
         optimizer_lbfgs.zero_grad()
-        L, _, _, _ = total_loss_cavity(
-            model, colloc_aug_t, sens_aug_t, sens_u_t, sens_v_t,
+        L, _, _, _, _ = total_loss_cavity(
+            model, colloc_aug_t, sens_aug_t, sens_u_t, sens_v_t, sens_p_t,
             re=cfg.re, u_lid=U_LID, device=device,
-            w_pde=W_PDE, w_data=W_DATA, w_bc=W_BC,
+            w_pde=W_PDE, w_data=W_DATA, w_bc=W_BC, w_pp=W_PP, w_p=W_P,
             re_norm=re_norm,
         )
         L.backward()
@@ -263,6 +271,10 @@ def train_multi_re(args):
 
     model = ParametricPINN(n_params=1, hidden=HIDDEN, n_layers=N_LAYERS,
                            n_freqs=N_FREQS, sigma=SIGMA).to(device)
+    if args.resume:
+        ckpt = torch.load(args.resume, map_location=device)
+        model.load_state_dict(ckpt["state_dict"])
+        print(f"Resumed from {args.resume}")
     n_params = sum(p.numel() for p in model.parameters())
     print(f"Model params: {n_params}")
 
@@ -291,14 +303,15 @@ def train_multi_re(args):
         }
 
     t0 = time.time()
-    history = {"epoch": [], "loss": [], "pde": [], "data": [], "bc": []}
+    history = {"epoch": [], "loss": [], "pde": [], "pp": [], "data": [], "bc": []}
 
     print(f"\n--- Adam training ({EPOCHS_ADAM} epochs) across {len(configs)} Re values ---")
     for ep in range(1, EPOCHS_ADAM + 1):
         optimizer_adam.zero_grad()
-        L, Lpde, Ldata, Lbc = total_loss_cavity_multi_re(
+        L, Lpde, Lpp, Ldata, Lbc = total_loss_cavity_multi_re(
             model, colloc_by_re, sens_by_re, u_lid=U_LID,
             device=device, w_pde=W_PDE, w_data=W_DATA, w_bc=W_BC,
+            w_pp=W_PP, w_p=W_P,
         )
         L.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), GRAD_CLIP)
@@ -308,11 +321,12 @@ def train_multi_re(args):
         if ep % 200 == 0 or ep == 1:
             lr = optimizer_adam.param_groups[0]["lr"]
             print(f"  epoch {ep:5d}  loss={L.item():.6f}  "
-                  f"pde={Lpde.item():.6f}  data={Ldata.item():.6f}  "
-                  f"bc={Lbc.item():.6f}  lr={lr:.2e}")
+                  f"pde={Lpde.item():.6f}  pp={Lpp.item():.6f}  "
+                  f"data={Ldata.item():.6f}  bc={Lbc.item():.6f}  lr={lr:.2e}")
             history["epoch"].append(ep)
             history["loss"].append(L.item())
             history["pde"].append(Lpde.item())
+            history["pp"].append(Lpp.item())
             history["data"].append(Ldata.item())
             history["bc"].append(Lbc.item())
 
@@ -330,9 +344,10 @@ def train_multi_re(args):
 
     def closure():
         optimizer_lbfgs.zero_grad()
-        L, _, _, _ = total_loss_cavity_multi_re(
+        L, _, _, _, _ = total_loss_cavity_multi_re(
             model, colloc_by_re, sens_by_re, u_lid=U_LID,
             device=device, w_pde=W_PDE, w_data=W_DATA, w_bc=W_BC,
+            w_pp=W_PP, w_p=W_P,
         )
         L.backward()
         return L
@@ -407,6 +422,12 @@ if __name__ == "__main__":
     parser.add_argument("--n-sensors", type=int, default=N_SENSORS)
     parser.add_argument("--hidden", type=int, default=HIDDEN)
     parser.add_argument("--lr", type=float, default=LR_ADAM)
+    parser.add_argument("--w-pp", type=float, default=W_PP,
+                        help="Pressure-Poisson residual weight")
+    parser.add_argument("--w-p", type=float, default=W_P,
+                        help="Pressure data loss weight (fix flat pressure)")
+    parser.add_argument("--resume", type=str, default=None,
+                        help="Path to .pt checkpoint to resume from (fine-tune)")
     args = parser.parse_args()
     EPOCHS_ADAM = args.epochs_adam
     EPOCHS_LBFGS = args.epochs_lbfgs
@@ -414,6 +435,8 @@ if __name__ == "__main__":
     N_SENSORS = args.n_sensors
     HIDDEN = args.hidden
     LR_ADAM = args.lr
+    W_PP = args.w_pp
+    W_P = args.w_p
 
     if args.single_re is not None:
         train_single_re(args)

@@ -113,6 +113,96 @@ def pde_loss_multi_re(model, colloc_by_re: dict, device):
 
 
 # --------------------------------------------------------------------------
+# Cavity physics: combined PDE + pressure-Poisson residuals (single forward)
+# --------------------------------------------------------------------------
+def cavity_physics_loss(model, colloc_xy: torch.Tensor, re: float):
+    """Combined steady-NS PDE residual + pressure-Poisson residual (single Re).
+
+    Returns (L_pde, L_pp) from a single forward pass. The pressure-Poisson
+    term Laplacian(p) + div(u·grad u) couples p to the velocity field. NOTE:
+    this is a consequence of momentum + continuity, so it acts as an auxiliary
+    regularizer; pressure variation must also be driven by data supervision.
+    """
+    xy = colloc_xy.clone().detach().requires_grad_(True)
+    out = model(xy)
+    u, v, p = out[:, 0], out[:, 1], out[:, 2]
+
+    du = _grad(u, xy); dv = _grad(v, xy); dp = _grad(p, xy)
+    u_x, u_y = du[:, 0], du[:, 1]
+    v_x, v_y = dv[:, 0], dv[:, 1]
+    p_x, p_y = dp[:, 0], dp[:, 1]
+
+    d2u = _grad(u_x, xy); d2v = _grad(v_x, xy)
+    u_xx, u_yy = d2u[:, 0], d2u[:, 1]
+    v_xx, v_yy = d2v[:, 0], d2v[:, 1]
+
+    nu = 1.0 / re
+    f_cont = u_x + v_y
+    f_x = u * u_x + v * u_y + p_x - nu * (u_xx + u_yy)
+    f_y = u * v_x + v * v_y + p_y - nu * (v_xx + v_yy)
+    L_pde = (F.mse_loss(f_cont, torch.zeros_like(f_cont))
+             + F.mse_loss(f_x, torch.zeros_like(f_x))
+             + F.mse_loss(f_y, torch.zeros_like(f_y)))
+
+    # Pressure-Poisson: Laplacian(p) + div(u·grad u) = 0
+    T_x = u * u_x + v * u_y
+    T_y = u * v_x + v * v_y
+    T_x_x = _grad(T_x, xy)[:, 0]
+    T_y_y = _grad(T_y, xy)[:, 1]
+    div_T = T_x_x + T_y_y
+    p_xx = _grad(p_x, xy)[:, 0]
+    p_yy = _grad(p_y, xy)[:, 1]
+    f_pp = (p_xx + p_yy) + div_T
+    L_pp = F.mse_loss(f_pp, torch.zeros_like(f_pp))
+
+    return L_pde, L_pp
+
+
+def cavity_physics_loss_multi_re(model, colloc_by_re: dict, device):
+    """Combined PDE + pressure-Poisson residuals across multiple Re (one fwd/Re).
+
+    Returns (L_pde, L_pp) averaged over Re.
+    """
+    L_pde_tot = 0.0
+    L_pp_tot = 0.0
+    for re, xy_np in colloc_by_re.items():
+        inp = torch.from_numpy(xy_np).float().to(device).clone().detach().requires_grad_(True)
+        out = model(inp)
+        u, v, p = out[:, 0], out[:, 1], out[:, 2]
+
+        du = _grad(u, inp); dv = _grad(v, inp); dp = _grad(p, inp)
+        u_x, u_y = du[:, 0], du[:, 1]
+        v_x, v_y = dv[:, 0], dv[:, 1]
+        p_x, p_y = dp[:, 0], dp[:, 1]
+
+        d2u = _grad(u_x, inp); d2v = _grad(v_x, inp)
+        u_xx, u_yy = d2u[:, 0], d2u[:, 1]
+        v_xx, v_yy = d2v[:, 0], d2v[:, 1]
+
+        nu = 1.0 / re
+        f_cont = u_x + v_y
+        f_x = u * u_x + v * u_y + p_x - nu * (u_xx + u_yy)
+        f_y = u * v_x + v * v_y + p_y - nu * (v_xx + v_yy)
+        L_pde = (F.mse_loss(f_cont, torch.zeros_like(f_cont))
+                 + F.mse_loss(f_x, torch.zeros_like(f_x))
+                 + F.mse_loss(f_y, torch.zeros_like(f_y)))
+
+        T_x = u * u_x + v * u_y
+        T_y = u * v_x + v * v_y
+        T_x_x = _grad(T_x, inp)[:, 0]
+        T_y_y = _grad(T_y, inp)[:, 1]
+        div_T = T_x_x + T_y_y
+        p_xx = _grad(p_x, inp)[:, 0]
+        p_yy = _grad(p_y, inp)[:, 1]
+        f_pp = (p_xx + p_yy) + div_T
+        L_pp = F.mse_loss(f_pp, torch.zeros_like(f_pp))
+
+        L_pde_tot = L_pde_tot + L_pde
+        L_pp_tot = L_pp_tot + L_pp
+    return L_pde_tot / len(colloc_by_re), L_pp_tot / len(colloc_by_re)
+
+
+# --------------------------------------------------------------------------
 # Boundary conditions: Cavity (all no-slip walls + moving lid)
 # --------------------------------------------------------------------------
 def bc_loss_cavity_walls(model, n: int, device, re_norm=None):
@@ -262,23 +352,26 @@ def total_loss(model, colloc_xy, coords, u_target, v_target,
     return w_pde * L_pde + w_data * L_data + w_bc * L_bc, L_pde, L_data, L_bc
 
 
-def total_loss_cavity(model, colloc_xy, coords, u_target, v_target,
-                      re, u_lid, device, w_pde=1.0, w_data=1.0, w_bc=1.0,
-                      re_norm=None):
-    """Combined hybrid loss for cavity case: PDE + data + BCs.
+def total_loss_cavity(model, colloc_xy, coords, u_target, v_target, p_target,
+                       re, u_lid, device, w_pde=1.0, w_data=1.0, w_bc=1.0,
+                       w_pp=1.0, w_p=1.0, re_norm=None):
+    """Combined hybrid loss for cavity case: PDE + Poisson + data + BCs.
 
-    Args:
-        re_norm: Normalized Re for BC augmentation (for ParametricPINN).
+    Returns (L_total, L_pde, L_pp, L_data, L_bc).
     """
-    L_pde = pde_loss(model, colloc_xy, re, u_lid)
-    L_data = data_loss(model, coords, u_target, v_target)
+    L_pde, L_pp = cavity_physics_loss(model, colloc_xy, re)
+    u_pred, v_pred, p_pred = _split(model(coords))
+    L_data = (F.mse_loss(u_pred, u_target) + F.mse_loss(v_pred, v_target)
+              + w_p * F.mse_loss(p_pred, p_target))
     L_bc = bc_loss_cavity(model, 200, u_lid, device, re_norm=re_norm)
-    return w_pde * L_pde + w_data * L_data + w_bc * L_bc, L_pde, L_data, L_bc
+    L = w_pde * L_pde + w_pp * L_pp + w_data * L_data + w_bc * L_bc
+    return L, L_pde, L_pp, L_data, L_bc
 
 
 def total_loss_cavity_multi_re(model, colloc_by_re, sens_by_re, u_lid,
-                               device, w_pde=1.0, w_data=1.0, w_bc=1.0):
-    """Combined hybrid loss for parametric cavity: PDE + data + BCs across Re.
+                                device, w_pde=1.0, w_data=1.0, w_bc=1.0,
+                                w_pp=1.0, w_p=1.0):
+    """Combined hybrid loss for parametric cavity: PDE + Poisson + data + BCs.
 
     Args:
         model: ParametricPINN.
@@ -286,8 +379,10 @@ def total_loss_cavity_multi_re(model, colloc_by_re, sens_by_re, u_lid,
         sens_by_re: dict {re_val: {'coords': (Ns,3), 'u': (Ns,), 'v': (Ns,), 'p': (Ns,)}}.
         u_lid: lid velocity (scalar, same for all Re).
         device: torch device.
+
+    Returns (L_total, L_pde, L_pp, L_data, L_bc).
     """
-    L_pde = pde_loss_multi_re(model, colloc_by_re, device)
+    L_pde, L_pp = cavity_physics_loss_multi_re(model, colloc_by_re, device)
 
     L_data = 0.0
     for re, sens in sens_by_re.items():
@@ -298,12 +393,13 @@ def total_loss_cavity_multi_re(model, colloc_by_re, sens_by_re, u_lid,
         u_pred, v_pred, p_pred = _split(model(coords_t))
         L_data = (L_data
                   + F.mse_loss(u_pred, u_t) + F.mse_loss(v_pred, v_t)
-                  + 1.0 * F.mse_loss(p_pred, p_t))
+                  + w_p * F.mse_loss(p_pred, p_t))
     L_data = L_data / len(sens_by_re)
 
     # BCs are Re-independent; use re_norm=0.0 (Re=100) as representative
     L_bc = bc_loss_cavity(model, 200, u_lid, device, re_norm=0.0)
-    return w_pde * L_pde + w_data * L_data + w_bc * L_bc, L_pde, L_data, L_bc
+    L = w_pde * L_pde + w_pp * L_pp + w_data * L_data + w_bc * L_bc
+    return L, L_pde, L_pp, L_data, L_bc
 
 
 def _split(out: torch.Tensor):

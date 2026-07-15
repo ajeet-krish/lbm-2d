@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="AK-Vortex Code Architecture - Memory model, OpenMP parallelism, and build system documentation">
-  <title>Implementation - AK-Vortex</title>
+  <title>C++ Implementation - AK-Vortex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -38,7 +38,8 @@
       <div class="nav-section">
         <div class="nav-heading">Reference</div>
         <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="implementation.html" class="nav-item">C++ Implementation</a>
+        <a href="pinn.html" class="nav-item">Physics-Informed Neural Networks</a>
         <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
       </div>
     </nav>
@@ -46,7 +47,7 @@
 
 <div class="main-content">
 
-  <h1>Code Architecture &amp; Implementation</h1>
+  <h1>C++ Implementation &amp; Code Architecture</h1>
   <p>This page documents the solver architecture, memory model, parallelization strategy, build system, and test suite. Every design decision is explained with its performance and engineering rationale.</p>
 
   <!-- ============================================================ -->
@@ -55,32 +56,102 @@
   <div class="module-table">
     <div class="module-row">
       <span class="mod-name">lbm_types.hpp</span>
-      <span class="mod-desc">D2Q9 lattice constants, index helpers, LBMCapabilities struct, equilibrium function</span>
+      <span class="mod-desc">D2Q9 lattice constants, index helpers, MRT relaxation parameters, equilibrium function, LES globals</span>
       <span class="mod-file">src/lbm_types.hpp</span>
     </div>
     <div class="module-row">
       <span class="mod-name">lbm.hpp</span>
-      <span class="mod-desc">Core solver: collision, streaming, boundary conditions, force extraction, VTK export</span>
+      <span class="mod-desc">Core solver: MRT collide + Smagorinsky LES, stream + Bouzidi bounce-back, BCs, momentum-exchange force extraction, JSON/VTK output</span>
       <span class="mod-file">src/lbm.hpp</span>
     </div>
     <div class="module-row">
+      <span class="mod-name">geometry.hpp</span>
+      <span class="mod-desc">NACA 4-digit coordinates, polygon operations, point-in-polygon tests</span>
+      <span class="mod-file">src/geometry.hpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">amr.hpp</span>
+      <span class="mod-desc">Block-structured adaptive mesh refinement: AMRBlock / AMRGrid, prolongation, restriction, regridding</span>
+      <span class="mod-file">src/amr.hpp</span>
+    </div>
+    <div class="module-row">
       <span class="mod-name">main.cpp</span>
-      <span class="mod-desc">Entry point, simulation loop, Cd/Cl accumulation, parameter computation</span>
+      <span class="mod-desc">Cylinder wake entry point (LBM_Engine), auto-LES activation</span>
       <span class="mod-file">src/main.cpp</span>
     </div>
     <div class="module-row">
+      <span class="mod-name">cavity.cpp</span>
+      <span class="mod-desc">Lid-driven cavity benchmark (LBM_Cavity)</span>
+      <span class="mod-file">src/cavity.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">step.cpp</span>
+      <span class="mod-desc">Backward-facing step, separation and reattachment (LBM_Step)</span>
+      <span class="mod-file">src/step.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">flat_plate.cpp</span>
+      <span class="mod-desc">Flat plate boundary layer, primary validation, NACA geometry (LBM_FlatPlate)</span>
+      <span class="mod-file">src/flat_plate.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">square_cylinder.cpp</span>
+      <span class="mod-desc">Square cylinder (ERCOFTAC 043), polygon bounce-back (LBM_SquareCylinder)</span>
+      <span class="mod-file">src/square_cylinder.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">orifice_plate.cpp</span>
+      <span class="mod-desc">Single and multi-stage orifice plate, staggered paths (LBM_OrificePlate)</span>
+      <span class="mod-file">src/orifice_plate.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">urban_canyon.cpp</span>
+      <span class="mod-desc">Urban canyon, side and top-down modes (LBM_UrbanCanyon)</span>
+      <span class="mod-file">src/urban_canyon.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">downwash.cpp</span>
+      <span class="mod-desc">Building downwash, scaled urban blocks (LBM_Downwash)</span>
+      <span class="mod-file">src/downwash.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">periodic_hills.cpp</span>
+      <span class="mod-desc">Periodic hills LES benchmark, body-force driving (LBM_PeriodicHills)</span>
+      <span class="mod-file">src/periodic_hills.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">cylinder_near_wall.cpp</span>
+      <span class="mod-desc">Cylinder near wall, ground-effect study (LBM_CylinderNearWall)</span>
+      <span class="mod-file">src/cylinder_near_wall.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">side_by_side_cylinders.cpp</span>
+      <span class="mod-desc">Side-by-side cylinders, transverse interference (LBM_SideBySide)</span>
+      <span class="mod-file">src/side_by_side_cylinders.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">rotating_cylinder.cpp</span>
+      <span class="mod-desc">Rotating cylinder, Magnus effect, Ladd moving boundary (LBM_RotatingCylinder)</span>
+      <span class="mod-file">src/rotating_cylinder.cpp</span>
+    </div>
+    <div class="module-row">
+      <span class="mod-name">amr_test.cpp</span>
+      <span class="mod-desc">AMR demonstration driver on the cylinder case (LBM_AMR)</span>
+      <span class="mod-file">src/amr_test.cpp</span>
+    </div>
+    <div class="module-row">
       <span class="mod-name">lbm_test.cpp</span>
-      <span class="mod-desc">14 Google Test cases: equilibrium, macros, indexing, bounce-back, mass conservation</span>
+      <span class="mod-desc">12 Google Test cases: equilibrium, macros, indexing, bounce-back, obstacle, force, mass conservation, params</span>
       <span class="mod-file">src/lbm_test.cpp</span>
     </div>
     <div class="module-row">
       <span class="mod-name">postprocess.py</span>
-      <span class="mod-desc">VTK to JSON/PNG conversion for the web visualization pipeline</span>
+      <span class="mod-desc">VTK/JSON to PNG with --split, --cmap, --strouhal, --vorticity; JSON frame reader for the web gallery</span>
       <span class="mod-file">scripts/postprocess.py</span>
     </div>
     <div class="module-row">
       <span class="mod-name">CMakeLists.txt</span>
-      <span class="mod-desc">Build system: C++20, OpenMP, Google Test via FetchContent</span>
+      <span class="mod-desc">Build system: C++20, OpenMP, Google Test via FetchContent, per-case build targets</span>
       <span class="mod-file">CMakeLists.txt</span>
     </div>
   </div>
@@ -162,10 +233,6 @@ std::vector&lt;double&gt; f(NX * NY * 9);
 
   <p>Collision and streaming are <strong>separate parallel regions</strong>; they cannot be fused into a single loop because streaming reads from the post-collision state of neighboring nodes, introducing a data dependency across grid cells.</p>
 
-  <div class="callout cyan">
-    <strong>Thread Scaling.</strong> On an Apple M3 Pro (8 performance cores), the collision-stream cycle achieves approximately 7-8&times; speedup over serial execution for the 400 &times; 150 grid. Set the thread count via the <code>OMP_NUM_THREADS</code> environment variable.
-  </div>
-
   <!-- ============================================================ -->
   <h2>5. Force Extraction: Momentum Exchange Method</h2>
 
@@ -195,23 +262,26 @@ std::vector&lt;double&gt; f(NX * NY * 9);
   <!-- ============================================================ -->
   <h2>6. Build System &amp; Quick Start</h2>
 
-  <pre><code><span style="color:var(--green);"># Build the solver</span>
+  <pre><code><span style="color:var(--green);"># Configure and build all targets</span>
 cmake -B build && cmake --build build
 
-<span style="color:var(--green);"># Run a simulation (default Re=100)</span>
-./build/LBM_Engine
+<span style="color:var(--green);"># Run a case via its CMake target</span>
+cmake --build build --target sim        # cylinder (LBM_Engine)
+cmake --build build --target cavity     # lid-driven cavity
+cmake --build build --target flat_plate # flat plate boundary layer
+cmake --build build --target amr        # AMR demonstration
 
-<span style="color:var(--green);"># Run with custom Reynolds number and steps</span>
-./build/LBM_Engine 200
-./build/LBM_Engine 100 12000
+<span style="color:var(--green);"># Or run the executable directly with arguments</span>
+./build/LBM_Engine 200          # cylinder at Re=200
+./build/LBM_Engine 100 12000    # cylinder at Re=100 for 12000 steps
 
-<span style="color:var(--green);"># Run the test suite</span>
+<span style="color:var(--green);"># Run the Google Test suite (12 cases)</span>
 ./build/LBM_Tests
 
-<span style="color:var(--green);"># Batch simulation across 4 Reynolds numbers</span>
-bash scripts/run_all_re.sh
+<span style="color:var(--green);"># Batch sweep across cases</span>
+bash scripts/run_all_cases.sh
 
-<span style="color:var(--green);"># Post-process VTK to JSON for web viewer</span>
+<span style="color:var(--green);"># Post-process VTK to JSON for the web viewer</span>
 python3 scripts/postprocess.py output/re100 --json --every 5
 
 <span style="color:var(--green);"># Preview the documentation site</span>
@@ -232,22 +302,31 @@ python3 -m http.server -d docs 8765</code></pre>
   <!-- ============================================================ -->
   <h2>8. Test Suite</h2>
 
-  <p>The test suite covers 14 test cases across 5 test groups:</p>
+  <p>The test suite covers 12 test cases across 8 test groups:</p>
 
   <table>
     <tr><th>Group</th><th>Tests</th><th>What It Validates</th></tr>
-    <tr><td>EquilibriumTest</td><td>4</td><td>Sum = rho, momentum matching, rest state, positivity</td></tr>
+    <tr><td>EquilibriumTest</td><td>4</td><td>Sum = rho, momentum matching, rest state, all directions covered</td></tr>
     <tr><td>MacrosTest</td><td>2</td><td>Recovery of input rho/u/v from equilibrium, zero velocity</td></tr>
-    <tr><td>IndexTest</td><td>2</td><td>1D index formulas for nodes and distributions</td></tr>
-    <tr><td>BounceBackTest</td><td>2</td><td>Opposite directions, self-inverse property</td></tr>
-    <tr><td>ObstacleTest</td><td>1</td><td>Cylinder placement, interior/exterior checks, area ratio</td></tr>
+    <tr><td>IndexTest</td><td>1</td><td>1D index formula for nodes</td></tr>
+    <tr><td>BounceBackTest</td><td>1</td><td>Opposite-direction mapping for bounce-back</td></tr>
+    <tr><td>ObstacleTest</td><td>1</td><td>Cylinder placement, interior/exterior checks</td></tr>
     <tr><td>ForceTest</td><td>1</td><td>Force vector reset</td></tr>
-    <tr><td>TimeStepTest</td><td>1</td><td>Mass conservation over 10 timesteps</td></tr>
+    <tr><td>TimeStepTest</td><td>1</td><td>Mass conservation over multiple timesteps</td></tr>
     <tr><td>ParamsTest</td><td>1</td><td>tau-from-Re calculation</td></tr>
   </table>
 
   <!-- ============================================================ -->
-  <h2>9. Continuous Integration</h2>
+  <h2>9. Solver Output &amp; the ML Data Pipeline</h2>
+
+  <p>Every simulation run emits a structured result set that doubles as training data for the neural-network surrogate. Per frame, the solver writes <code>frame_*.json</code> containing the velocity components (u, v), the vorticity field (omega), and the pressure field (p) on a downsampled grid; a <code>meta.json</code> records the grid dimensions, lattice spacing, Reynolds number, relaxation time, and inflow velocity; and <code>forces.jsonl</code> appends time-resolved drag and lift coefficients. Paraview VTK is written alongside for 3D inspection and offline post-processing.</p>
+
+  <p><code>scripts/postprocess.py</code> converts the VTK output to JSON/PNG and can slice individual frames for the web gallery (with --split, --cmap, --strouhal, and --vorticity flags). The neural-network data loader (<code>pinn/data/loader.py</code>) then ingests those <code>frame*.json</code> files into NumPy arrays, samples sensor points (importance-sampled near the geometry) and collocation points for the PDE residual, and normalizes the coordinates (x, y) to [-1, 1] and the physical parameters (e.g. Reynolds number to Re_n). This JSON-to-NumPy step is the bridge that turns a multi-hour C++ simulation into a training batch.</p>
+
+  <p>This result pipeline is exactly what feeds the surrogate work documented next: <a href="pinn.html">Physics-Informed Neural Networks</a>.</p>
+
+  <!-- ============================================================ -->
+  <h2>10. Continuous Integration</h2>
 
   <p>GitHub Actions builds and tests on both Ubuntu and macOS on every push and pull request:</p>
 

@@ -41,18 +41,19 @@
       <div class="nav-section">
         <div class="nav-heading">Reference</div>
         <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="implementation.html" class="nav-item">C++ Implementation</a>
+        <a href="pinn.html" class="nav-item">Physics-Informed Neural Networks</a>
         <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
       </div>
     </nav>
   </div>
 
-<div class="main-content">
+  <div class="main-content">
 
     <h1>Cylinder Wake: Laminar Vortex Shedding</h1>
 
     <p class="section-intro">
-      Flow past a circular cylinder is the canonical external aerodynamics benchmark.
+      Flow past a circular cylinder is the gold standard external aerodynamics benchmark.
       At low Reynolds numbers the wake is steady and symmetric; above Re &asymp; 60 the
       von K&aacute;rm&aacute;n vortex street emerges with periodic vortex shedding.
       This solver uses Bouzidi interpolated bounce-back for a smooth cylinder surface,
@@ -115,7 +116,7 @@
       ratio of inertial to viscous forces, based on the cylinder diameter D).
       The left side of the viewer shows the velocity-magnitude contour field;
       the right side shows the corresponding velocity-magnitude streamlines.
-      Drag the slider handle to wipe between the two.
+      Drag the slider handle to change between the two.
     </p>
 
     <div style="display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;" id="reTabs"></div>
@@ -193,7 +194,7 @@
       (<em>x</em>, <em>y</em>) to velocity and pressure fields (<em>u</em>,
       <em>v</em>, <em>p</em>) using a fully-connected MLP with 8 hidden layers
       &times; 64 neurons (29,507 parameters). Training uses a <strong>hybrid
-      loss</strong>: data loss on sparse solver measurements + PDE residual
+        loss</strong>: data loss on sparse solver measurements + PDE residual
       (steady incompressible Navier-Stokes via <code>torch.autograd</code>) +
       boundary condition enforcement (no-slip walls and cylinder surface).
     </p>
@@ -212,16 +213,16 @@
 
     <div style="text-align:center;margin:1.5rem 0;">
       <img src="assets/images/cylinder/pinn_steady_comparison.png"
-           alt="PINN vs LBM comparison: C++ solver, PINN surrogate, error delta"
-           style="max-width:100%;border-radius:6px;border:1px solid #30363d;">
+        alt="PINN vs LBM comparison: C++ solver, PINN surrogate, error delta"
+        style="max-width:100%;border-radius:6px;border:1px solid #30363d;">
     </div>
 
     <h3>Training Convergence</h3>
 
     <div style="text-align:center;margin:1.5rem 0;">
       <img src="assets/images/cylinder/pinn_loss_history.png"
-           alt="PINN training loss convergence: total, PDE residual, data, boundary"
-           style="max-width:600px;border-radius:6px;border:1px solid #30363d;">
+        alt="PINN training loss convergence: total, PDE residual, data, boundary"
+        style="max-width:600px;border-radius:6px;border:1px solid #30363d;">
     </div>
 
     <table>

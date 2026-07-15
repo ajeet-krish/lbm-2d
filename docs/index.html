@@ -40,7 +40,8 @@
       <div class="nav-section">
         <div class="nav-heading">Reference</div>
         <a href="theory.html" class="nav-item">Theory &amp; Methodology</a>
-        <a href="implementation.html" class="nav-item">Implementation</a>
+        <a href="implementation.html" class="nav-item">C++ Implementation</a>
+        <a href="pinn.html" class="nav-item">Physics-Informed Neural Networks</a>
         <a href="https://github.com/ajeet-krish/lbm-2d" class="nav-item" target="_blank">GitHub Repository &nearr;</a>
       </div>
     </nav>
@@ -50,45 +51,61 @@
 
     <section class="hero" id="overview">
       <h1>AK-Vortex: <span class="accent-orange">High-Performance</span> C++ Lattice Boltzmann CFD Solver</h1>
-      <p class="subtitle">
-        This solver was built to explore computational fluid dynamics from the ground up.
-        It simulates 2D airflow around buildings, through internal passages, and over wings using
-        the Lattice Boltzmann Method, a particle-based approach to solving the
-        Navier-Stokes equations. Everything runs in C++ with OpenMP parallelisation
-        and outputs results as interactive visualisations.
-      </p>
-      <a href="https://github.com/ajeet-krish/lbm-2d" class="github-link" target="_blank">View Source on GitHub
-        &rarr;</a>
     </section>
 
-    <h2>Why Build This?</h2>
-
     <p class="section-intro">
-      I wanted to understand CFD at the implementation level, not just the theory.
-      Commercial solvers like OpenFOAM and SU2 are incredible tools, but their
-      complexity hides the physics behind layers of abstraction. Building from
-      scratch forces you to confront every detail: how collision operators
-      dissipate energy, how boundary conditions shape the flow, and how memory
-      layout determines whether your code runs at 10% or 90% of peak hardware
-      throughput.
+      How does air flow around a plane wing, a high-rise building, or a racing car? To predict this without expensive
+      physical wind tunnels, engineers use Computational Fluid Dynamics (CFD) to simulate air as millions of
+      interacting particles.
     </p>
 
     <p class="section-intro">
-      This project is my lab notebook. Each simulation case is an experiment,
-      each validation table is a measurement, and each bug fix is a lesson
-      learned. The code is readable by design. I want someone else to be able
-      to open a single header file and follow the entire algorithm from
-      equilibrium distribution to force extraction.
+      Commercial solvers like ANSYS are powerful tools, but their complexity hides away the underlying physics while you
+      set the inputs and hope the result is right. To better understand CFD at the implementation level, I set out to
+      build a
+      solver from scratch.
+    </p>
+
+    <p class="section-intro">
+      AK-Vortex is a custom 2D CFD solver written in C++. Rather than solving the traditional, math-heavy fluid
+      equations directly, it uses the Lattice Boltzmann Method (LBM), a particle-based approach, to simulate
+      fluid behavior. The solver leverages OpenMP parallelization for high-performance computing and generates
+      interactive visual flow data.
+    </p>
+
+    <p class="section-intro">
+      This project is my open, ongoing lab notebook. Every simulation is an experiment and every validation table is a
+      measurement. The code is written so anyone can read it and follow how the solver works, from the core LBM method
+      all the way to training neural networks on its results.
+    </p>
+
+    <p class="section-intro">
+      On top of the solver, AK-Vortex trains a Physics-Informed Neural Network (PINN) on its own results. A PINN is a
+      neural network that learns to reproduce the flow field directly. Instead of waiting hours for a fresh
+      simulation for the smallest of changes, you get results in a fraction of a second. This mirrors the modern SciML
+      workflow used at NASA, Rolls-Royce, and Formula 1 teams, where a high-performance physics engine generates trusted
+      baseline data and a neural network compresses it into a deployable model. This shows not only that the C++ solver
+      works, but that its output can drive the
+      machine-learning-augmented analysis the industry is moving toward.
     </p>
 
     <h2>Simulation Cases</h2>
 
     <p class="section-intro">
-      There are currently fourteen validation cases spanning external aerodynamics, internal flows,
-      urban microclimate, and multi-body interactions. This is an ever-growing list of experiments to test the solver's
-      limits in different scenarios. Each case includes
-      a comparison slider, quantitative validation against experimental data,
-      and discussion of what the results mean physically.
+      The solver is tested against a growing set of validation cases spanning
+      external aerodynamics, internal flows, urban microclimate, and multi-body
+      interactions. Each case is an experiment: a different geometry, boundary
+      condition, and Reynolds number designed to stress a specific capability of the
+      solver, from smooth curved boundaries to turbulent separation. Every run
+      produces velocity fields, quantitative validation against
+      experimental or benchmark data, and a physical discussion of what the results
+      mean.
+    </p>
+
+    <p class="section-intro">
+      Selected cases now pair the high-fidelity LBM solution with a trained PINN
+      surrogate, presenting side-by-side LBM / PINN / error-delta comparisons and the
+      resulting accuracy metrics directly on the case page.
     </p>
 
     <div class="case-grid">
@@ -98,7 +115,7 @@
           onerror="this.style.background='#161b22';this.alt='Cylinder'">
         <div class="case-info">
           <h3>Cylinder Wake</h3>
-          <p>Von Karman vortex street at Re = 20-200. Bouzidi interpolated bounce-back for smooth curved boundaries.</p>
+          <p>A cylinder in a steady flow, shedding the alternating von Karman vortex street.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -108,8 +125,7 @@
           onerror="this.style.background='#161b22';this.alt='Cavity'">
         <div class="case-info">
           <h3>Lid-Driven Cavity</h3>
-          <p>Classic benchmark at Re = 100, 400, 1000. Centerline velocity profiles validated against Ghia et al. 1982.
-          </p>
+          <p>A box with one sliding wall, spinning up a single rotating eddy; the classic benchmark of solver accuracy</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -119,7 +135,7 @@
           onerror="this.style.background='#161b22';this.alt='Backward Step'">
         <div class="case-info">
           <h3>Backward-Facing Step</h3>
-          <p>Flow separation and reattachment. Reattachment length Xr/H validated against Armaly et al. 1983.</p>
+          <p>Flow spilling over a sudden step, separating and reattaching downstream, like air behind a ledge or building.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -129,8 +145,7 @@
           onerror="this.style.background='#161b22';this.alt='Orifice Plate'">
         <div class="case-info">
           <h3>Orifice Plate</h3>
-          <p>Single and multi-stage orifice plates: one/three holes and staggered serpentine paths. Pressure drop
-            validation for ISO 5167 flow metering.</p>
+          <p>A plate with one or more holes blocking a pipe, squeezing flow into a jet; the basis of pipeline flow meters</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -140,7 +155,7 @@
           onerror="this.style.background='#161b22';this.alt='Urban Canyon'">
         <div class="case-info">
           <h3>Urban Canyon</h3>
-          <p>Three Oke 1988 flow regimes with 3 buildings. Top-down street-level wind and building downwash effects.</p>
+          <p>Rows of buildings lining a street, trapping and recirculating the wind into the stale air pockets found at city level.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -150,7 +165,7 @@
           alt="Periodic hills velocity contour" onerror="this.style.background='#161b22';this.alt='Periodic Hills'">
         <div class="case-info">
           <h3>Periodic Hills</h3>
-          <p>Canonical LES benchmark (Moser/Kim/Moin 1993). Separated turbulent flow with sinusoidal hill profile.</p>
+          <p>A repeating train of smooth hills the flow must climb and separate behind, like wind over wavy terrain.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -160,8 +175,7 @@
           onerror="this.style.background='#161b22';this.alt='Flat Plate'">
         <div class="case-info">
           <h3>Flat Plate Boundary Layer</h3>
-          <p>PRIMARY validation. Laminar BL vs Blasius solution. AoA sweep (-10 to 15 deg) and Re sweep (500-2000) for
-            drag polar.</p>
+          <p>The project's primary validation case: a thin plate angled into the flow, growing the slow boundary layer that governs wing and airfoil drag.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -171,18 +185,17 @@
           alt="Square cylinder velocity contour" onerror="this.style.background='#161b22';this.alt='Square Cylinder'">
         <div class="case-info">
           <h3>Square Cylinder</h3>
-          <p>ERCOFTAC 043 sharp-edge separation. Fixed separation points at corners, wider wake than circular cylinder.
-          </p>
+          <p>A blunt square post shedding a wider, more turbulent wake than a round one</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
 
       <a href="cylinder_near_wall.html" class="case-card">
-        <img class="case-thumb" src="assets/images/cylinder_near_wall/gap20_contour.png" alt="Cylinder near wall contour"
-          onerror="this.style.background='#161b22';this.alt='Cylinder Near Wall'">
+        <img class="case-thumb" src="assets/images/cylinder_near_wall/gap20_contour.png"
+          alt="Cylinder near wall contour" onerror="this.style.background='#161b22';this.alt='Cylinder Near Wall'">
         <div class="case-info">
           <h3>Cylinder Near Wall</h3>
-          <p>Ground effect study at variable wall gaps (10/20/40 cells). Lift and drag vs gap validated vs potential flow.</p>
+          <p>A cylinder hovering just above a floor, where the wall pushes the lift upward; the ground effect that lifts race cars and planes near takeoff</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -192,7 +205,7 @@
           onerror="this.style.background='#161b22';this.alt='Side-by-Side Cylinders'">
         <div class="case-info">
           <h3>Side-by-Side Cylinders</h3>
-          <p>Transverse interference study at variable S/D (2, 3, 5). Bi-stable wake flip-flop and Draft tube effect.</p>
+          <p>Two cylinders side by side, their wakes shoving each other around, like the tube bundles in a heat exchanger.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>
@@ -202,7 +215,7 @@
           onerror="this.style.background='#161b22';this.alt='Rotating Cylinder'">
         <div class="case-info">
           <h3>Rotating Cylinder</h3>
-          <p>Magnus effect at variable spin (omega = 0.5, 1.0, 2.0 rad/ts). Lift matches Kutta-Joukowski within 10%.</p>
+          <p>A spinning cylinder dragging the flow around it to make lift: the Magnus effect behind curveballs and rotor ships.</p>
           <span class="case-link">View case &rarr;</span>
         </div>
       </a>

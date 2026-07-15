@@ -147,6 +147,7 @@ python3 train_cavity.py --single-re 100   # Cavity single Re
 - **Momentum exchange** force extraction for Cd/Cl coefficients
 - **Direct JSON output** -- per-frame velocity, pressure, vorticity fields + append-only force history. Optional `--vtk` flag for legacy Paraview export.
 - **14 simulation cases**: flat plate, cylinder, square cylinder, lid-driven cavity, backward-facing step, orifice plate, urban canyon (side + topdown vertical/horizontal), building downwash, periodic hills, cylinder near wall, side-by-side cylinders, rotating cylinder.
+- **PINN surrogate**: Fourier-feature parametric PINN (593K params) trained on cavity Re=100+400, 3-panel comparison (LBM/PINN/Error) on website, interactive Re-sweep slider.
 - **Polygon obstacle support** via point-in-polygon -- any closed 2D shape.
 - **Production-grade**: Google Test suite (12 tests), GitHub Actions CI on ubuntu + macos.
 
@@ -169,6 +170,17 @@ under-represent high-frequency boundary layers. The cavity surrogate uses a
 Fourier feature embedding (frozen random sinusoidal projection of spatial
 coords) before the MLP to lift inputs into a high-frequency space, breaking
 this limitation. See `pinn/models/pinn.py` (`FourierFeatureLayer`).
+
+**Cavity results (v3, Fourier features, 593K params):**
+
+| Re | L2 u | L2 v | u_max ratio | Status |
+|----|-------|-------|-------------|--------|
+| 100 | 23.7% | 29.3% | 1.24 | Trained |
+| 400 | 24.4% | 30.0% | 1.10 | Trained |
+| 200 | -- | -- | -- | Interpolated (not in training data) |
+
+u_max ratio improved from 3.50 (v2, plain tanh) to 1.24 (v3, Fourier).
+Velocity field error dropped 30x. Parametric Re-slider demo on `cavity.html`.
 
 **Implementation order:**
 
@@ -227,7 +239,7 @@ docs/
   flat_plate.html      PRIMARY validation case (Blasius, drag polar)
   cylinder.html        Cylinder wake (comparison slider)
   square_cylinder.html ERCOFTAC 043 (sharp-edge separation)
-  cavity.html          Lid-driven cavity
+  cavity.html          Lid-driven cavity + PINN parametric Re-sweep
   step.html            Backward-facing step
   orifice_plate.html   Orifice plate (single + multi-stage)
   urban.html           Urban canyon (side + topdown vertical/horizontal + downwash)
@@ -274,7 +286,7 @@ docs/
 | 3 | Vorticity output + postprocessor | Completed |
 | 4 | Full simulation re-runs + new cases | In progress |
 | 5 | Website updates for new features | Pending |
-| 6 | Physics-Informed Neural Network (PINN) surrogate suite | In progress |
+| 6 | Physics-Informed Neural Network (PINN) surrogate suite | In progress (cavity done, step/orifice pending) |
 
 ### Pending Fixes (Phase 4)
 
