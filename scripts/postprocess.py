@@ -201,7 +201,7 @@ def _overlay_obstacles(ax, obstacle_mask):
 # PNG rendering
 # ---------------------------------------------------------------------------
 def render_contour(ax, vel, cmap, vmin, vmax, obstacle=None):
-    im = ax.imshow(vel, origin='lower', cmap=cmap, aspect='auto',
+    im = ax.imshow(vel, origin='lower', cmap=cmap, aspect='equal',
                    vmin=vmin, vmax=vmax, interpolation='bilinear')
     _overlay_obstacles(ax, obstacle)
     ax.axis('off')
@@ -220,6 +220,7 @@ def render_streamlines(ax, u, v, cmap, obstacle=None, density=1.0):
                        cmap=cmap, density=density, linewidth=0.8, arrowsize=0.8)
     _overlay_obstacles(ax, obstacle)
     ax.axis('off')
+    ax.set_aspect('equal')
     ax.set_facecolor('white')
     return sp, vel_mag
 
