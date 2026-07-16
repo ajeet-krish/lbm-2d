@@ -48,20 +48,20 @@ def plot_comparison(re=100, case_dir=CASE_DIR):
 
     # Panel A: C++ LBM Solver
     im0 = axes[0].imshow(vel_true, origin="lower", cmap="turbo",
-                          vmin=vmin, vmax=vmax, aspect="auto")
+                          vmin=vmin, vmax=vmax, aspect="equal")
     axes[0].set_title("C++ LBM Solver (Baseline)", fontsize=11)
     axes[0].set_xlabel("x (downsampled)")
     axes[0].set_ylabel("y (downsampled)")
 
     # Panel B: PINN Surrogate
     im1 = axes[1].imshow(vel_pred, origin="lower", cmap="turbo",
-                          vmin=vmin, vmax=vmax, aspect="auto")
+                          vmin=vmin, vmax=vmax, aspect="equal")
     axes[1].set_title(f"PINN Surrogate  (L2u={l2_u:.1%})", fontsize=11)
     axes[1].set_xlabel("x (downsampled)")
 
     # Panel C: Error Delta (sequential Reds, low=good)
     im2 = axes[2].imshow(err, origin="lower", cmap="Reds",
-                          vmin=0.0, vmax=vmax * 0.5, aspect="auto")
+                          vmin=0.0, vmax=vmax * 0.5, aspect="equal")
     axes[2].set_title(f"|Error|  (L2v={l2_v:.1%})", fontsize=11)
     axes[2].set_xlabel("x (downsampled)")
 
