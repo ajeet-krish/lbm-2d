@@ -41,7 +41,8 @@ except ImportError:
 # ---------------------------------------------------------------------------
 CASE_CMAPS = {
     'cylinder':              ('jet', 'jet'),
-    'cavity':                ('viridis', 'viridis'),
+    'cavity':                ('turbo', 'turbo'),
+    'lid-driven-cavity':     ('turbo', 'turbo'),
     'backward-facing-step':  ('coolwarm', 'coolwarm'),
     'ribbed-channel':        ('plasma', 'plasma'),
     'urban-canyon':          ('viridis', 'viridis'),

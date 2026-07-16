@@ -21,9 +21,12 @@ CASE_DIR = os.path.join(
 )
 
 
-def plot_comparison(case_dir=CASE_DIR):
+def plot_comparison(re=100, case_dir=CASE_DIR):
     """3-panel: LBM / PINN / absolute error delta."""
-    data = np.load(os.path.join(case_dir, "prediction_steady.npz"))
+    pred_path = os.path.join(case_dir, f"prediction_re{re}.npz")
+    if not os.path.exists(pred_path):
+        pred_path = os.path.join(case_dir, "prediction_re100.npz")
+    data = np.load(pred_path)
     u_true = data["u_true"]
     u_pred = data["u_pred"]
     v_true = data["v_true"]
@@ -44,20 +47,20 @@ def plot_comparison(case_dir=CASE_DIR):
     vmax = max(vel_true.max(), vel_pred.max())
 
     # Panel A: C++ LBM Solver
-    im0 = axes[0].imshow(vel_true, origin="lower", cmap="coolwarm",
+    im0 = axes[0].imshow(vel_true, origin="lower", cmap="turbo",
                           vmin=vmin, vmax=vmax, aspect="auto")
     axes[0].set_title("C++ LBM Solver (Baseline)", fontsize=11)
     axes[0].set_xlabel("x (downsampled)")
     axes[0].set_ylabel("y (downsampled)")
 
     # Panel B: PINN Surrogate
-    im1 = axes[1].imshow(vel_pred, origin="lower", cmap="coolwarm",
+    im1 = axes[1].imshow(vel_pred, origin="lower", cmap="turbo",
                           vmin=vmin, vmax=vmax, aspect="auto")
     axes[1].set_title(f"PINN Surrogate  (L2u={l2_u:.1%})", fontsize=11)
     axes[1].set_xlabel("x (downsampled)")
 
-    # Panel C: Error Delta
-    im2 = axes[2].imshow(err, origin="lower", cmap="Reds",
+    # Panel C: Error Delta (diverging RdBu centered on zero)
+    im2 = axes[2].imshow(err, origin="lower", cmap="RdBu",
                           vmin=0.0, vmax=vmax * 0.5, aspect="auto")
     axes[2].set_title(f"|Error|  (L2v={l2_v:.1%})", fontsize=11)
     axes[2].set_xlabel("x (downsampled)")
@@ -66,9 +69,9 @@ def plot_comparison(case_dir=CASE_DIR):
     plt.colorbar(im1, ax=axes[1], shrink=0.8, label="|V|")
     plt.colorbar(im2, ax=axes[2], shrink=0.8, label="|V| error")
 
-    fig.suptitle("Cylinder Re=100: Steady-State PINN vs LBM",
+    fig.suptitle(f"Cavity Re={re}: Steady-State PINN vs LBM",
                  fontsize=13, fontweight="bold")
-    out = os.path.join(case_dir, "comparison_steady.png")
+    out = os.path.join(case_dir, f"pinn_comparison_re{re}.png")
     fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {out}")
@@ -102,5 +105,6 @@ def plot_loss_history(case_dir=CASE_DIR):
 
 
 if __name__ == "__main__":
-    plot_comparison()
+    plot_comparison(re=100)
+    plot_comparison(re=400)
     plot_loss_history()

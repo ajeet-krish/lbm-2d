@@ -1,6 +1,6 @@
 // ==========================================================================
 // LBM-2D: Color maps for canvas flow visualization
-// Builds 256-entry LUTs for viridis, RdBu (diverging), and jet.
+// Builds 256-entry LUTs for viridis, turbo, RdBu (diverging), and jet.
 // Pure JS, no dependencies.
 // ==========================================================================
 
@@ -83,9 +83,36 @@ const Colormaps = (function () {
         return lut;
     }
 
+    // Turbo colormap (Google, 2019) -- perceptually-improved rainbow.
+    // Control points sampled from the published 256-entry turbo LUT.
+    const TURBO_STOPS = [
+        [0.00, [48, 18, 59]],
+        [0.05, [70, 33, 114]],
+        [0.10, [78, 42, 154]],
+        [0.15, [69, 53, 188]],
+        [0.20, [54, 66, 208]],
+        [0.25, [41, 81, 217]],
+        [0.30, [31, 97, 219]],
+        [0.35, [25, 113, 217]],
+        [0.40, [23, 130, 211]],
+        [0.45, [27, 146, 201]],
+        [0.50, [36, 162, 187]],
+        [0.55, [52, 177, 170]],
+        [0.60, [74, 191, 149]],
+        [0.65, [102, 203, 124]],
+        [0.70, [134, 213, 96]],
+        [0.75, [167, 220, 67]],
+        [0.80, [200, 223, 42]],
+        [0.85, [230, 220, 30]],
+        [0.90, [251, 200, 39]],
+        [0.95, [253, 170, 43]],
+        [1.00, [231, 105, 28]],
+    ];
+
     const N = 256;
     const LUTS = {
         viridis: buildLUT(VIRIDIS_STOPS, N),
+        turbo: buildLUT(TURBO_STOPS, N),
         jet: buildUniform(jetRGB, N),
         rdbu: buildUniform(rdbuRGB, N),
     };

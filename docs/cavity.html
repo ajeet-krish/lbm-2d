@@ -309,7 +309,7 @@
       single network: (x, y, Re, t) &rarr; (u, v, p). The model is trained once on the
       Re=100 and Re=400 LBM time-series and interpolates continuously across Reynolds
       number <em>and</em> time. Press Play below to watch the surrogate's transient
-      vortex roll-up, or scrub to any instant &mdash; rendered with the same viridis
+      vortex roll-up, or scrub to any instant &mdash; rendered with the same turbo
       colormap as the LBM evolution to its left for direct comparison.
     </p>
 
@@ -337,11 +337,10 @@
     </div>
 
     <div class="fv-controls">
-      <div class="fv-group" id="pinnReGroup">
-        <span class="fv-label-txt">Re</span>
-        <button class="fv-btn fv-re active" data-re="100">100</button>
-        <button class="fv-btn fv-re" data-re="400">400</button>
-        <button class="fv-btn fv-re" data-re="1000">1000</button>
+      <div class="fv-group" id="pinnReGroup" style="flex-wrap:wrap;gap:8px;">
+        <span class="fv-label-txt">Re = <span id="pinnReReadout">100</span></span>
+        <input type="range" id="pinnReSlider" min="100" max="1000" step="10" value="100" class="fv-slider" style="min-width:200px;flex:1;">
+        <span class="fv-label-txt" style="color:var(--accent-dim);">live ONNX inference</span>
       </div>
     </div>
 
@@ -407,9 +406,9 @@
       number never present in the training data (e.g. Re=300, between the training points
       Re=100 and Re=400), the surrogate smoothly migrates the vortex center from
       y/H &asymp; 0.64 to 0.58 -- the physical trend from the steady-state table above,
-      recovered by interpolation rather than a new simulation. The live
-      <em>PINN Prediction</em> panel demonstrates this continuously: scrub the Re buttons
-      (or the temporal animation) and the vortex center shifts in real time. A dedicated
+      recovered by interpolation rather than a new simulation.       The live
+      <em>PINN Prediction</em> panel demonstrates this continuously: drag the Re slider
+      (or play the temporal animation) and the vortex center shifts in real time. A dedicated
       Re=300 comparison panel is pending export of the interpolated field.
     </p>
 
@@ -605,20 +604,21 @@
     (function () {
       // Single colormap for EVERY plot + animation on this case, so the
       // static field, the LBM evolution, and the PINN prediction all read
-      // the same way. (Backward-step etc. will use another cmap.)
-      var CASE_CMAP = 'viridis';
+      // the same way. Turbo (perceptually-improved rainbow) for cavity.
+      var CASE_CMAP = 'turbo';
       var DATA_DIR = 'assets/data/cavity';
       var lbmCanvas = document.getElementById('lbmCanvas');
       var pinnCanvas = document.getElementById('pinnCanvas');
       var viewer = new FlowViewer(lbmCanvas, DATA_DIR, { cmap: CASE_CMAP });
-      // Temporal PINN surrogate: same FlowViewer engine over the
-      // pinn_temporal_re{re}.bin binary exported by export_temporal.py.
-      var pinnViewer = new FlowViewer(pinnCanvas, DATA_DIR,
-        { filePrefix: 'pinn_temporal', cmap: CASE_CMAP });
+
+      // Live temporal PINN surrogate: runs the trained ParametricPINN (ONNX)
+      // in-browser at ANY Reynolds number in [100, 1000], animating the
+      // transient evolution frame-by-frame.
+      var pinn = new PinnSurrogate(pinnCanvas, { dataDir: DATA_DIR, cmap: CASE_CMAP });
 
       var statusEl = document.getElementById('fvStatus');
       viewer.onStatus = function (m) { if (statusEl) statusEl.textContent = m; };
-      pinnViewer.onStatus = function (m) { if (statusEl) statusEl.textContent = m; };
+      pinn.onStatus = function (m) { if (statusEl) statusEl.textContent = m; };
 
       viewer.onFrameChange = function (f) {
         var lbl = document.getElementById('lbmFrameLabel');
@@ -629,13 +629,11 @@
         }
       };
 
-      pinnViewer.onFrameChange = function (f) {
+      pinn.onFrameChange = function (f) {
         var lbl = document.getElementById('pinnFrameLabel');
-        if (lbl && pinnViewer.cache[pinnViewer.re]) {
-          lbl.textContent = 'Frame ' + f + ' / ' + (pinnViewer.cache[pinnViewer.re].lbm.n_frames - 1);
-          var scr = document.getElementById('pinnScrubber');
-          if (scr) { scr.max = pinnViewer.cache[pinnViewer.re].lbm.n_frames - 1; scr.value = f; }
-        }
+        if (lbl) lbl.textContent = 'Frame ' + f + ' / ' + (pinn.nFrames - 1);
+        var scr = document.getElementById('pinnScrubber');
+        if (scr) { scr.max = pinn.nFrames - 1; scr.value = f; }
       };
 
       // Unified Re selector (Velocity Field) drives the LBM evolution: load the
@@ -648,14 +646,17 @@
         });
       };
 
-      // Re selector (PINN section)
-      document.querySelectorAll('#pinnReGroup .fv-re').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          document.querySelectorAll('#pinnReGroup .fv-re').forEach(function (b) { b.classList.remove('active'); });
-          btn.classList.add('active');
-          pinnViewer.setRe(parseInt(btn.getAttribute('data-re'), 10));
+      // Continuous Re slider (PINN section) -- live ONNX inference at any Re.
+      var reSlider = document.getElementById('pinnReSlider');
+      var reReadout = document.getElementById('pinnReReadout');
+      if (reSlider) {
+        reSlider.min = 100; reSlider.max = 1000; reSlider.step = 10; reSlider.value = 100;
+        reSlider.addEventListener('input', function () {
+          var re = parseInt(this.value, 10);
+          if (reReadout) reReadout.textContent = re;
+          pinn.setRe(re);
         });
-      });
+      }
 
       // LBM play / pause
       document.getElementById('lbmPlay').addEventListener('click', function () {
@@ -673,16 +674,16 @@
 
       // PINN play / pause
       document.getElementById('pinnPlay').addEventListener('click', function () {
-        var playing = pinnViewer.togglePlay();
+        var playing = pinn.togglePlay();
         this.innerHTML = playing ? '&#10074;&#10074; Pause' : '&#9654; Play';
       });
 
       // PINN scrubber
       document.getElementById('pinnScrubber').addEventListener('input', function () {
-        pinnViewer.pause();
+        pinn.pause();
         var pb = document.getElementById('pinnPlay');
         if (pb) pb.innerHTML = '&#9654; Play';
-        pinnViewer.setFrame(parseInt(this.value, 10));
+        pinn.setFrame(parseInt(this.value, 10));
       });
 
       // Boot
@@ -691,10 +692,11 @@
         document.getElementById('lbmPlay').innerHTML = '&#10074;&#10074; Pause';
         viewer.load(400);  // preload Re=400
       });
-      pinnViewer.init(100).then(function () {
-        pinnViewer.play();
+      pinn.init().then(function () {
+        pinn.setRe(100);
+        pinn.play();
         document.getElementById('pinnPlay').innerHTML = '&#10074;&#10074; Pause';
-        pinnViewer.load(400);  // preload Re=400
+        if (reReadout) reReadout.textContent = '100';
       });
     })();
   </script>
