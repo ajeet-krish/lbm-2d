@@ -203,6 +203,7 @@ def _overlay_obstacles(ax, obstacle_mask):
 def render_contour(ax, vel, cmap, vmin, vmax, obstacle=None):
     im = ax.imshow(vel, origin='lower', cmap=cmap, aspect='equal',
                    vmin=vmin, vmax=vmax, interpolation='bilinear')
+    ax.set_box_aspect(1)  # force square axes box so square fields stay square
     _overlay_obstacles(ax, obstacle)
     ax.axis('off')
     ax.set_facecolor('white')
@@ -221,6 +222,7 @@ def render_streamlines(ax, u, v, cmap, obstacle=None, density=1.0):
     _overlay_obstacles(ax, obstacle)
     ax.axis('off')
     ax.set_aspect('equal')
+    ax.set_box_aspect(1)
     ax.set_facecolor('white')
     return sp, vel_mag
 
