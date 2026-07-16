@@ -59,8 +59,8 @@ def plot_comparison(re=100, case_dir=CASE_DIR):
     axes[1].set_title(f"PINN Surrogate  (L2u={l2_u:.1%})", fontsize=11)
     axes[1].set_xlabel("x (downsampled)")
 
-    # Panel C: Error Delta (diverging RdBu centered on zero)
-    im2 = axes[2].imshow(err, origin="lower", cmap="RdBu",
+    # Panel C: Error Delta (sequential Reds, low=good)
+    im2 = axes[2].imshow(err, origin="lower", cmap="Reds",
                           vmin=0.0, vmax=vmax * 0.5, aspect="auto")
     axes[2].set_title(f"|Error|  (L2v={l2_v:.1%})", fontsize=11)
     axes[2].set_xlabel("x (downsampled)")
