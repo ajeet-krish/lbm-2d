@@ -12,8 +12,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-NPZ = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn_temporal", "loss_history_temporal.npz")
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+NPZ = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn", "temporal", "v1", "loss_history.npz")
 OUT = os.path.join(PROJECT_ROOT, "docs", "assets", "images", "cavity", "loss_convergence.png")
 
 # Dracula-inspired theme

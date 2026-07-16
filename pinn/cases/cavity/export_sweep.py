@@ -10,7 +10,7 @@ import gzip
 import struct
 import numpy as np
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DATA_OUT = os.path.join(PROJECT_ROOT, "docs", "assets", "data", "cavity")
 TARGET_RES = 96
 MAGIC = 0x4C424D31
@@ -43,7 +43,7 @@ def _bilinear(field, target):
 
 
 def export_pinn(re):
-    src = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn_parametric",
+    src = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn", "stable", "v3",
                        f"prediction_re{re}.npz")
     if not os.path.exists(src):
         print(f"  SKIP pinn_re{re}: {src} not found")
@@ -64,8 +64,8 @@ def export_sweep(re_list, step=15):
     from models.pinn import ParametricPINN, predict
     from config import cavity_re100
 
-    pt_path = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn_parametric",
-                           "model_cavity_multi_re.pt")
+    pt_path = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn",
+                           "stable", "v3", "model.pt")
     if not os.path.exists(pt_path):
         print(f"  SKIP sweep: {pt_path} not found")
         return
@@ -116,8 +116,8 @@ def export_onnx():
     import torch
     from models.pinn import ParametricPINN
 
-    pt_path = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn_parametric",
-                           "model_cavity_multi_re.pt")
+    pt_path = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn", "stable", "v3",
+                           "model.pt")
     if not os.path.exists(pt_path):
         print(f"  SKIP onnx: {pt_path} not found")
         return

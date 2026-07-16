@@ -28,7 +28,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 from config import cavity_re100, cavity_re400, cavity_re1000
 from data.loader import grid_coords, flatten_grid
 from data.temporal_loader import (
@@ -114,7 +114,7 @@ def train(args):
 
     configs = [cavity_re100(), cavity_re400(), cavity_re1000()]
     base_dir = configs[0].case_dir
-    out_dir = os.path.join(os.path.dirname(base_dir), "pinn_temporal")
+    out_dir = os.path.join(base_dir, "pinn", "temporal", "v1")
     os.makedirs(out_dir, exist_ok=True)
 
     # Frame directories per Re.

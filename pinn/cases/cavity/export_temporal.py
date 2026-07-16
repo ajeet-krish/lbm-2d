@@ -19,7 +19,7 @@ import struct
 
 import numpy as np
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DATA_OUT = os.path.join(PROJECT_ROOT, "docs", "assets", "data", "cavity")
 TARGET_RES = 96
 MAGIC = 0x4C424D31
@@ -128,8 +128,8 @@ def export_onnx():
     import torch
     from models.pinn import ParametricPINN
 
-    pt_path = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn_temporal",
-                           "model_temporal.pt")
+    pt_path = os.path.join(PROJECT_ROOT, "output", "cavity", "pinn", "temporal", "v1",
+                           "model.pt")
     if not os.path.exists(pt_path):
         print(f"  SKIP temporal onnx: {pt_path} not found")
         return

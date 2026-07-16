@@ -93,14 +93,17 @@ pip3 install -r requirements.txt
 python3 data/loader.py
 
 # Train cylinder PINN (single case, original)
-python3 train.py
+python3 cases/cylinder/train.py
 
 # Train cavity parametric PINN (multi-Re)
-python3 train_cavity.py
+python3 cases/cavity/train_steady.py
 
 # Train cavity at single Re
-python3 train_cavity.py --single-re 100
-python3 train_cavity.py --single-re 400
+python3 cases/cavity/train_steady.py --single-re 100
+python3 cases/cavity/train_steady.py --single-re 400
+
+# Train cavity time-parametric PINN (spatio-temporal surrogate)
+python3 cases/cavity/train_temporal.py
 ```
 
 ## Directory layout
@@ -109,14 +112,47 @@ python3 train_cavity.py --single-re 400
 pinn/
   README.md              # This file
   requirements.txt       # torch, numpy, matplotlib, scipy, onnx, onnxruntime
-  config.py              # CaseConfig: meta -> grid dims, ds, geometry
-  data/loader.py         # Load frame*.json -> numpy; sample collocation/sensor points
-  models/pinn.py         # PINN + ParametricPINN MLP architectures
-  models/losses.py       # PDE residual, BC loss (cavity/cylinder), data loss
-  train.py               # Cylinder Re=100 training (original)
-  train_cavity.py        # Cavity parametric PINN (single-Re + multi-Re)
-  evaluate.py            # Inference on full grid -> numpy fields
-  plot_results.py        # 3-panel (LBM / PINN / Error delta)
+  config.py              # CaseConfig: meta -> grid dims, ds, geometry (shared)
+  data/                  # Shared data loaders
+    loader.py            # Load frame*.json -> numpy; steady collocation/sensors
+    temporal_loader.py   # Temporal (4-D) sensor + collocation loaders
+  models/                # Shared network architectures + losses
+    pinn.py              # PINN + ParametricPINN MLP; Fourier feature layers
+    losses.py            # PDE residual, BC loss (cavity/cylinder), data loss
+  export/                # Multi-case export (shared)
+    export_web_data.py   # LBM frames -> binary for web viewer (all cases)
+  cases/                 # Per-case organization
+    cavity/              # Lid-driven cavity surrogate
+      train_steady.py    # Phase 6.3: parametric steady-state PINN
+      train_temporal.py  # Phase 6.8: time-parametric (spatio-temporal) PINN
+      export_sweep.py    # Cavity steady-state sweep + ONNX export
+      export_temporal.py # Cavity temporal ONNX + binary frame export
+      plot_results.py    # 3-panel (LBM / PINN / Error delta)
+      plot_loss_convergence.py  # Training loss convergence plot
+      plot_temporal_l2.py       # Frame-by-frame temporal L2 profile
+      logs/               # Training logs (gitignored)
+    cylinder/            # Cylinder wake surrogate
+      train.py           # Phase 6.1: steady-state PINN (single Re=100)
+      evaluate.py        # Inference on full grid -> numpy fields
+
+# Trained model artifacts live in output/ (gitignored), organized by case:
+output/
+  cavity/
+    pinn/
+      stable/            # Steady-state parametric PINN (Phase 6.3)
+        v1/              # 64-wide, no Fourier (baseline)
+        v2/              # 256-wide, no Fourier
+        v3/              # Fourier multi-scale (current best, ACTIVE)
+          model.pt
+          prediction_re{100,400}.npz
+          loss_history.npz
+      temporal/          # Time-parametric PINN (Phase 6.8)
+        v1/              # Current temporal model (4-input: x, y, Re, t)
+          model.pt
+          loss_history.npz
+  cylinder/
+    re100/
+      pinn/              # Phase 6.1 artifacts (model.pt, prediction.npz)
 ```
 
 ## Key references

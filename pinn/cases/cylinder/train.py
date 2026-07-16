@@ -14,7 +14,7 @@ import time
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 from config import CaseConfig, cylinder_re100
 from data.loader import (
     load_frame, grid_coords, flatten_grid,

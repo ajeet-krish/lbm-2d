@@ -12,12 +12,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import cylinder_re100
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+from config import cavity_re100
 
 CASE_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    "..", "output", "cylinder", "re100", "pinn"
+    "..", "..", "..", "output", "cavity", "pinn", "stable", "v3"
 )
 
 

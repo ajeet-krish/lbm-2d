@@ -86,14 +86,14 @@
         <span class="mod-file">pinn/train.py</span>
       </div>
       <div class="module-row">
-        <span class="mod-name">train_cavity.py</span>
+        <span class="mod-name">train_steady.py</span>
         <span class="mod-desc">Cavity parametric PINN: single-Re and multi-Re training</span>
-        <span class="mod-file">pinn/train_cavity.py</span>
+        <span class="mod-file">pinn/cases/cavity/train_steady.py</span>
       </div>
       <div class="module-row">
         <span class="mod-name">evaluate.py</span>
         <span class="mod-desc">Full-grid inference to NumPy fields for comparison and plotting</span>
-        <span class="mod-file">pinn/evaluate.py</span>
+        <span class="mod-file">pinn/cases/cylinder/evaluate.py</span>
       </div>
       <div class="module-row">
         <span class="mod-name">export_onnx.py</span>
@@ -103,7 +103,7 @@
       <div class="module-row">
         <span class="mod-name">plot_results.py</span>
         <span class="mod-desc">3-panel render: C++ LBM / PINN surrogate / absolute error delta</span>
-        <span class="mod-file">pinn/plot_results.py</span>
+        <span class="mod-file">pinn/cases/cavity/plot_results.py</span>
       </div>
       <div class="module-row">
         <span class="mod-name">data/temporal_loader.py</span>
@@ -118,7 +118,7 @@
       <div class="module-row">
         <span class="mod-name">export_temporal.py</span>
         <span class="mod-desc">Exports pinn_temporal_re{re}.bin frame sequences + pinn_temporal_model.onnx</span>
-        <span class="mod-file">pinn/export_temporal.py</span>
+        <span class="mod-file">pinn/cases/cavity/export_temporal.py</span>
       </div>
     </div>
 
@@ -209,10 +209,10 @@ pip3 install -r requirements.txt
 python3 data/loader.py
 
 <span style="color:var(--green);"># Train the cylinder steady-state surrogate</span>
-python3 train.py
+python3 cases/cylinder/train.py
 
-<span style="color:var(--green);"</span># Train the cavity parametric surrogate (multi-Re)</span>
-python3 train_cavity.py</code></pre>
+<span style="color:var(--green);"># Train the cavity parametric surrogate (multi-Re)</span>
+python3 cases/cavity/train_steady.py</code></pre>
 
     <!-- ============================================================ -->
     <h2>4. Engineering Iterations: Design &amp; Fixes</h2>

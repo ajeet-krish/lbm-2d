@@ -20,7 +20,7 @@ from scipy.ndimage import gaussian_filter
 from data.loader import load_frame, grid_coords, flatten_grid
 from config import CaseConfig
 
-# Re normalization range (matches train_cavity.py).
+# Re normalization range (matches cases/cavity/train_temporal.py).
 RE_MIN = 100.0
 RE_MAX = 1000.0
 

@@ -1,10 +1,10 @@
 """Train parametric PINN on Lid-Driven Cavity (Re=100, 400).
 
 Usage:
-    python3 train_cavity.py                        # multi-Re (Re=100 + Re=400)
-    python3 train_cavity.py --single-re 100        # single Re only
-    python3 train_cavity.py --single-re 400        # single Re only
-    python3 train_cavity.py --epochs-adam 8000     # longer Adam phase
+    python3 train_steady.py                        # multi-Re (Re=100 + Re=400)
+    python3 train_steady.py --single-re 100        # single Re only
+    python3 train_steady.py --single-re 400        # single Re only
+    python3 train_steady.py --epochs-adam 8000     # longer Adam phase
 """
 
 import argparse
@@ -15,7 +15,7 @@ import time
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 from config import cavity_re100, cavity_re400, CaseConfig
 from data.loader import (
     load_frame, grid_coords, flatten_grid,
@@ -98,7 +98,7 @@ def train_single_re(args):
     else:
         raise ValueError(f"Unsupported Re={args.single_re}. Use 100 or 400.")
 
-    case_dir = os.path.join(cfg.case_dir, "pinn_parametric")
+    case_dir = os.path.join(cfg.case_dir, "pinn", "stable", "v3")
     os.makedirs(case_dir, exist_ok=True)
 
     data = prepare_single_re(cfg, device)
@@ -253,7 +253,7 @@ def train_multi_re(args):
     print(f"Device: {device}")
 
     configs = [cavity_re100(), cavity_re400()]
-    output_dir = os.path.join(configs[0].case_dir, "..", "pinn_parametric")
+    output_dir = os.path.join(configs[0].case_dir, "pinn", "stable", "v3")
     os.makedirs(output_dir, exist_ok=True)
 
     # Prepare data for each Re

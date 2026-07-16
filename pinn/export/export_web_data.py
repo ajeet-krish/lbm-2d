@@ -235,7 +235,7 @@ def export_lbm_case(case_name, cfg):
 # --- PINN exports (cavity only; kept for the trained surrogate) ------------
 
 def export_pinn(re):
-    from pinn_export_helpers import export_pinn as _ep  # noqa
+    from cases.cavity.export_sweep import export_pinn as _ep  # noqa
     _ep(re)
 
 
@@ -254,9 +254,9 @@ def main():
         export_lbm_case(case_name, cfg)
 
     if args.pinn:
-        # Reuse the original cavity PINN export logic via the helper module.
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from pinn_export_helpers import export_cavity_pinn
+        # Reuse the cavity PINN export logic via the helper module.
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+        from cases.cavity.export_sweep import export_cavity_pinn
         export_cavity_pinn()
 
     print("Done.")
