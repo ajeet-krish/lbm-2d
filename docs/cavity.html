@@ -302,6 +302,22 @@
         style="width:100%;height:100%;object-fit:contain;">
     </div>
 
+    <h3>Steady-State Comparison: Re=1000</h3>
+
+    <p class="section-intro">
+      At Re=1000 (transitional regime) the primary vortex tightens further toward the
+      lid-driven corner and secondary corner eddies grow along the stationary walls.
+      The PINN steady-state surrogate was not separately trained at Re=1000; this panel
+      shows the temporal model evaluated at its final frame (t &rarr; steady), with
+      correspondingly higher residual error (u L2 &asymp; 37.5%, v L2 &asymp; 31.2%)
+      than the dedicated Re=100/400 steady model.
+    </p>
+
+    <div class="chart-container" style="height:320px;">
+      <img src="assets/images/cavity/pinn_comparison_re1000.png" alt="PINN vs LBM comparison at Re=1000"
+        style="width:100%;height:100%;object-fit:contain;">
+    </div>
+
     <h3>PINN Temporal Surrogate</h3>
 
     <p class="section-intro">
@@ -309,7 +325,7 @@
       single network: (x, y, Re, t) &rarr; (u, v, p). The model is trained once on the
       Re=100 and Re=400 LBM time-series and interpolates continuously across Reynolds
       number <em>and</em> time. Press Play below to watch the surrogate's transient
-      vortex roll-up, or scrub to any instant &mdash; rendered with the same turbo
+      vortex roll-up, or scrub to any instant &mdash; rendered with the same jet
       colormap as the LBM evolution to its left for direct comparison.
     </p>
 
@@ -605,7 +621,7 @@
       // Single colormap for EVERY plot + animation on this case, so the
       // static field, the LBM evolution, and the PINN prediction all read
       // the same way. Turbo (perceptually-improved rainbow) for cavity.
-      var CASE_CMAP = 'turbo';
+      var CASE_CMAP = 'jet';
       var DATA_DIR = 'assets/data/cavity';
       var lbmCanvas = document.getElementById('lbmCanvas');
       var pinnCanvas = document.getElementById('pinnCanvas');
@@ -697,6 +713,9 @@
         pinn.play();
         document.getElementById('pinnPlay').innerHTML = '&#10074;&#10074; Pause';
         if (reReadout) reReadout.textContent = '100';
+      }).catch(function (e) {
+        console.error('PINN surrogate init failed:', e);
+        if (reReadout) {}
       });
     })();
   </script>

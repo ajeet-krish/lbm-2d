@@ -47,14 +47,14 @@ def plot_comparison(re=100, case_dir=CASE_DIR):
     vmax = max(vel_true.max(), vel_pred.max())
 
     # Panel A: C++ LBM Solver
-    im0 = axes[0].imshow(vel_true, origin="lower", cmap="turbo",
+    im0 = axes[0].imshow(vel_true, origin="lower", cmap="jet",
                           vmin=vmin, vmax=vmax, aspect="equal")
     axes[0].set_title("C++ LBM Solver (Baseline)", fontsize=11)
     axes[0].set_xlabel("x (downsampled)")
     axes[0].set_ylabel("y (downsampled)")
 
     # Panel B: PINN Surrogate
-    im1 = axes[1].imshow(vel_pred, origin="lower", cmap="turbo",
+    im1 = axes[1].imshow(vel_pred, origin="lower", cmap="jet",
                           vmin=vmin, vmax=vmax, aspect="equal")
     axes[1].set_title(f"PINN Surrogate  (L2u={l2_u:.1%})", fontsize=11)
     axes[1].set_xlabel("x (downsampled)")
@@ -107,4 +107,5 @@ def plot_loss_history(case_dir=CASE_DIR):
 if __name__ == "__main__":
     plot_comparison(re=100)
     plot_comparison(re=400)
+    plot_comparison(re=1000)
     plot_loss_history()

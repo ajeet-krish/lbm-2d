@@ -41,21 +41,21 @@ except ImportError:
 # ---------------------------------------------------------------------------
 CASE_CMAPS = {
     'cylinder':              ('jet', 'jet'),
-    'cavity':                ('turbo', 'turbo'),
-    'lid-driven-cavity':     ('turbo', 'turbo'),
-    'backward-facing-step':  ('coolwarm', 'coolwarm'),
-    'ribbed-channel':        ('plasma', 'plasma'),
-    'urban-canyon':          ('viridis', 'viridis'),
-    'urban-side':            ('viridis', 'viridis'),
-    'urban-topdown':         ('viridis', 'viridis'),
-    'building-downwash':     ('RdBu', 'RdBu'),
+    'cavity':                ('jet', 'jet'),
+    'lid-driven-cavity':     ('jet', 'jet'),
+    'backward-facing-step':  ('jet', 'jet'),
+    'ribbed-channel':        ('jet', 'jet'),
+    'urban-canyon':          ('jet', 'jet'),
+    'urban-side':            ('jet', 'jet'),
+    'urban-topdown':         ('jet', 'jet'),
+    'building-downwash':     ('jet', 'jet'),
     'flat-plate':            ('jet', 'jet'),
     'square-cylinder':       ('jet', 'jet'),
-    'periodic-hills':        ('viridis', 'viridis'),
+    'periodic-hills':        ('jet', 'jet'),
     'cylinder-near-wall':    ('jet', 'jet'),
     'side-by-side':          ('jet', 'jet'),
     'rotating-cylinder':     ('jet', 'jet'),
-    'orifice-plate':         ('coolwarm', 'coolwarm'),
+    'orifice-plate':         ('jet', 'jet'),
 }
 
 # Detect shape type from meta.json or directory name

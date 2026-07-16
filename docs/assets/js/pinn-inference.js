@@ -22,7 +22,7 @@ class PinnSurrogate {
         this.ctx = canvas.getContext('2d');
         this.dataDir = opts.dataDir || 'assets/data/cavity';
         this.modelDir = opts.modelDir || 'assets/js/vendor/onnxruntime-web/dist';
-        this.cmap = opts.cmap || 'turbo';
+        this.cmap = opts.cmap || 'jet';
         this.nx = 96;
         this.ny = 96;
         this.nFrames = 51;
@@ -64,7 +64,9 @@ class PinnSurrogate {
     async init() {
         const ok = await this.loadGrid();
         if (!ok) { this._showError('grid data missing'); return; }
-        this._tryLoadOrt();
+        await this._tryLoadOrt();
+        // Model is ready (or failed gracefully) -- render the initial frame.
+        this._renderCurrent();
     }
 
     _showError(msg) {

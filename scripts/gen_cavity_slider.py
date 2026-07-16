@@ -25,7 +25,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 IMG_DIR = os.path.join(ROOT, "docs", "assets", "images", "cavity")
 FRAME = "frame_10240.json"          # steady-state frame
 CASES = [("re100", 100), ("re400", 400)]
-CMAP = "viridis"
+CMAP = "jet"
 
 
 def load(path):

@@ -136,7 +136,7 @@
             this.filePrefix = opts.filePrefix || 'lbm';
             // cmap: per-case color scheme. Every plot AND animation for a
             // given case must share this colormap for visual consistency.
-            this.cmap = opts.cmap || 'viridis';
+            this.cmap = opts.cmap || 'jet';
             this.cache = {};            // re -> { lbm, vmax }
             this._missing = {};         // re -> true if file failed to load
             this.re = 100;
