@@ -65,6 +65,51 @@ class FourierFeatureLayer(nn.Module):
         return torch.cat(feats, dim=1)
 
 
+class MultiScaleFourierLayer(nn.Module):
+    """Multi-scale random Fourier feature mapping for spatial coordinates.
+
+    Concatenates multiple single-scale Fourier feature bands with different
+    frequency scalings (sigma values). This gives the network access to
+    low-frequency (bulk flow), medium-frequency (vortex), and high-frequency
+    (boundary layer) representation simultaneously, mitigating the spectral
+    bias of tanh MLPs more effectively than a single band.
+
+    Input: (N, in_dim) spatial coordinates.
+    Output: (N, 2 * n_freqs * in_dim * n_scales) multi-scale Fourier features.
+
+    Args:
+        in_dim:    Spatial input dimension (default 2).
+        n_freqs:   Frequencies per scale band.
+        sigmas:    List of standard-deviations for each scale band.
+    """
+
+    def __init__(self, in_dim: int = 2, n_freqs: int = 128,
+                 sigmas: tuple = (1.0, 5.0, 20.0)):
+        super().__init__()
+        self.in_dim = in_dim
+        self.n_freqs = n_freqs
+        self.sigmas = tuple(sigmas)
+        self.out_dim = 2 * n_freqs * in_dim * len(self.sigmas)
+        # One frozen random matrix per scale band.
+        self.Bs = nn.ParameterList([
+            nn.Parameter(torch.randn(n_freqs, in_dim) * s, requires_grad=False)
+            for s in self.sigmas
+        ])
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Encode spatial coordinates at multiple frequency scales."""
+        feats = []
+        two_pi = 2.0 * math.pi
+        for B in self.Bs:
+            band = []
+            for d in range(self.in_dim):
+                proj = two_pi * x[:, d:d + 1] @ B[:, d:d + 1].T
+                band.append(torch.cos(proj))
+                band.append(torch.sin(proj))
+            feats.append(torch.cat(band, dim=1))
+        return torch.cat(feats, dim=1)
+
+
 class PINN(nn.Module):
     """Steady-state PINN: (x, y) -> (u, v, p)."""
 
@@ -99,22 +144,37 @@ class ParametricPINN(nn.Module):
     """Parametric PINN with Fourier feature embedding: (x, y, p1, ...) -> (u, v, p).
 
     Spatial coordinates (x, y) are passed through a frozen random Fourier
-    feature layer before the MLP; physical parameters are concatenated after
-    the Fourier features.
+    feature layer (single-scale or multi-scale) before the MLP; physical
+    parameters are concatenated after the Fourier features.
 
     Input dimension = 2 (spatial) + n_params (physical parameters).
     MLP input dimension = 2*n_freqs*2 (Fourier features) + n_params.
     Parameters should be pre-normalized to [0, 1] before passing to forward().
+
+    Args:
+        n_params:  Number of physical parameters (Re, geometry dims, etc.).
+        hidden:    MLP hidden width.
+        n_layers:  Number of MLP hidden layers.
+        n_freqs:   Number of Fourier frequencies (m). Default 128.
+        sigma:     Fourier feature frequency scale. Default 5.0.
+        sigmas:    If set, use multi-scale Fourier features with these bands.
+                   Overrides sigma. Example: (1.0, 5.0, 20.0).
     """
 
     def __init__(self, n_params: int = 1, hidden: int = 256, n_layers: int = 8,
-                 n_freqs: int = 128, sigma: float = 5.0):
+                 n_freqs: int = 128, sigma: float = 5.0, sigmas=None):
         super().__init__()
         self.n_params = n_params
         self.n_freqs = n_freqs
-        self.sigma = sigma
+        self.sigma = sigma if sigmas is None else sigmas
+        self.sigmas = sigmas
 
-        self.fourier = FourierFeatureLayer(in_dim=2, n_freqs=n_freqs, sigma=sigma)
+        if sigmas is not None:
+            self.fourier = MultiScaleFourierLayer(
+                in_dim=2, n_freqs=n_freqs, sigmas=sigmas)
+        else:
+            self.fourier = FourierFeatureLayer(
+                in_dim=2, n_freqs=n_freqs, sigma=sigma)
 
         in_dim = self.fourier.out_dim + n_params
         layers = [nn.Linear(in_dim, hidden), nn.Tanh()]

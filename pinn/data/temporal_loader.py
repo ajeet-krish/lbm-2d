@@ -121,7 +121,7 @@ def build_temporal_sensors(cfg: CaseConfig, frame_dirs_by_re: dict,
 
 
 def build_temporal_collocation(cfg: CaseConfig, re_values, n, seed=1,
-                               t_min=0.0, t_max=1.0):
+                                t_min=0.0, t_max=1.0):
     """Random collocation points for the unsteady PDE residual.
 
     Returns (N, 4) = (x_norm, y_norm, re_norm, t_norm). re_norm is sampled from
@@ -135,3 +135,93 @@ def build_temporal_collocation(cfg: CaseConfig, re_values, n, seed=1,
     rn = rng.choice(re_norm_vals, size=n)
     tn = rng.uniform(t_min, t_max, n)
     return np.stack([xs, ys, rn, tn], axis=1)
+
+
+def adaptive_resample_sensors(model, configs, frame_dirs_by_re, re_values,
+                              sens_by_re, n_per_frame=600, device="cpu",
+                              seed=7):
+    """Resample sensors based on current model residual.
+
+    For each Re and frame, evaluates the model at current sensor positions,
+    computes the residual |pred - target| for (u, v), and re-samples new
+    sensor positions weighted by this residual. This concentrates sensors in
+    regions where the model is currently least accurate (typically boundary
+    layers and the vortex core).
+
+    Args:
+        model:        Trained ParametricPINN (n_params=2).
+        configs:      List of CaseConfig for each Re.
+        frame_dirs_by_re: dict {re_val: frame_dir_path}.
+        re_values:    List of Re values.
+        sens_by_re:   Current sensor dict to be updated.
+        n_per_frame:  Sensors per frame.
+        device:       torch device.
+        seed:         RNG seed for resampling.
+
+    Returns:
+        Updated sens_by_re dict with new 'coords', 'u', 'v', 'p' for each Re.
+    """
+    import torch
+    from models.pinn import predict
+
+    rng = np.random.default_rng(seed)
+    Xn, Yn, _, _ = grid_coords(configs[0])
+    coords_all = flatten_grid(Xn, Yn)
+    fluid_mask = None  # computed from first frame
+
+    new_sens_by_re = {}
+    for re in re_values:
+        re_norm = normalize_re(re)
+        frames = load_temporal_frames(frame_dirs_by_re[re])
+        n_frames = len(frames)
+
+        all_coords, all_uvp = [], []
+        for fi, fr in enumerate(frames):
+            t_norm = fi / (n_frames - 1) if n_frames > 1 else 0.0
+            u_t = fr["u"]
+            v_t = fr["v"]
+            p_t = fr["p"]
+            obstacle = fr["obstacle"]
+            if fluid_mask is None:
+                fluid_mask = obstacle < 0.5
+
+            # Get model prediction at full grid.
+            re_col = np.full((coords_all.shape[0], 1), re_norm)
+            t_col = np.full((coords_all.shape[0], 1), t_norm)
+            inp = torch.from_numpy(
+                np.concatenate([coords_all, re_col, t_col], axis=1)
+            ).float().to(device)
+            with torch.no_grad():
+                u_p, v_p, _ = predict(model, inp)
+            u_p = u_p.cpu().numpy().reshape(u_t.shape)
+            v_p = v_p.cpu().numpy().reshape(v_t.shape)
+
+            # Residual map (L2 of u,v error) on fluid nodes.
+            rmap = np.sqrt((u_p - u_t) ** 2 + (v_p - v_t) ** 2)
+            rmap[obstacle > 0.5] = 0.0
+            rmap = rmap + 1e-6
+
+            fidx = np.where(fluid_mask.ravel())[0]
+            probs = rmap.ravel()[fidx]
+            probs = probs / probs.sum()
+
+            chosen = rng.choice(fidx, size=n_per_frame, replace=False, p=probs)
+            ji = chosen // u_t.shape[1]
+            ii = chosen % u_t.shape[1]
+            c2 = coords_all[ji * u_t.shape[1] + ii]
+            c4 = np.concatenate([c2,
+                                 np.full((n_per_frame, 1), re_norm),
+                                 np.full((n_per_frame, 1), t_norm)], axis=1)
+            uvp = np.stack([u_t[ji, ii], v_t[ji, ii], p_t[ji, ii]], axis=1)
+            all_coords.append(c4)
+            all_uvp.append(uvp)
+
+        new_sens_by_re[re] = {
+            "coords": np.concatenate(all_coords, 0),
+            "u": np.concatenate([a[:, 0] for a in all_uvp], 0),
+            "v": np.concatenate([a[:, 1] for a in all_uvp], 0),
+            "p": np.concatenate([a[:, 2] for a in all_uvp], 0),
+        }
+        print(f"    Re={re}: {new_sens_by_re[re]['coords'].shape} sensors resampled")
+
+    return new_sens_by_re

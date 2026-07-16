@@ -269,6 +269,33 @@ img { max-width: 100%; border-radius: 4px; border: 1px solid var(--border); }
 }
 .key-results li strong { color: var(--fg); }
 
+/* Key findings list (compact, bullet style) */
+.key-findings {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.key-findings li {
+  position: relative;
+  padding: 0.5em 0 0.5em 1.6em;
+  background: var(--bg-card);
+  border-left: 3px solid var(--cyan);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.85em;
+  line-height: 1.6;
+  color: var(--fg-dim);
+}
+.key-findings li::before {
+  content: '\25B8';
+  position: absolute;
+  left: 0.6em;
+  color: var(--cyan);
+  font-size: 0.85em;
+}
+.key-findings li strong { color: var(--fg); }
+
 /* --- Callout --- */
 .callout {
   background: var(--bg-card);

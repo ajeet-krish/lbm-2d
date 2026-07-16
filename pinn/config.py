@@ -169,3 +169,14 @@ def cavity_re1000() -> CaseConfig:
 def all_cavity_configs():
     """Return list of cavity configs for multi-Re training."""
     return [cavity_re100(), cavity_re400()]
+
+
+# Reynolds-number normalization range used across the parametric/temporal PINN
+# surrogates: Re is mapped to [0, 1] over [RE_MIN, RE_MAX].
+RE_MIN = 100.0
+RE_MAX = 1000.0
+
+
+def normalize_re(re: float) -> float:
+    """Map a Reynolds number to [0, 1] over the training range [100, 1000]."""
+    return (re - RE_MIN) / (RE_MAX - RE_MIN)

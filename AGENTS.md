@@ -22,6 +22,7 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 | 3 | Vorticity output + postprocessor | Completed |
 | 4 | Full simulation re-runs + new cases | In progress |
 | 5 | Website updates for new features | In progress (interactive LBM/PINN viewers on all cases) |
+| 5.5 | Cavity page deep dive + PINN surrogate narrative | Completed (Key Findings, LBM Analysis, Training Convergence, What PINN Unlocks, Limitations sections; loss + temporal L2 plots) |
 
 ### Completed to date
 - MRT collision operator (default, BGK fallback) with tuned rates
@@ -66,6 +67,8 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 - PINN parametric cavity (Phase 6.3): `ParametricPINN` (spatial + Re_n input), multi-Re training (Re=100+400), importance-sampled sensors (3000), hybrid loss with pressure (data_loss_full), v2 trained (462K params, HIDDEN=256, N_LAYERS=8) -- u L2 56.1%/41.8%, v L2 34.7%/33.0%, p L2 12.6%/12.6% for Re=100/400
 - PINN Fourier feature layer (`FourierFeatureLayer`, done): frozen random sinusoidal projection (m=128, sigma=5.0) applied to spatial coords only, lifting (x,y) to 512-dim frequency space to break tanh spectral bias; MLP input becomes 513-dim (512 fourier + 1 Re_n); 593K params
 - PINN cavity v3 (Fourier, done): u L2 23.7%/24.4%, v L2 29.3%/30.0%, p L2 12.5%/12.6% for Re=100/400; u_max ratio true 1.24 (was 3.50 in v2 -- spectral bias fixed); velocity L2-err 30x lower than v2; parametric Re=200 interpolation gives smooth vortex-center migration (y/H 0.64->0.58 from Re=100->400)
+- PINN temporal (Phase 6.8, done): time-parametric `ParametricPINN(n_params=2)` trained on 51-frame sequences at Re=100/400, 593,155 params, 201 min MPS; u L2 ~33% mean over transient (final frame 29.9%/34.7%), v L2 ~43-48%; u_max ratio 1.13-1.16; ONNX + float16 frame binaries exported; cavity.html PINN Prediction section animates full transient via second FlowViewer
+- PINN web engine (Phase 6.6, done): `flow-viewer.js` velocity-only canvas engine (viridis, flipY-aware streamlines), `pinn-inference.js` placeholder surrogate, vendored onnxruntime-web (numThreads=1); binary `.bin` (+.gz) viewer data exported for all 11 cases via `export_web_data.py`
 
 ### Simulation Results (Phase 4)
 
@@ -130,9 +133,11 @@ This transforms the network from a single-case calculator into a continuous desi
 | 6.3 | Cavity parametric PINN (x,y,Re) -> (u,v,p), Re=100/400 | **Completed** (velocity; pressure paused) |
 | 6.4 | Backward-facing step PINN (x,y,Re) -> (u,v,p) | Pending |
 | 6.5 | Orifice plate parametric PINN (x,y,hole_w,n_plates) -> (u,v,p) | Pending |
-| 6.6 | ONNX export + WASM real-time inference page | Pending |
+| 6.6 | ONNX export + WASM real-time inference page | **Completed** (temporal ONNX exported, vendored runtime) |
 | 6.7 | Ablation study (data/PDE/BC terms), methodology write-up | Pending |
-| 6.8 | Time-parametric PINN (spatio-temporal surrogate) | Pending |
+| 6.8 | Time-parametric PINN (spatio-temporal surrogate) | **Completed** (Re=100/400 trained, ONNX + binary export done) |
+| 6.8b | Extend temporal PINN to Re=1000 | In progress (data exists, retrain pending) |
+| 6.9 | Model improvement roadmap (pressure-Poisson, Re range, curriculum, etc.) | Pending |
 
 #### Phase 6.3: Cavity Parametric PINN (FIRST)
 
@@ -334,9 +339,33 @@ LBM Evolution section for direct solver-vs-ML comparison.
   the temporal binary, with its own Re buttons + play/pause + time scrubber
   (`pinnReGroup`, `pinnPlay`, `pinnScrubber`, `pinnFrameLabel`).
 
-**Status:** In progress. Code + web wiring complete; training and binary export
-pending (torch not yet installed on this machine; `python3 train_temporal.py`
-then `python3 export_temporal.py` light it up).
+**Training results (temporal, done):**
+- 12,000 Adam + 1,000 L-BFGS epochs, 201 min on MPS, 593,155 params
+- Final loss 1.2e-3 (pde 3.4e-5, data 1.4e-4, bc 3.5e-5, ic 3.6e-5)
+- Frame-by-frame L2: re100 u mean=33.3% final=29.9%, v mean=48.0%;
+  re400 u mean=33.0% final=34.7%, v mean=43.1%. Early transient (frames 0-10) hardest at ~45% L2.
+- u_max ratio 1.13-1.16 (vortex strength captured). Supersedes steady-state model.
+- Output: `output/cavity/pinn_temporal/model_temporal.pt`,
+  `docs/assets/data/cavity/pinn_temporal_re{100,400}.bin` (+.gz),
+  `docs/assets/data/cavity/pinn_temporal_model.onnx` (2.38 MB)
+
+**Status:** Completed. Re=1000 extension (Phase 6.8b): data exists
+(`output/cavity/re1000/frames/`, 51 frames at 256x256), retrain pending.
+
+#### Phase 6.9: Model Improvement Roadmap
+
+Prioritized enhancements to raise surrogate accuracy and design-space coverage.
+Ordered by impact-to-effort ratio.
+
+| # | Improvement | Problem it fixes | Approach | Priority |
+|---|-------------|------------------|----------|----------|
+| 1 | Pressure-Poisson residual | Pressure prediction near-constant (std 0.0015 vs true 0.0413) | Add Laplacian(p) = -rho*(d2(uu)/dx2 + 2*d2(uv)/dxdy + d2(vv)/dy2) to hybrid loss | High |
+| 2 | Extended Re range (100-1000) | Only Re=100/400 trained; narrow design space | Add Re=1000 data (exists at 256x256), retrain 3-Re temporal model | High |
+| 3 | Curriculum learning | Early transient (frames 0-10) hardest at ~45% L2 | Train on early frames first, then expand time window; time-weighted data loss | Medium |
+| 4 | Adaptive importance sampling | Fixed 3000 sensors under-resolve moving vortex core | Resample sensors each epoch weighted by current residual/gradient | Medium |
+| 5 | Multi-scale Fourier features | Single sigma=5.0 mis-resolves boundary layers vs bulk | Concatenate multiple sigma bands (e.g. 1, 5, 20) into feature layer | Medium |
+| 6 | Temporal attention / recurrent | MLP treats t_n as static input, weak time coupling | Add a lightweight temporal attention or GRU head over t_n | Low |
+| 7 | Ensemble training (UQ) | No uncertainty estimate on predictions | Train N models with different seeds; report mean + std as error band | Low |
 
 ### Phase 1: Smagorinsky LES Turbulence Model
 
@@ -625,4 +654,36 @@ sensor = sqrt(du_dx^2 + du_dy^2 + dv_dx^2 + dv_dy^2) * dx
 3. **Phase 3: Vorticity + Postprocessor**, Completed
 4. **Phase 4: Full Re-Runs + New Cases**, In progress (17 simulations pending)
 5. **Phase 5: Website Updates**, In progress (interactive LBM/PINN viewers on all cases)
-6. **Phase 6.8: Time-Parametric PINN**, In progress (code + web wiring done; training/export pending torch install)
+6. **Phase 6.8: Time-Parametric PINN**, Completed (Re=100/400 trained, ONNX + binary export done)
+7. **Phase 6.8b: Re=1000 temporal extension**, In progress (data exists, retrain pending)
+8. **Phase 6.9: Model improvement roadmap**, Pending (pressure-Poisson, Re range, curriculum)
+9. **Phase 5.5: Cavity deep dive + PINN narrative**, Completed (website restructuring template)
+
+#### Phase 5.5: Cavity Page Deep Dive + PINN Surrogate Narrative
+
+**Goal:** Restructure the cavity case page into a portfolio-grade analysis: scanner-friendly Key Findings, a real LBM Analysis section, expanded PINN narrative (architecture, training, steady-state, temporal, parametric interpolation), a Training Convergence plot, a "What the PINN Unlocks" applications section, and an honest Limitations & Next Steps section. This establishes the template for all other case pages.
+
+**Completed (website restructuring only; no new simulations):**
+- `docs/cavity.html`: restructured to Hero -> Setup -> Velocity Field -> Validation -> Key Findings -> LBM Analysis -> PINN (Architecture, Training, Steady-State Comparison x2, Temporal Surrogate, Accuracy Summary, Parametric Interpolation) -> Training Convergence -> What the PINN Unlocks (6 subsections) -> Limitations & Next Steps -> Footer
+- `pinn/plot_loss_convergence.py`: training loss convergence plot (`loss_convergence.png`), total loss 1.26Mx reduction
+- `pinn/plot_temporal_l2.py`: frame-by-frame temporal L2 profile (`temporal_l2_profile.png`), Re=100 u-mean 33.6% / v-mean 48.6%, Re=400 u-mean 33.6% / v-mean 44.5%
+- CSS: `.key-findings` compact bullet list style in `docs/css/style.css`
+
+**Deferred to future roadmap (simulations):**
+- Re=1000 temporal retraining (Phase 6.8b) -- data exists, not yet retrained
+- Re=1000 cavity.html selector + slider images
+- Re=300 parametric interpolation comparison plot (needs steady-state model export at Re=300)
+- Sensitivity field plot (du/dRe via autograd)
+
+**Carry-over template (per case page):**
+1. Hero + Setup table
+2. Velocity Field (side-by-side: steady slider | LBM evolution)
+3. Validation (quantitative comparison)
+4. Key Findings (3-4 bullets)
+5. LBM Analysis (flow physics)
+6. PINN Surrogate (architecture, training, steady-state, temporal, parametric)
+7. Training Convergence (loss plot)
+8. What the PINN Unlocks (applications)
+9. Limitations & Next Steps
+
+Infrastructure already generalized: `export_web_data.py` CASES dict, `temporal_loader.py` multi-Re loading, `train_temporal.py` multi-Re training, `flow-viewer.js` filePrefix + cmap options.

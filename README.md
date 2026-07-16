@@ -183,6 +183,22 @@ this limitation. See `pinn/models/pinn.py` (`FourierFeatureLayer`).
 u_max ratio improved from 3.50 (v2, plain tanh) to 1.24 (v3, Fourier).
 Velocity field error dropped 30x. Parametric Re-slider demo on `cavity.html`.
 
+**Time-parametric results (Phase 6.8, 593K params, 514-dim input):**
+
+Trained on the full 51-frame transient at Re=100 and Re=400. A single network
+predicts `(u, v, p)` at any `(x, y, Re, t)`.
+
+| Re | L2 u (mean / final frame) | L2 v (mean / final frame) | u_max ratio |
+|----|---------------------------|---------------------------|-------------|
+| 100 | 33.3% / 29.9% | 48.0% / -- | 1.13 |
+| 400 | 33.0% / 34.7% | 43.1% / -- | 1.16 |
+
+12,000 Adam + 1,000 L-BFGS epochs, 201 min on Apple Silicon MPS. Final hybrid
+loss 1.2e-3. Early transient (frames 0-10) is hardest at ~45% L2. The temporal
+model supersedes the steady-state model for animation. Export: `pinn_temporal_re{100,400}.bin`
++ `pinn_temporal_model.onnx` (2.38 MB), wired into `cavity.html` PINN Prediction
+section as a second FlowViewer with time scrubber.
+
 **Implementation order:**
 
 | Phase | Case | Parametric Axis | Data Status | Portfolio Demo |
@@ -190,7 +206,7 @@ Velocity field error dropped 30x. Parametric Re-slider demo on `cavity.html`.
 | 6.3 | Lid-driven cavity | Re (100-400) | Exists (51 frames, 128x128) | Re slider -> vortex center shift |
 | 6.4 | Backward-facing step | Re (100-400) | Re-run Re=100 needed (no p/omega) | Re slider -> reattachment length |
 | 6.5 | Orifice plate | hole_w, n_plates | New Re+geometry sweeps needed | Diameter slider -> loss coeff K |
-| 6.8 | Time-Parametric PINN (NEW) | t + Re | LBM time-series at Re=100+400 | Watch vortex roll-up at any timestep |
+| 6.8 | Time-Parametric PINN | t + Re | LBM time-series at Re=100+400 | Watch vortex roll-up at any timestep |
 
 #### Phase 6.8: Time-Parametric PINN (Spatio-Temporal Surrogate)
 
@@ -222,7 +238,9 @@ learns temporal dynamics from the LBM time-series, then predicts the entire
 spatio-temporal flow field in real-time browser inference -- the solver generates
 baseline data once, the PINN provides a deployable, interactive surrogate.
 
-**Status:** Pending (architecture + training script planned; cavity first).
+**Status:** Completed (Re=100/400 trained, 201 min MPS, ONNX + float16 binary
+export done; cavity.html PINN Prediction section animates the transient via a
+second FlowViewer with time scrubber). Re=1000 extension planned (Phase 6.8b).
 
 **Web integration:** Each case page gets two separate viewer sections -- "LBM
 Evolution" (C++ solver frames) and "PINN Prediction" (surrogate) -- so the solver
@@ -335,8 +353,10 @@ docs/
 | 3 | Vorticity output + postprocessor | Completed |
 | 4 | Full simulation re-runs + new cases | In progress |
 | 5 | Website updates for new features | In progress (interactive viewers on all cases) |
-| 6 | Physics-Informed Neural Network (PINN) surrogate suite | In progress (cavity done, step/orifice pending, temporal PINN planned) |
-| 7 | Time-parametric PINN training (Phase 6.8) | Pending |
+| 6 | Physics-Informed Neural Network (PINN) surrogate suite | In progress (cavity + temporal done, step/orifice pending) |
+| 6.8 | Time-parametric PINN training | Completed (Re=100/400; Re=1000 extension pending) |
+| 6.9 | Model improvement roadmap (pressure-Poisson, Re range) | Pending |
+| 5.5 | Cavity page deep dive + PINN narrative | Completed (Key Findings, LBM Analysis, Training Convergence, What PINN Unlocks, Limitations; loss + temporal L2 plots) |
 
 ### Pending Fixes (Phase 4)
 

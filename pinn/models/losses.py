@@ -449,19 +449,28 @@ def bc_loss_cavity_temporal(model, n: int, u_lid: float, device,
 
 
 def ic_loss_cavity_temporal(model, grid_xy: torch.Tensor, device,
-                            re_norm_vals=(0.0, 1.0)):
+                            re_norm_vals=(0.0, 1.0), batch_size: int = 4096):
     """Initial condition: at t_norm = 0, u = 0, v = 0 everywhere (rest state).
 
     grid_xy: (N, 2) normalized spatial coords (e.g. full-grid flatten).
+    Processed in batches to bound memory on MPS.
     """
     losses = []
+    grid_xy = grid_xy.to(device)
     for rn in re_norm_vals:
         re_col = torch.full((grid_xy.shape[0], 1), rn, device=device)
         t_col = torch.zeros((grid_xy.shape[0], 1), device=device)
-        xy = torch.cat([grid_xy.to(device), re_col, t_col], dim=1)
-        u, v, _ = _split(model(xy))
-        losses.append(F.mse_loss(u, torch.zeros_like(u)))
-        losses.append(F.mse_loss(v, torch.zeros_like(v)))
+        xy = torch.cat([grid_xy, re_col, t_col], dim=1)
+        u_acc, v_acc, n = 0.0, 0.0, 0
+        for start in range(0, xy.shape[0], batch_size):
+            end = min(start + batch_size, xy.shape[0])
+            xy_b = xy[start:end]
+            u_b, v_b, _ = _split(model(xy_b))
+            u_acc += F.mse_loss(u_b, torch.zeros_like(u_b))
+            v_acc += F.mse_loss(v_b, torch.zeros_like(v_b))
+            n += 1
+        losses.append(u_acc / n)
+        losses.append(v_acc / n)
     return torch.stack(losses).mean()
 
 
@@ -512,25 +521,115 @@ def unsteady_pde_loss_multi_re(model, colloc_by_re: dict, device):
     return total / len(colloc_by_re)
 
 
+def temporal_physics_loss_multi_re(model, colloc_by_re: dict, device,
+                                    batch_size: int = 500):
+    """Combined unsteady-NS + pressure-Poisson + vorticity-transport residuals.
+
+    Returns (L_ns, L_pp, L_vort) averaged over Re. Collocation points are
+    processed in mini-batches of `batch_size` to bound MPS memory usage.
+
+        NS:  du/dt + u·du/dx + v·du/dy + dp/dx - nu(d2u/dx2 + d2u/dy2) = 0
+             dv/dt + u·dv/dx + v·dv/dy + dp/dy - nu(d2v/dx2 + d2v/dy2) = 0
+             du/dx + dv/dy = 0
+        PP:  Laplacian(p) + div(u·grad u) = 0
+        Vort: d(omega)/dt + u·grad(omega) - nu*Laplacian(omega) = 0
+              where omega = dv/dx - du/dy
+    """
+    L_ns_tot, L_pp_tot, L_vort_tot = 0.0, 0.0, 0.0
+    n_re = len(colloc_by_re)
+    for re, xy_np in colloc_by_re.items():
+        nu = 1.0 / re
+        L_ns_re, L_pp_re, L_vort_re = 0.0, 0.0, 0.0
+        n_batches = 0
+        for start in range(0, len(xy_np), batch_size):
+            end = min(start + batch_size, len(xy_np))
+            inp = (torch.from_numpy(xy_np[start:end]).float().to(device)
+                   .clone().detach().requires_grad_(True))
+            out = model(inp)
+            u, v, p = out[:, 0], out[:, 1], out[:, 2]
+
+            du = _grad(u, inp); dv = _grad(v, inp); dp = _grad(p, inp)
+            u_x, u_y = du[:, 0], du[:, 1]
+            v_x, v_y = dv[:, 0], dv[:, 1]
+            p_x, p_y = dp[:, 0], dp[:, 1]
+            u_t = du[:, 3]; v_t = dv[:, 3]
+
+            d2u = _grad(u_x, inp); d2v = _grad(v_x, inp)
+            u_xx, u_yy = d2u[:, 0], d2u[:, 1]
+            v_xx, v_yy = d2v[:, 0], d2v[:, 1]
+
+            f_cont = u_x + v_y
+            f_x = u_t + u * u_x + v * u_y + p_x - nu * (u_xx + u_yy)
+            f_y = v_t + u * v_x + v * v_y + p_y - nu * (v_xx + v_yy)
+            L_ns = (F.mse_loss(f_cont, torch.zeros_like(f_cont))
+                    + F.mse_loss(f_x, torch.zeros_like(f_x))
+                    + F.mse_loss(f_y, torch.zeros_like(f_y)))
+
+            T_x = u * u_x + v * u_y
+            T_y = u * v_x + v * v_y
+            T_x_x = _grad(T_x, inp)[:, 0]
+            T_y_y = _grad(T_y, inp)[:, 1]
+            div_T = T_x_x + T_y_y
+            p_xx = _grad(p_x, inp)[:, 0]
+            p_yy = _grad(p_y, inp)[:, 1]
+            f_pp = (p_xx + p_yy) + div_T
+            L_pp = F.mse_loss(f_pp, torch.zeros_like(f_pp))
+            # Scale-normalize so PP residual is comparable to PDE residual
+            # (raw PP involves 2nd-deriv of p + div of velocity products, much
+            # larger magnitude than the NS residual terms).
+            L_pp = L_pp / (torch.mean(f_pp ** 2).detach() + 1e-8)
+
+            omega = v_x - u_y
+            d_omega = _grad(omega, inp)
+            omega_x, omega_y = d_omega[:, 0], d_omega[:, 1]
+            omega_t = d_omega[:, 3]
+            d2omega = _grad(omega_x, inp)
+            omega_xx, omega_yy = d2omega[:, 0], d2omega[:, 1]
+            f_vort = (omega_t + u * omega_x + v * omega_y
+                      - nu * (omega_xx + omega_yy))
+            L_vort = F.mse_loss(f_vort, torch.zeros_like(f_vort))
+            L_vort = L_vort / (torch.mean(f_vort ** 2).detach() + 1e-8)
+
+            L_ns_re += L_ns
+            L_pp_re += L_pp
+            L_vort_re += L_vort
+            n_batches += 1
+        L_ns_tot += L_ns_re / n_batches
+        L_pp_tot += L_pp_re / n_batches
+        L_vort_tot += L_vort_re / n_batches
+    return L_ns_tot / n_re, L_pp_tot / n_re, L_vort_tot / n_re
+
+
 def total_loss_cavity_temporal(model, colloc_by_re, sens_by_re, grid_xy,
                                u_lid, device, w_pde=1.0, w_data=1.0,
-                               w_bc=1.0, w_ic=1.0, re_norm_vals=(0.0, 1.0)):
+                               w_bc=1.0, w_ic=1.0, w_pp=1.0, w_vort=1.0,
+                               re_norm_vals=(0.0, 1.0)):
     """Combined hybrid loss for the temporal cavity PINN.
 
-    Returns (L_total, L_pde, L_data, L_bc, L_ic).
+    Returns (L_total, L_pde, L_pp, L_vort, L_data, L_bc, L_ic).
     """
-    L_pde = unsteady_pde_loss_multi_re(model, colloc_by_re, device)
+    L_pde, L_pp, L_vort = temporal_physics_loss_multi_re(
+        model, colloc_by_re, device, batch_size=2000)
 
     L_data = 0.0
     for re, sens in sens_by_re.items():
-        coords_t = torch.from_numpy(sens["coords"]).float().to(device)
-        u_t = torch.from_numpy(sens["u"]).float().to(device)
-        v_t = torch.from_numpy(sens["v"]).float().to(device)
-        p_t = torch.from_numpy(sens["p"]).float().to(device)
-        u_pred, v_pred, p_pred = _split(model(coords_t))
-        L_data = (L_data
-                  + F.mse_loss(u_pred, u_t) + F.mse_loss(v_pred, v_t)
-                  + F.mse_loss(p_pred, p_t))
+        coords_np = sens["coords"]
+        u_t_np = sens["u"]
+        v_t_np = sens["v"]
+        p_t_np = sens["p"]
+        L_data_re = 0.0
+        n_b = 0
+        for start in range(0, len(coords_np), 4000):
+            end = min(start + 4000, len(coords_np))
+            coords_t = torch.from_numpy(coords_np[start:end]).float().to(device)
+            u_t = torch.from_numpy(u_t_np[start:end]).float().to(device)
+            v_t = torch.from_numpy(v_t_np[start:end]).float().to(device)
+            p_t = torch.from_numpy(p_t_np[start:end]).float().to(device)
+            u_pred, v_pred, p_pred = _split(model(coords_t))
+            L_data_re += (F.mse_loss(u_pred, u_t) + F.mse_loss(v_pred, v_t)
+                          + F.mse_loss(p_pred, p_t))
+            n_b += 1
+        L_data += L_data_re / n_b
     L_data = L_data / len(sens_by_re)
 
     L_bc = bc_loss_cavity_temporal(model, 200, u_lid, device,
@@ -538,8 +637,9 @@ def total_loss_cavity_temporal(model, colloc_by_re, sens_by_re, grid_xy,
     L_ic = ic_loss_cavity_temporal(model, grid_xy, device,
                                    re_norm_vals=re_norm_vals)
 
-    L = w_pde * L_pde + w_data * L_data + w_bc * L_bc + w_ic * L_ic
-    return L, L_pde, L_data, L_bc, L_ic
+    L = (w_pde * L_pde + w_pp * L_pp + w_vort * L_vort
+         + w_data * L_data + w_bc * L_bc + w_ic * L_ic)
+    return L, L_pde, L_pp, L_vort, L_data, L_bc, L_ic
 
 
 def _split(out: torch.Tensor):

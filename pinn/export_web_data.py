@@ -47,7 +47,7 @@ CASES = {
     "cavity": {
         "src": "cavity",
         "max_dim": 96,
-        "configs": [("re100", "100"), ("re400", "400")],
+        "configs": [("re100", "re100"), ("re400", "re400"), ("re1000", "re1000")],
     },
     "cylinder": {
         "src": "cylinder",

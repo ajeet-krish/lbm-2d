@@ -105,12 +105,27 @@
         <span class="mod-desc">3-panel render: C++ LBM / PINN surrogate / absolute error delta</span>
         <span class="mod-file">pinn/plot_results.py</span>
       </div>
+      <div class="module-row">
+        <span class="mod-name">data/temporal_loader.py</span>
+        <span class="mod-desc">Loads LBM frame sequences -> (x, y, Re_n, t_n) -> (u, v, p) sensors + collocation</span>
+        <span class="mod-file">pinn/data/temporal_loader.py</span>
+      </div>
+      <div class="module-row">
+        <span class="mod-name">train_temporal.py</span>
+        <span class="mod-desc">Time-parametric (spatio-temporal) PINN training loop (multi-Re + time)</span>
+        <span class="mod-file">pinn/train_temporal.py</span>
+      </div>
+      <div class="module-row">
+        <span class="mod-name">export_temporal.py</span>
+        <span class="mod-desc">Exports pinn_temporal_re{re}.bin frame sequences + pinn_temporal_model.onnx</span>
+        <span class="mod-file">pinn/export_temporal.py</span>
+      </div>
     </div>
 
     <!-- ============================================================ -->
     <h2>2. Network Architecture &amp; Design</h2>
 
-    <p>The surrogate is a fully-connected multilayer perceptron. Two architectures share the same backbone:</p>
+    <p>The surrogate is a fully-connected multilayer perceptron. Three architectures share the same Fourier-feature backbone, growing from a single operating point to a continuous spatio-temporal design space:</p>
 
     <pre
       style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:6px;font-size:0.72em;padding:16px;overflow-x:auto;"><code><span style="color:var(--green);"># Steady-state PINN (single flow condition)</span>
@@ -123,6 +138,13 @@
 <span style="color:var(--fg);">Fourier: frozen random sinusoidal projection (m=128, sigma=5.0)</span>
 <span style="color:var(--fg);">       lifts (x, y) -> 512-dim frequency space</span>
 <span style="color:var(--fg);">Hidden: 513 -> 256 (x8 layers, tanh) -> 3   (462K params)</span>
+<span style="color:var(--fg);">Output: (u, v, p)</span>
+
+<span style="color:var(--green);"># Time-parametric PINN (spatio-temporal surrogate)</span>
+<span style="color:var(--fg);">Input:  (x, y, Re_n, t_n)            t_n = frame / (n_frames - 1)</span>
+<span style="color:var(--fg);">Fourier: frozen random sinusoidal projection (m=128, sigma=5.0)</span>
+<span style="color:var(--fg);">       lifts (x, y) -> 512-dim frequency space</span>
+<span style="color:var(--fg);">Hidden: 514 -> 256 (x8 layers, tanh) -> 3   (593,155 params)</span>
 <span style="color:var(--fg);">Output: (u, v, p)</span></code></pre>
 
     <!-- NN architecture diagram (TikZ -> SVG) to be inserted here -->
@@ -155,15 +177,19 @@
     <pre><code>1. load frame*.json          NumPy fields (u, v, p) on the downsampled grid
 2. sample sensors            importance-sampled points near the geometry
 3. sample collocation        PDE residual points across the interior
-4. normalize                 (x, y) -> [-1, 1], Re -> Re_n
+4. normalize                 (x, y) -> [-1, 1], Re -> Re_n, frame -> t_n
 5. optimize                  Adam (lr=1e-3) + CosineAnnealingLR
 6. evaluate                  full-grid inference -> 3-panel comparison</code></pre>
 
     <p>For the cavity case, training is multi-Re: each epoch samples collocation points at both Re = 100 and Re = 400,
-      so a single model learns the whole slice of the design space rather than one operating point. On the cylinder
+      so a single model learns the whole slice of the design space rather than one operating point. The
+      <strong>time-parametric</strong> variant extends this to the full transient: collocation points are sampled across
+      all 51 frames of the LBM evolution, the PDE loss enforces the <em>unsteady</em> Navier-Stokes equations (with
+      material time derivatives), and an initial-condition loss pins the rest state at t<sub>n</sub> = 0. On the cylinder
       case, 40% of collocation points are placed within three cylinder radii via importance sampling to resolve the
       near-field gradients. All training runs on the Apple M5 using the PyTorch MPS (Metal Performance Shaders) backend;
-      the cylinder steady-state run completes in roughly 9 minutes for 15,000 epochs.</p>
+      the cylinder steady-state run completes in roughly 9 minutes for 15,000 epochs, while the cavity time-parametric
+      run takes about 201 minutes (12,000 Adam + 1,000 L-BFGS steps).</p>
 
     <pre
       style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:6px;font-size:0.72em;padding:16px;overflow-x:auto;"><code><span style="color:var(--green);"># Install dependencies (Python >= 3.10)</span>
@@ -222,11 +248,30 @@ python3 train_cavity.py</code></pre>
     <p><strong>Change:</strong> a frozen random sinusoidal projection (m = 128 basis functions, sigma = 5.0) lifts
       <code>(x, y)</code> into a 512-dimensional frequency space before the MLP. The parametric input becomes
       513-dimensional (512 Fourier + Re_n); the MLP stays at 256 x 8.</p>
-    <p><strong>Result:</strong> expected u L2 in the 15-25% range, with the pressure field now capturing the vortex
-      pressure variation that iteration 2 flattened.</p>
-    <p><strong>Diagnosis:</strong> the Fourier window gives the optimizer high-frequency basis functions to combine, so
+    <p><strong>Result:</strong> measured u L2 of 23.7% at Re = 100 and 24.4% at Re = 400; v L2 29.3% / 30.0%; p L2
+      12.5% / 12.6%. The u<sub>max</sub> ratio (pred/true) dropped from 3.50 (iteration 2) to 1.24 (Re=100) / 1.10
+      (Re=400), confirming the spectral bias is removed.</p>
+      <p><strong>Diagnosis:</strong> the Fourier window gives the optimizer high-frequency basis functions to combine, so
       the lid shear layer and the vortex core are no longer averaged away. This is the architecture carried forward as
       the project baseline.</p>
+
+    <h3>Iteration 4 -- Time-parametric (spatio-temporal) extension</h3>
+
+    <p><strong>Hypothesis:</strong> a single network can learn the full transient, not just a steady frame, delivering an
+      ML-powered animation that exceeds the LBM section in interactivity while keeping the same spatial fidelity.</p>
+    <p><strong>Change:</strong> extend the input with a normalized time t<sub>n</sub> = frame / (n_frames - 1), giving a
+      514-dimensional input (512 Fourier + Re<sub>n</sub> + t<sub>n</sub>) and 593,155 parameters. Train on the 51-frame
+      LBM sequences at Re = 100 and Re = 400 with the <em>unsteady</em> Navier-Stokes residual (continuity + momentum
+      with material time derivatives), an initial-condition loss pinning the rest state at t<sub>n</sub> = 0, and the
+      wall/lid boundary-condition loss. Optimize with 12,000 Adam steps (cosine annealing) + 1,000 L-BFGS; export the
+      weights to <code>pinn_temporal_re{re}.bin</code> frame sequences and <code>pinn_temporal_model.onnx</code>.</p>
+    <p><strong>Result:</strong> transient-mean u L2 of ~33% (final-frame ~30% at Re=100, ~35% at Re=400) with a peak
+      velocity ratio of 1.13-1.16 (no overshoot); the vortex center migrates y/H &asymp; 0.64 (Re=100) &rarr; 0.58
+      (Re=400) with Reynolds number. The surrogate animates the vortex roll-up in the cavity page's PINN Prediction panel.</p>
+    <p><strong>Diagnosis:</strong> adding the time axis costs steady-state fidelity versus the steady-only parametric model
+      (u L2 rises from ~24% to ~33% transient mean) -- an expected trade for continuous spatio-temporal generalization
+      from one network. The v-field carries the larger relative error (~43-48%) because it is an order of magnitude
+      smaller than u. This is the current project baseline and the highest-impact ML deliverable.</p>
 
     <table>
       <tr>
@@ -261,13 +306,23 @@ python3 train_cavity.py</code></pre>
         <td>256</td>
         <td>Yes</td>
         <td>462K</td>
-        <td>15-25%*</td>
-        <td>15-25%*</td>
-        <td>vortex captured</td>
+        <td>23.7%</td>
+        <td>24.4%</td>
+        <td>12.5% / 12.6%</td>
+      </tr>
+      <tr>
+        <td>4 (temporal)</td>
+        <td>256</td>
+        <td>Yes</td>
+        <td>593,155</td>
+        <td>~33%&dagger;</td>
+        <td>~33%&dagger;</td>
+        <td>transient</td>
       </tr>
     </table>
-    <p style="font-size:0.8em;color:var(--muted)">* Iteration 3 expected accuracy from the Fourier-feature fix; final
-      measured L2 pending the completed training run.</p>
+    <p style="font-size:0.8em;color:var(--muted)">&dagger; Iteration 4 u L2 is the transient-mean over the 51-frame
+      LBM sequence (final-frame ~30% at Re=100, ~35% at Re=400). Adding the time axis trades some steady-state
+      fidelity for a single network that predicts the full evolution; see the cavity page for frame-by-frame metrics.</p>
 
     <!-- ============================================================ -->
     <h2>5. Results &amp; Validation</h2>
@@ -286,16 +341,20 @@ python3 train_cavity.py</code></pre>
 
     <p>The parametric cavity model demonstrates the design-space payoff directly: dragging the Reynolds-number slider
       from 100 to 400 shifts the primary vortex center from roughly y/H = 0.70 to y/H = 0.68, matching the known
-      migration of the cavity recirculation with Reynolds number -- without re-running the solver.</p>
+      migration of the cavity recirculation with Reynolds number -- without re-running the solver. The time-parametric
+      model goes further: a single trained network (<code>pinn_temporal_model.onnx</code>) animates the full vortex
+      roll-up on the <a href="cavity.html">cavity page</a>'s PINN Prediction panel, interpolating continuously across
+      both Re and time.</p>
 
     <!-- ============================================================ -->
     <h2>6. Deployment Path</h2>
 
-    <p>The surrogate is exported with <code>torch.onnx.export</code> to <code>model.onnx</code>, then served through
-      ONNX Runtime Web so the trained field can be evaluated live in the browser. This closes the loop from the C++
+    <p>The surrogate is exported with <code>torch.onnx.export</code> to <code>pinn_temporal_model.onnx</code> (and the
+      51-frame sequence to <code>pinn_temporal_re{re}.bin</code> via <code>export_temporal.py</code>), then served
+      through ONNX Runtime Web so the trained field is evaluated live in the browser. This closes the loop from the C++
       solver: a multi-hour simulation becomes an interactive, real-time surrogate a recruiter or engineer can probe by
-      dragging a parameter slider. Phases 6.6 (ONNX + WASM) and 6.7 (ablation study) are the remaining roadmap items.
-    </p>
+      dragging a parameter slider or scrubbing through time. Phases 6.6 (ONNX + WASM) and 6.7 (ablation study) are
+      complete; the temporal surrogate is the current deployed baseline.</p>
 
     <!-- ============================================================ -->
     <h2>7. Hardware &amp; Environment</h2>

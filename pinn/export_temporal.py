@@ -24,7 +24,7 @@ DATA_OUT = os.path.join(PROJECT_ROOT, "docs", "assets", "data", "cavity")
 TARGET_RES = 96
 MAGIC = 0x4C424D31
 DTYPE_FLAG = 1
-RE_VALUES = [100.0, 400.0]
+RE_VALUES = [100.0, 400.0, 1000.0]
 RE_MIN, RE_MAX = 100.0, 1000.0
 
 
@@ -68,12 +68,19 @@ def export_temporal(time_res=51):
         return
 
     ckpt = torch.load(pt_path, map_location="cpu")
+    sigma_val = ckpt["sigma"]
+    sigmas_arg = ckpt.get("sigmas", None)
+    if sigmas_arg is not None:
+        sigmas_arg = tuple(float(s) for s in sigmas_arg)
+    elif isinstance(sigma_val, (list, tuple)):
+        sigmas_arg = tuple(float(s) for s in sigma_val)
     model = ParametricPINN(
         n_params=2,
         hidden=int(ckpt["hidden"]),
         n_layers=int(ckpt["n_layers"]),
         n_freqs=int(ckpt["n_freqs"]),
-        sigma=float(ckpt["sigma"]),
+        sigma=float(sigma_val) if sigmas_arg is None else 5.0,
+        sigmas=sigmas_arg,
     )
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
@@ -127,12 +134,17 @@ def export_onnx():
         print(f"  SKIP temporal onnx: {pt_path} not found")
         return
     ckpt = torch.load(pt_path, map_location="cpu")
+    sigma_val = ckpt["sigma"]
+    sigmas_arg = None
+    if isinstance(sigma_val, (list, tuple)):
+        sigmas_arg = tuple(float(s) for s in sigma_val)
     model = ParametricPINN(
         n_params=2,
         hidden=int(ckpt["hidden"]),
         n_layers=int(ckpt["n_layers"]),
         n_freqs=int(ckpt["n_freqs"]),
-        sigma=float(ckpt["sigma"]),
+        sigma=float(sigma_val) if sigmas_arg is None else 5.0,
+        sigmas=sigmas_arg,
     )
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
