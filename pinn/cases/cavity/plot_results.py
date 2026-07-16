@@ -106,6 +106,7 @@ def plot_loss_history(case_dir=CASE_DIR):
 
 if __name__ == "__main__":
     plot_comparison(re=100)
+    plot_comparison(re=300)
     plot_comparison(re=400)
     plot_comparison(re=1000)
     plot_loss_history()
