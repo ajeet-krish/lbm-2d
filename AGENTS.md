@@ -5,6 +5,7 @@
 - **C++ code style**: 4-space indentation, K&R braces, no tabs, no trailing whitespace.
 - **Variable naming**: snake_case for local variables, PascalCase for structs/classes, SCREAMING_SNAKE_CASE for constants.
 - **HTML/CSS**: Double quotes for attributes, 2-space indentation, semantic HTML5 elements.
+- **Colormap convention**: All velocity/flow field plots and animations use the `jet` (rainbow) colormap for visual consistency across the portfolio (decided over turbo on 2026-07-16). The 3-panel error-delta panel uses `Reds`. Vorticity uses `RdBu` (signed). `viridis`/`turbo` LUTs remain available in `colormaps.js` but are not the default.
 
 ## Goal
 Build and deploy a cache-optimized D2Q9 Lattice Boltzmann Method CFD solver in C++20 as a portfolio centrepiece for aerospace/defense engineering roles. Deliver an 8+ page HTML portfolio with per-case dedicated pages (interactive comparison sliders, KaTeX theory, validation tables), and a production-grade GitHub repository with CI and unit tests.
@@ -12,17 +13,19 @@ Build and deploy a cache-optimized D2Q9 Lattice Boltzmann Method CFD solver in C
 ## Target Audience
 Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Origin, and similar. The site must communicate: HPC competency (C++, OpenMP, cache optimization), CFD fundamentals (MRT, Bouzidi, Smagorinsky LES, AMR), and engineering communication skills (interactive web presentation, per-case analysis narratives).
 
-## Current Status (2026-07-12)
+## Current Status (2026-07-16)
 
 | Phase | Description | Status |
 |-------|-------------|--------|
 | 0 | Solver Improvement Plan (correctness + perf + cleanup) | Completed |
 | 1 | Smagorinsky LES turbulence model | Completed |
-| 2 | Block-structured AMR (adaptive mesh refinement) | In progress |
+| 2 | Block-structured AMR (adaptive mesh refinement) | In progress (restriction operator needs fix) |
 | 3 | Vorticity output + postprocessor | Completed |
-| 4 | Full simulation re-runs + new cases | In progress |
+| 4 | Full simulation re-runs + new cases | In progress (17 simulations pending) |
 | 5 | Website updates for new features | In progress (interactive LBM/PINN viewers on all cases) |
-| 5.5 | Cavity page deep dive + PINN surrogate narrative | Completed (Key Findings, LBM Analysis, Training Convergence, What PINN Unlocks, Limitations sections; loss + temporal L2 plots) |
+| 5.5 | Cavity page deep dive + PINN surrogate narrative | Completed (Key Findings, LBM Analysis, Training Convergence, What PINN Unlocks, Limitations sections; loss + temporal L2 plots; 600x speed section; Re=300 interpolation; sensitivity map) |
+| 6 | PINN surrogate suite (cavity steady + temporal) | Completed (Re=100/400/1000 temporal trained; Re=300 interpolation; ONNX + binary export) |
+| 6.9 | Model improvement roadmap (pressure-Poisson, Re range) | Pending |
 
 ### Completed to date
 - MRT collision operator (default, BGK fallback) with tuned rates
@@ -68,7 +71,7 @@ Aerospace hiring managers at SpaceX, Firefly Aerospace, Lockheed Martin, Blue Or
 - PINN Fourier feature layer (`FourierFeatureLayer`, done): frozen random sinusoidal projection (m=128, sigma=5.0) applied to spatial coords only, lifting (x,y) to 512-dim frequency space to break tanh spectral bias; MLP input becomes 513-dim (512 fourier + 1 Re_n); 593K params
 - PINN cavity v3 (Fourier, done): u L2 23.7%/24.4%, v L2 29.3%/30.0%, p L2 12.5%/12.6% for Re=100/400; u_max ratio true 1.24 (was 3.50 in v2 -- spectral bias fixed); velocity L2-err 30x lower than v2; parametric Re=200 interpolation gives smooth vortex-center migration (y/H 0.64->0.58 from Re=100->400)
 - PINN temporal (Phase 6.8, done): time-parametric `ParametricPINN(n_params=2)` trained on 51-frame sequences at Re=100/400, 593,155 params, 201 min MPS; u L2 ~33% mean over transient (final frame 29.9%/34.7%), v L2 ~43-48%; u_max ratio 1.13-1.16; ONNX + float16 frame binaries exported; cavity.html PINN Prediction section animates full transient via second FlowViewer
-- PINN web engine (Phase 6.6, done): `flow-viewer.js` velocity-only canvas engine (viridis, flipY-aware streamlines), `pinn-inference.js` placeholder surrogate, vendored onnxruntime-web (numThreads=1); binary `.bin` (+.gz) viewer data exported for all 11 cases via `export_web_data.py`
+- PINN web engine (Phase 6.6, done): `flow-viewer.js` velocity-only canvas engine (jet colormap, flipY-aware streamlines), `pinn-inference.js` placeholder surrogate, vendored onnxruntime-web (numThreads=1); binary `.bin` (+.gz) viewer data exported for all 11 cases via `pinn/export/export_web_data.py`
 
 ### Simulation Results (Phase 4)
 
@@ -135,8 +138,8 @@ This transforms the network from a single-case calculator into a continuous desi
 | 6.5 | Orifice plate parametric PINN (x,y,hole_w,n_plates) -> (u,v,p) | Pending |
 | 6.6 | ONNX export + WASM real-time inference page | **Completed** (temporal ONNX exported, vendored runtime) |
 | 6.7 | Ablation study (data/PDE/BC terms), methodology write-up | Pending |
-| 6.8 | Time-parametric PINN (spatio-temporal surrogate) | **Completed** (Re=100/400 trained, ONNX + binary export done) |
-| 6.8b | Extend temporal PINN to Re=1000 | In progress (data exists, retrain pending) |
+| 6.8 | Time-parametric PINN (spatio-temporal surrogate) | **Completed** (Re=100/400/1000 trained, ONNX + binary export done) |
+| 6.8b | Extend temporal PINN to Re=1000 | **Completed** (trained, exported; Re=300 interpolation panel added) |
 | 6.9 | Model improvement roadmap (pressure-Poisson, Re range, curriculum, etc.) | Pending |
 
 #### Phase 6.3: Cavity Parametric PINN (FIRST)
@@ -158,14 +161,16 @@ This transforms the network from a single-case calculator into a continuous desi
 - pressure still essentially CONSTANT: pred std=0.0015 vs true std=0.0413; the p L2=12.5% is misleading (just captures the mean, since pressure is mean-dominated). Root cause: p treated as independent output, not coupled to velocity via the pressure Poisson equation. Fix: add pressure-Poisson residual term to the loss (Phase 6.3d).
 - parametric interpolation verified: Re=200 (between training points) gives smooth vortex-center migration y/H 0.64->0.58 from Re=100->400, u_max decreasing physically with Re.
 
-**Parametric demo:** "Drag Re slider from 100 to 400, watch vortex center migrate from y/H ~ 0.70 to ~ 0.68."
+**Parametric demo:** "Select Re=100, 400, or 1000 (discrete buttons) and watch vortex center migrate; Re=300 shown as an interpolated prediction panel."
 
 **Website integration (done):** cavity.html updated with:
 - Architecture table (Fourier features, MLP, params, training time)
-- 3-panel comparison PNGs for Re=100 and Re=400 (LBM / PINN / Error)
-- Parametric Re-sweep (Re=100/200/400) with interactive tab selector
+- 3-panel comparison PNGs for Re=100, Re=400, Re=1000 (LBM / PINN in jet / Error delta in Reds)
+- Parametric Re-sweep (Re=100/300/400/1000) with discrete Re buttons + interpolated Re=300 panel
 - Accuracy summary table (L2 errors, u_max ratio, vortex center)
-- Images: `docs/assets/images/cavity/pinn_comparison_re{100,400}.png`, `pinn_parametric_re{100,200,400}.png`
+- Speed section: ~60-100 ms/surrogate frame vs ~30 s/LBM frame (~300-600x)
+- Sensitivity map (∂u/∂Re via autograd) at Re=300
+- Images: `docs/assets/images/cavity/pinn_comparison_re{100,400,1000}.png`, `pinn_parametric_re{100,300,400,1000}.png`
 
 **Pressure note:** Pressure prediction is near-constant (std 0.0015 vs true 0.0413). Paused to focus on velocity (primary deliverable). See Phase 6.3d for future fix.
 
@@ -179,7 +184,7 @@ Laplacian(p) = -rho * ( d2(uu)/dx2 + 2*d2(uv)/dxdy + d2(vv)/dy2 )
 ```
 Enforcing this couples p to the velocity field structure and forces the correct pressure variation. This also strengthens velocity-pressure consistency.
 
-**Status:** Not yet implemented. Velocity (primary deliverable) is already excellent; pressure is secondary for the cavity Re-slider demo. Candidate follow-up after Phase 6.4/6.5, or sooner if pressure field is needed for the 3-panel error plot.
+**Status:** Not yet implemented. Velocity (primary deliverable) is already excellent; pressure is secondary for the cavity Re-button demo. Candidate follow-up after Phase 6.4/6.5, or sooner if pressure field is needed for the 3-panel error plot.
 
 #### Phase 6.4: Backward-Facing Step (SECOND)
 
@@ -212,20 +217,19 @@ L_total = w_data * MSE(u_pred, u_lbm) + MSE(v_pred, v_lbm)
 ```
 PDE residual = steady incompressible Navier-Stokes (continuity + 2 momentum eqns), derivatives via torch.autograd.
 
-**Files to create (no C++ changes):**
+**Files (reorganized, no C++ changes):**
 ```
 pinn/
   README.md              # Setup, architecture, usage
   requirements.txt       # torch, numpy, matplotlib, scipy, onnx, onnxruntime
-  config.py              # Case params (nx, ny, obstacle, Re, tau, u_inflow)
+  cases/cavity/          # train_steady.py, train_temporal.py, export_sweep.py,
+                         #   export_temporal.py, plot_results.py, logs/
+  cases/cylinder/        # train.py, evaluate.py
+  export/export_web_data.py  # LBM frames -> float16 .bin (gz), PINN sweep, ONNX model
   data/loader.py         # Read frame*.json + forces.jsonl -> numpy arrays
-  models/pinn.py         # PINN MLP + forward
+  data/temporal_loader.py# Load LBM frames -> (x,y,Re_n,t_n) -> (u,v,p) samples
+  models/pinn.py         # PINN MLP + ParametricPINN + FourierFeatureLayer
   models/losses.py       # PDE residual, BC loss, data loss
-  train.py               # MPS training loop (Adam + L-BFGS)
-  evaluate.py            # Inference on full grid -> numpy fields
-  export_onnx.py         # torch.onnx.export -> model.onnx
-  plot_results.py        # 3-panel (LBM / PINN / Error delta)
-  wasm/static/infer.html # ONNX Runtime Web canvas inference
 ```
 
 **Website integration:** Keep existing LBM slider (contour | streamline). Add below it a 3-panel static comparison (C++ LBM / PINN surrogate / absolute error delta). Later add a live ONNX Runtime Web inference page (PINN-only; no C++ WASM rebuild) with a frame slider and field selector.
@@ -240,24 +244,25 @@ C++ rebuild).
 
 **Files created:**
 ```
-docs/assets/js/colormaps.js      # viridis/RdBu/jet LUTs, paintField() (flipY-aware)
+docs/assets/js/colormaps.js      # viridis/turbo/jet/rdbu LUTs, paintField() (flipY-aware)
 docs/assets/js/flow-viewer.js     # FlowViewer class: LBM time-series canvas engine
 docs/assets/js/pinn-inference.js  # PinnSurrogate: precomputed sweep + ONNX upgrade
 docs/assets/js/vendor/onnxruntime-web/dist/  # vendored ort.min.js + wasm (numThreads=1)
-pinn/export_web_data.py           # LBM frames -> float16 .bin (gz), PINN sweep, ONNX model
+pinn/export/export_web_data.py    # LBM frames -> float16 .bin (gz), PINN sweep, ONNX model
 docs/assets/data/{case}/          # lbm_re{val}.bin (+ gz), pinn_*.bin, pinn_model.onnx
 ```
 
-**Binary format** (`pinn/export_web_data.py`): header magic `0x4C424D31` + uint32
+**Binary format** (`pinn/export/export_web_data.py`): header magic `0x4C424D31` + uint32
 n_frames, nx, ny, n_chan, dtype_flag, then float16 (or float32) little-endian data
 in `[frame][channel][y][x]` order. JS parser at `window.FlowData.parseBinary()`.
 
 **Viewer layout (per case page):** Two SEPARATE sections (not tabs):
 1. **LBM Evolution** -- canvas + Play/Pause + scrubber + frame counter. Auto-plays
    the solver's 51-200 frames from rest to steady state.
-2. **PINN Prediction** -- canvas + Re slider + inference-time readout. Uses the
-   precomputed PINN Re-sweep (`pinn_sweep.bin`) by default; upgrades to live ONNX
-   Runtime Web inference of the trained ParametricPINN when `pinn_model.onnx` exists.
+2. **PINN Prediction** -- canvas + discrete Re buttons (100/400/1000) + time
+   scrubber + inference-time readout. Uses the precomputed PINN temporal binaries
+   (`pinn_temporal_re{re}.bin`) by default; upgrades to live ONNX Runtime Web
+   inference of the trained ParametricPINN when `pinn_temporal_model.onnx` exists.
 
 **Orientation note:** LBM frame data is stored y-up (y=0 = bottom wall, y=NY-1 =
 lid/top). `paintField()` uses `flipY=true` so the lid renders at the canvas TOP.
@@ -314,8 +319,8 @@ sensors, 3000/frame). Hybrid loss = w_pde*unsteady_NS + w_data*data(u,v,p) + w_b
 **Files to create:**
 ```
 pinn/data/temporal_loader.py   # Load LBM frames -> (x,y,Re_n,t_n) -> (u,v,p) samples
-pinn/train_temporal.py          # Multi-Re temporal training loop (MPS)
-pinn/export_temporal.py         # ONNX + precomputed temporal sweep binaries
+pinn/cases/cavity/train_temporal.py  # Multi-Re temporal training loop (MPS)
+pinn/cases/cavity/export_temporal.py # ONNX + precomputed temporal sweep binaries
 ```
 
 **Web integration:** Add a time scrubber (or auto-play) to the PINN Prediction
@@ -328,9 +333,9 @@ LBM Evolution section for direct solver-vs-ML comparison.
 - `pinn/models/losses.py`: added `unsteady_pde_loss_multi_re`,
   `bc_loss_cavity_temporal`, `ic_loss_cavity_temporal`, `total_loss_cavity_temporal`
   (IC enforces rest state at t_n=0 across Re).
-- `pinn/train_temporal.py`: multi-Re temporal training loop (Adam + L-BFGS),
+- `pinn/cases/cavity/train_temporal.py`: multi-Re temporal training loop (Adam + L-BFGS),
   `ParametricPINN(n_params=2)` (Fourier on x,y, then Re_n + t_n -> 514-dim input).
-- `pinn/export_temporal.py`: writes `pinn_temporal_re{re}.bin` (+ `.gz`) per-Re
+- `pinn/cases/cavity/export_temporal.py`: writes `pinn_temporal_re{re}.bin` (+ `.gz`) per-Re
   frame sequences (same binary format as LBM viewer) + `pinn_temporal_model.onnx`.
 - `docs/assets/js/flow-viewer.js`: added `filePrefix` option (loads
   `pinn_temporal_re{re}.bin`) + graceful `_showMissing()` placeholder when the
@@ -546,19 +551,14 @@ lbm-2d/
   pinn/                        # Physics-Informed Neural Network surrogate suite (NEW)
     README.md                  # Setup, architecture, roadmap
     requirements.txt           # torch, numpy, matplotlib, scipy, onnx, onnxruntime
-    config.py                  # CaseConfig + convenience constructors (cavity, step, orifice)
+    cases/cavity/              # train_steady.py, train_temporal.py, export_sweep.py,
+                               #   export_temporal.py, plot_results.py, logs/
+    cases/cylinder/            # train.py, evaluate.py
+    export/export_web_data.py  # LBM frames -> float16 .bin (+.gz) for website
     data/loader.py             # Read frame*.json + forces.jsonl -> numpy arrays
     data/temporal_loader.py    # Load LBM frames -> (x,y,Re_n,t_n) -> (u,v,p) samples
     models/pinn.py             # PINN + ParametricPINN MLP architectures
     models/losses.py           # PDE residual, BC loss (cavity/cylinder), data loss
-    train.py                   # Cylinder Re=100 training loop
-    train_cavity.py            # Cavity parametric PINN (single-Re + multi-Re)
-    train_temporal.py          # Time-parametric PINN (multi-Re + time)
-    export_temporal.py         # Temporal PINN -> ONNX + frame binaries
-    evaluate.py                # Inference on full grid -> numpy fields
-    export_onnx.py             # torch.onnx.export -> model.onnx
-    plot_results.py            # 3-panel (LBM / PINN / Error delta)
-    wasm/static/infer.html     # ONNX Runtime Web canvas inference
 
 ## Smagorinsky LES Reference
 
@@ -654,8 +654,8 @@ sensor = sqrt(du_dx^2 + du_dy^2 + dv_dx^2 + dv_dy^2) * dx
 3. **Phase 3: Vorticity + Postprocessor**, Completed
 4. **Phase 4: Full Re-Runs + New Cases**, In progress (17 simulations pending)
 5. **Phase 5: Website Updates**, In progress (interactive LBM/PINN viewers on all cases)
-6. **Phase 6.8: Time-Parametric PINN**, Completed (Re=100/400 trained, ONNX + binary export done)
-7. **Phase 6.8b: Re=1000 temporal extension**, In progress (data exists, retrain pending)
+6. **Phase 6.8: Time-Parametric PINN**, Completed (Re=100/400/1000 trained, ONNX + binary export done)
+7. **Phase 6.8b: Re=1000 temporal extension**, Completed (trained, exported; Re=300 interpolation panel added)
 8. **Phase 6.9: Model improvement roadmap**, Pending (pressure-Poisson, Re range, curriculum)
 9. **Phase 5.5: Cavity deep dive + PINN narrative**, Completed (website restructuring template)
 
@@ -665,15 +665,16 @@ sensor = sqrt(du_dx^2 + du_dy^2 + dv_dx^2 + dv_dy^2) * dx
 
 **Completed (website restructuring only; no new simulations):**
 - `docs/cavity.html`: restructured to Hero -> Setup -> Velocity Field -> Validation -> Key Findings -> LBM Analysis -> PINN (Architecture, Training, Steady-State Comparison x2, Temporal Surrogate, Accuracy Summary, Parametric Interpolation) -> Training Convergence -> What the PINN Unlocks (6 subsections) -> Limitations & Next Steps -> Footer
-- `pinn/plot_loss_convergence.py`: training loss convergence plot (`loss_convergence.png`), total loss 1.26Mx reduction
-- `pinn/plot_temporal_l2.py`: frame-by-frame temporal L2 profile (`temporal_l2_profile.png`), Re=100 u-mean 33.6% / v-mean 48.6%, Re=400 u-mean 33.6% / v-mean 44.5%
+- `pinn/cases/cavity/plot_loss_convergence.py`: training loss convergence plot (`loss_convergence.png`), total loss 1.26Mx reduction
+- `pinn/cases/cavity/plot_temporal_l2.py`: frame-by-frame temporal L2 profile (`temporal_l2_profile.png`), Re=100 u-mean 33.6% / v-mean 48.6%, Re=400 u-mean 33.6% / v-mean 44.5%
 - CSS: `.key-findings` compact bullet list style in `docs/css/style.css`
+- Speed section (~97 ms/surrogate frame vs ~30 s LBM, ~300-600x), Re=300 interpolation panel, sensitivity map (`sensitivity_map_re300.png`) -- all done.
 
 **Deferred to future roadmap (simulations):**
-- Re=1000 temporal retraining (Phase 6.8b) -- data exists, not yet retrained
-- Re=1000 cavity.html selector + slider images
-- Re=300 parametric interpolation comparison plot (needs steady-state model export at Re=300)
-- Sensitivity field plot (du/dRe via autograd)
+- Phase 6.4 backward-facing step PINN (data re-run needed)
+- Phase 6.5 orifice plate parametric PINN (new Re+geometry sweeps needed)
+- Phase 6.7 ablation study (data/PDE/BC terms)
+- Phase 6.3d pressure-Poisson coupling (fix near-constant pressure)
 
 **Carry-over template (per case page):**
 1. Hero + Setup table
@@ -686,4 +687,4 @@ sensor = sqrt(du_dx^2 + du_dy^2 + dv_dx^2 + dv_dy^2) * dx
 8. What the PINN Unlocks (applications)
 9. Limitations & Next Steps
 
-Infrastructure already generalized: `export_web_data.py` CASES dict, `temporal_loader.py` multi-Re loading, `train_temporal.py` multi-Re training, `flow-viewer.js` filePrefix + cmap options.
+Infrastructure already generalized: `pinn/export/export_web_data.py` CASES dict, `pinn/data/temporal_loader.py` multi-Re loading, `pinn/cases/cavity/train_temporal.py` multi-Re training, `docs/assets/js/flow-viewer.js` filePrefix + cmap options.

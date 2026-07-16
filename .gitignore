@@ -7,6 +7,14 @@ docs/assets/videos/*.mp4
 logs/
 *.log
 
+# Generated web viewer binary frame data (float16 .bin/.bin.gz exported by
+# pinn/export/export_web_data.py and export_temporal.py). Regenerated on demand;
+# not source. Keep the .onnx model + vendored runtime tracked.
+docs/assets/data/**/*.bin
+docs/assets/data/**/*.bin.gz
+docs/assets/data/*.bin
+docs/assets/data/*.bin.gz
+
 __pycache__/
 *.pyc
 *.pyo
