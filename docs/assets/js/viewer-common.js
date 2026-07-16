@@ -94,7 +94,7 @@ function initFlowViewerSections(opts) {
             var val = parseInt(this.value, 10);
             var rl = document.getElementById('pinnRe');
             if (rl) rl.textContent = val;
-            surrogate.render(val).then(function (r) {
+            surrogate.setRe(val).then(function (r) {
                 if (r && r.inferMs != null) {
                     time.textContent = 'ONNX inference: ' + r.inferMs.toFixed(1) + ' ms';
                 } else {

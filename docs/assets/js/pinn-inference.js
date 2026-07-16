@@ -191,6 +191,7 @@ class PinnSurrogate {
         if (data.inferMs != null && this.onStatus) {
             this.onStatus('Live ONNX inference ready (' + data.inferMs.toFixed(1) + ' ms/frame)');
         }
+        return { inferMs: data.inferMs };
     }
 
     setRe(re) {

@@ -353,10 +353,11 @@
     </div>
 
     <div class="fv-controls">
-      <div class="fv-group" id="pinnReGroup" style="flex-wrap:wrap;gap:8px;">
-        <span class="fv-label-txt">Re = <span id="pinnReReadout">100</span></span>
-        <input type="range" id="pinnReSlider" min="100" max="1000" step="10" value="100" class="fv-slider" style="min-width:200px;flex:1;">
-        <span class="fv-label-txt" style="color:var(--accent-dim);">live ONNX inference</span>
+      <div class="fv-group" id="pinnReGroup">
+        <span class="fv-label-txt">Re</span>
+        <button class="fv-btn fv-re active" data-re="100">100</button>
+        <button class="fv-btn fv-re" data-re="400">400</button>
+        <button class="fv-btn fv-re" data-re="1000">1000</button>
       </div>
     </div>
 
@@ -662,17 +663,16 @@
         });
       };
 
-      // Continuous Re slider (PINN section) -- live ONNX inference at any Re.
-      var reSlider = document.getElementById('pinnReSlider');
-      var reReadout = document.getElementById('pinnReReadout');
-      if (reSlider) {
-        reSlider.min = 100; reSlider.max = 1000; reSlider.step = 10; reSlider.value = 100;
-        reSlider.addEventListener('input', function () {
-          var re = parseInt(this.value, 10);
-          if (reReadout) reReadout.textContent = re;
-          pinn.setRe(re);
+      // Re buttons (PINN section) -- discrete Re, matching the LBM section.
+      document.querySelectorAll('#pinnReGroup .fv-re').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('#pinnReGroup .fv-re').forEach(function (b) {
+            b.classList.remove('active');
+          });
+          btn.classList.add('active');
+          pinn.setRe(parseInt(btn.getAttribute('data-re'), 10));
         });
-      }
+      });
 
       // LBM play / pause
       document.getElementById('lbmPlay').addEventListener('click', function () {
@@ -712,10 +712,8 @@
         pinn.setRe(100);
         pinn.play();
         document.getElementById('pinnPlay').innerHTML = '&#10074;&#10074; Pause';
-        if (reReadout) reReadout.textContent = '100';
       }).catch(function (e) {
         console.error('PINN surrogate init failed:', e);
-        if (reReadout) {}
       });
     })();
   </script>
