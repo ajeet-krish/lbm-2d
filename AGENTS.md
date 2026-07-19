@@ -638,6 +638,109 @@ sensor = sqrt(du_dx^2 + du_dy^2 + dv_dx^2 + dv_dy^2) * dx
    i. Delete old block hierarchy
 ```
 
+## Solver Accuracy & Capability Upgrade Roadmap (2026-07-18)
+
+**Context:** Current solver uses Cartesian immersed boundary + Bouzidi interpolated
+bounce-back, no near-wall treatment (pure no-slip), isothermal incompressible only,
+and is strictly 2D (D2Q9 hardcoded). The goal is to improve accuracy (smooth curved
+boundaries, proper y+ / wall treatment), add pressure visualization, thermal physics,
+and a 3D architecture.
+
+### UPGRADE 1: Curved Boundary Accuracy (blocky -> smooth)
+
+Three tiers, easiest first:
+
+- **Tier 1 (immediate): Grid refinement.** Increase grid from 800x300 to 2400x900 for
+  curved cases. At radius=90 cells (vs 30), staircase error drops 3x. Bouzidi `q`
+  already gives sub-grid positioning. Cost: 9x memory/compute (feasible 2D on M5).
+  **Status: Available via --nx/--ny override (main.cpp).**
+- **Tier 2 (medium effort, recommend first): Filippova-Hanel / Mei interpolated
+  bounce-back.** Bouzidi is 2nd-order but unstable at q->0 or q->1. Replace with the
+  Mei et al. (1999) formula in `apply_bouzidi_bb()` (lbm.hpp:206-245):
+  `f_bb = q*f_i^{eq}(rho,u_wall) + (1-q)*f_post + (2q-1)*w_i*rho*(e_i.u_wall)/cs^2`.
+  Unconditionally stable for all q in [0,1]. Implemented as `BounceBackGeometry::use_mei_bb`
+  (default true). **Status: Completed (2026-07-18), Cd~1.53 at Re=100 (vs 1.77 Bouzidi).**
+- **Tier 3 (high effort): IBM with direct forcing.** For airfoils/complex shapes. New
+  `src/ibm.hpp` (~200 lines). Lagrangian points on true surface (reuse `naca_coords()`),
+  force spreading via 4-point smoothed delta, velocity interpolation. Add only for
+  airfoil case. **Status: In progress (2026-07-18).**
+
+### UPGRADE 2: Wall Functions / y+ Requirements
+
+- **Wall-distance computation:** New `compute_wall_distance()` in lbm_types.hpp -- BFS from
+  obstacle nodes, returns distance in lattice units. **Status: Completed (2026-07-18).**
+- **Van Driest damping for LES:** Implemented in `mrt_collide()` (lbm.hpp:165-179):
+  `nu_t_damped = nu_t * (1 - exp(-y+/A+))^2` with A+ = 26. Prevents over-damping near walls.
+  **Status: Completed (2026-07-18), validated Cd~1.77 at Re=100.**
+- **Wall function bounce-back (WFB):** Slip-velocity approach (Ponsin et al. 2025).
+  Compute wall shear stress from resolved gradient, use log-law `u_slip = u_tau*(1/kappa*ln(y+)+B)`,
+  impose via modified bounce-back. New `src/wall_functions.hpp` (~150 lines).
+  **Status: In progress (2026-07-18).**
+- **y+ in lattice units:** `y+ = y*u_tau/nu` where `u_tau = sqrt(tau_wall/rho)` and
+  `nu = (tau-0.5)/3`. For channel at Re_tau=180 with NY=200, first cell y+ = 0.9 (resolved).
+  At NY=30: y+ = 6 (buffer layer, wall function needed).
+
+### UPGRADE 3: Pressure Contours & Enhanced Vorticity
+
+- **Pressure Cp plot:** Added `--cp` flag in postprocess.py, `save_cp_png()` function.
+  `Cp = (p - p_ref)/(0.5*rho_inf*U_inf^2)`. **Status: Completed (2026-07-18).**
+- **Pressure channel in viewer:** Binary format already supports multiple channels.
+  Add field selector (velocity / pressure / vorticity / temperature) to flow-viewer.js.
+  **Status: Pending (needs front-end work).**
+- **Full-resolution vorticity:** Upgraded to 9-point stencil in lbm.hpp:542-558.
+  **Status: Completed (2026-07-18), higher-order accuracy.**
+
+### UPGRADE 4: Thermal LBM (Heat Transfer)
+
+- **Approach: Double Distribution Function (DDF).** Keep D2Q9 `f_i` for momentum, add
+  D2Q9 (or D2Q5) `g_i` for temperature. Solves `dT/dt + u.grad(T) = alpha*laplacian(T)`.
+- **Boussinesq coupling:** `F_buoyancy = -rho_0*beta*(T-T_ref)*g` added to momentum.
+- **Parameters:** Pr = nu/alpha (0.71 air), Ra = g*beta*dT*L^3/(nu*alpha), Nu = h*L/k.
+- **New file: `src/thermal.hpp`** (~200 lines): `g_i` collision, streaming, thermal BCs
+  (isothermal Dirichlet, heat flux Neumann, adiabatic bounce-back).
+- **Modify `lbm_types.hpp`:** Add `g_thermal`, `g_thermal_next` to LBMCapabilities.
+- **New entry point: `src/heated_cylinder.cpp`** (Nusselt validation) + natural
+  convection cavity (Ra=10^3 to 10^6 benchmark).
+- **Memory overhead:** 2x (`f` + `g` vectors). For 800x300: ~16 MB extra. Negligible.
+
+### UPGRADE 5: 3D LBM Architecture
+
+- **Phase 5a: D3Q19 lattice abstraction.** New `src/lattice.hpp` with D2Q9/D3Q19 structs
+  (cx, cy, cz, weights). Template `LBMCapabilities<Lattice>` on lattice type. NZ=1 with
+  D2Q9 is a degenerate D3Q19 (all z-velocities zero).
+- **Phase 5b: Performance.** LBM is memory-bandwidth bound. On M5: 200^3 D3Q19 = ~1.2 GB,
+  fits in unified memory. OpenMP 3D decomposition natural. ~50-100 MLUPS expected.
+  **Use D3Q19** (19 dirs, 152 B/node) not D3Q27 (27 dirs, 216 B/node) for engineering
+  accuracy. D3Q27 only for DNS of isotropic turbulence.
+- **Phase 5c: Incremental migration.** (1) Abstract lattice into lattice.hpp. (2) Template
+  core solver on Lattice. (3) Keep 2D default (NZ=1). (4) Test D3Q19 with NZ=1 (verify
+  identical to D2Q9). (5) Enable NZ>1 for true 3D. Avoids complete rewrite.
+- **Phase 5d: New 3D entry points:** `main_3d.cpp` (sphere), `cavity_3d.cpp`, `pipe_3d.cpp`.
+- **Phase 5e: 3D postprocessing:** Slice planes (xy/xz/yz) in FlowViewer, isosurface
+  rendering (Q-criterion), VTK output for ParaView (already partial for 2D).
+- **D3Q19 MRT:** 19 moments, new transformation matrices (d'Humieres 2002). More relaxation
+  rates than D2Q9.
+
+### Recommended Implementation Order (8-12 weeks total)
+
+| Priority | Upgrade | Effort | Impact | Dependencies |
+|----------|---------|--------|--------|-------------|
+| 1 | Mei/Filippova-Hanel bounce-back | 1-2 days | High -- smooth curved boundaries | None |
+| 2 | Van Driest LES damping + wall distance | 2-3 days | High -- accurate wall-bounded LES | None |
+| 3 | Pressure Cp + enhanced visualization | 1-2 days | Medium -- better validation plots | None |
+| 4 | Wall function bounce-back (WFB) | 3-5 days | High -- enables high-Re flows | Wall distance |
+| 5 | Thermal LBM (DDF) | 1-2 weeks | High -- new physics domain | None |
+| 6 | IBM with direct forcing | 1-2 weeks | High -- airfoils, complex shapes | Tier 2 |
+| 7 | 3D lattice abstraction | 2-3 weeks | Very high -- new dimension | None |
+| 8 | D3Q19 solver | 3-4 weeks | Very high -- full 3D capability | Abstraction |
+
+### Quick Wins (do first, ~1 week)
+
+1. Mei bounce-back in `lbm.hpp:206-245` -- 30 lines, immediate smooth boundaries
+2. Van Driest damping in `lbm.hpp:151-162` -- 10 lines, fixes wall LES
+3. Pressure Cp in `postprocess.py` -- 20 lines, standard validation metric
+4. Full-resolution vorticity in `lbm.hpp:488-504` -- remove downsampling
+
 ## Known Issues
 
 1. **MRT parameter tuning**: Relaxation rates s_e, s_eps, s_q, s_pi need tuning per Re for optimal stability. Defaults for Re=100 may not extend to Re=1000 without adjustment (mitigated by LES).
@@ -646,6 +749,10 @@ sensor = sqrt(du_dx^2 + du_dy^2 + dv_dx^2 + dv_dy^2) * dx
 4. **AMR coarse-fine interface**: Prolongation/restriction operators may produce spurious reflections at block boundaries. Mitigated by ghost cell overlap and validation against single-grid baseline.
 5. **LES at very low Re**: Smagorinsky adds negligible eddy viscosity at Re < 200. Should match non-LES baseline within 0.1%.
 6. **forces.jsonl**: Static cache approach assumes single output directory per process. Safe for all batch scripts (each is a separate process).
+7. **Curved boundary accuracy**: Bouzidi bounce-back is 2nd-order but has stability issues at extreme q. Blocky staircase for coarse grids. See Upgrade 1 (Tier 2 Mei bounce-back recommended).
+8. **No near-wall treatment**: Pure no-slip bounce-back everywhere. No y+ computation, no wall function. See Upgrade 2.
+9. **Isothermal only**: No thermal modeling. See Upgrade 4.
+10. **Strictly 2D**: D2Q9 hardcoded. No 3D capability. See Upgrade 5.
 
 ## Implementation Sequence
 

@@ -174,6 +174,11 @@ struct BounceBackGeometry {
         if (is_polygon) return q_polygon(xf, yf, i);
         return q_cylinder(xf, yf, i);
     }
+
+    // Check if Van Driest / Mei schemes should be used
+    // Default true: Mei/Filippova-Hanel (1999/1998) interpolated bounce-back.
+    // Unconditionally stable for all q in [0,1], more accurate than Bouzidi (2001).
+    bool use_mei_bb = true;
 };
 
 // ------------------------------------------------------------------
@@ -183,6 +188,7 @@ struct LBMCapabilities {
     std::vector<double> f;          // current distribution f[node * 9 + i]
     std::vector<double> f_next;     // buffer for next timestep
     std::vector<uint8_t> obstacle;  // true if node is inside obstacle
+    std::vector<double> wall_dist;  // distance to nearest wall (lattice units)
 
     std::vector<double> fx_body;    // cumulative drag force on obstacle
     std::vector<double> fy_body;    // cumulative lift force on obstacle
@@ -195,6 +201,7 @@ struct LBMCapabilities {
         f.resize(n_nodes * NUM_DIRECTIONS, 0.0);
         f_next.resize(n_nodes * NUM_DIRECTIONS, 0.0);
         obstacle.resize(n_nodes, false);
+        wall_dist.resize(n_nodes, 0.0);
         reset_forces();
     }
 
@@ -203,6 +210,46 @@ struct LBMCapabilities {
         fy_body.assign(NX * NY, 0.0);
     }
 };
+
+// ------------------------------------------------------------------
+// Wall distance computation via multi-source BFS from obstacle nodes.
+// Returns distance in lattice units (grid spacing = 1.0).
+// Used for Van Driest LES damping and wall function BCs.
+// ------------------------------------------------------------------
+inline void compute_wall_distance(LBMCapabilities& sys) {
+    int n_nodes = NX * NY;
+    auto& dist = sys.wall_dist;
+    for (int i = 0; i < n_nodes; ++i) {
+        dist[i] = sys.obstacle[i] ? 0.0 : 1e9;
+    }
+
+    // 4-neighbour BFS (chebyshev distance on lattice grid)
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (int y = 0; y < NY; ++y) {
+            for (int x = 0; x < NX; ++x) {
+                int idx = node_index(x, y);
+                if (sys.obstacle[idx]) continue;
+                double d = dist[idx];
+                // Check 4-connected neighbours
+                int nx[4] = {x-1, x+1, x, x};
+                int ny[4] = {y, y, y-1, y+1};
+                for (int k = 0; k < 4; ++k) {
+                    int nxx = nx[k], nyy = ny[k];
+                    if (nxx < 0 || nxx >= NX || nyy < 0 || nyy >= NY) continue;
+                    int nidx = node_index(nxx, nyy);
+                    double nd = dist[nidx] + 1.0;
+                    if (nd < d) {
+                        d = nd;
+                        changed = true;
+                    }
+                }
+                dist[idx] = d;
+            }
+        }
+    }
+}
 
 // ------------------------------------------------------------------
 // Equilibrium distribution: f_i^eq = w_i * rho * (1 + 3 e.u + 4.5 (e.u)^2 - 1.5 u.u)

@@ -502,6 +502,48 @@ def save_vorticity_png(data, output_dir, frame):
     print(f"  Saved {path}")
 
 
+def save_cp_png(data, output_dir, frame, meta=None):
+    """Pressure coefficient Cp = (p - p_ref) / (0.5 * rho_inf * U_inf^2)"""
+    rho = np.array(data.get('rho', []))
+    obs = np.array(data.get('obstacle', []))
+    if rho.ndim == 0 or rho.size == 0:
+        print(f"  No rho field in frame {frame}, skipping Cp")
+        return
+    if rho.ndim == 1:
+        rho = rho.reshape(data['ny'], data['nx'])
+    if obs.ndim == 1 and obs.size > 0:
+        obs = obs.reshape(data['ny'], data['nx'])
+
+    # Reference values from meta or defaults
+    if meta:
+        u_inf = float(meta.get('u_inflow', meta.get('u_ref', 0.1)))
+        rho_inf = float(meta.get('rho_inf', 1.0))
+    else:
+        u_inf = 0.1
+        rho_inf = 1.0
+
+    # In lattice units: p = rho / 3 (cs^2 = 1/3)
+    p = rho / 3.0
+    p_ref = 1.0 / 3.0  # quiescent reference at rho=1.0
+    q_inf = 0.5 * rho_inf * u_inf * u_inf
+    cp = (p - p_ref) / max(q_inf, 1e-12)
+
+    # Clip Cp to [-3, 2] for visualization (typical range)
+    cp_clip = np.clip(cp, -3.0, 2.0)
+
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    fig.patch.set_facecolor('white')
+    im = render_contour(ax, cp_clip, 'RdBu', -3.0, 2.0, obs)
+    cbar = plt.colorbar(im, ax=ax, shrink=0.8)
+    cbar.set_label('Pressure Coefficient Cp', color='black')
+    plt.tight_layout(pad=0.5)
+    fig.subplots_adjust(right=0.92)
+    path = os.path.join(output_dir, f'cp_{int(frame):04d}.png')
+    plt.savefig(path, dpi=120, facecolor='white', edgecolor='none', bbox_inches='tight')
+    plt.close()
+    print(f"  Saved {path}")
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -518,6 +560,8 @@ def main():
                         help='Compute Strouhal from forces.jsonl')
     parser.add_argument('--vorticity', action='store_true',
                         help='Render vorticity (omega) field')
+    parser.add_argument('--cp', action='store_true',
+                        help='Render pressure coefficient Cp field')
     parser.add_argument('--field', default='velocity',
                         choices=['velocity', 'pressure'],
                         help='Field to render as contour (velocity or pressure)')
@@ -553,6 +597,8 @@ def main():
 
             if not HAS_MPL:
                 print("matplotlib not installed, skipping PNG output")
+            elif args.cp:
+                save_cp_png(data, input_dir, frame_num, meta)
             elif args.vorticity:
                 save_vorticity_png(data, input_dir, frame_num)
             elif args.video:
