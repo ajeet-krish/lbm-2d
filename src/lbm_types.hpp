@@ -190,6 +190,16 @@ struct LBMCapabilities {
     std::vector<uint8_t> obstacle;  // true if node is inside obstacle
     std::vector<double> wall_dist;  // distance to nearest wall (lattice units)
 
+    // Thermal LBM (Upgrade 4): double distribution function
+    std::vector<double> g_thermal;       // temperature distribution g[node * 9 + i]
+    std::vector<double> g_thermal_next;  // temperature buffer
+    bool use_thermal = false;            // enable thermal solver
+    double T_ref = 1.0;                  // reference temperature (lattice units)
+    double alpha = 0.1666666667;         // thermal diffusivity (Pr = nu/alpha)
+    double omega_k = 1.0;                // thermal relaxation rate = 1/(0.5 + 3*alpha)
+    double beta = 0.0;                   // thermal expansion coefficient (Boussinesq)
+    double g_buoyancy = 0.0;             // gravitational acceleration for buoyancy
+
     std::vector<double> fx_body;    // cumulative drag force on obstacle
     std::vector<double> fy_body;    // cumulative lift force on obstacle
 
@@ -202,6 +212,8 @@ struct LBMCapabilities {
         f_next.resize(n_nodes * NUM_DIRECTIONS, 0.0);
         obstacle.resize(n_nodes, false);
         wall_dist.resize(n_nodes, 0.0);
+        g_thermal.resize(n_nodes * NUM_DIRECTIONS, 1.0);  // T=1.0 initial
+        g_thermal_next.resize(n_nodes * NUM_DIRECTIONS, 1.0);
         reset_forces();
     }
 

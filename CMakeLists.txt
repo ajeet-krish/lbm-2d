@@ -161,6 +161,27 @@ add_executable(LBM_OrificePlate src/orifice_plate.cpp src/lbm.hpp src/lbm_types.
 target_include_directories(LBM_OrificePlate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(LBM_OrificePlate PRIVATE OpenMP::OpenMP_CXX)
 
+# ------------------------------------------------------------------
+# Heated cylinder (thermal LBM, Upgrade 4)
+# ------------------------------------------------------------------
+add_executable(LBM_HeatedCylinder src/heated_cylinder.cpp src/lbm.hpp src/lbm_types.hpp src/thermal.hpp src/ibm.hpp src/wall_functions.hpp)
+target_include_directories(LBM_HeatedCylinder PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_HeatedCylinder PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Airfoil with Immersed Boundary Method (Upgrade 1 Tier 3)
+# ------------------------------------------------------------------
+add_executable(LBM_AirfoilIBM src/airfoil_ibm.cpp src/lbm.hpp src/lbm_types.hpp src/thermal.hpp src/ibm.hpp src/wall_functions.hpp)
+target_include_directories(LBM_AirfoilIBM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_AirfoilIBM PRIVATE OpenMP::OpenMP_CXX)
+
+# ------------------------------------------------------------------
+# Natural convection cavity (Thermal LBM, Upgrade 4)
+# ------------------------------------------------------------------
+add_executable(LBM_ThermalCavity src/thermal_cavity.cpp src/lbm.hpp src/lbm_types.hpp src/thermal.hpp src/ibm.hpp src/wall_functions.hpp)
+target_include_directories(LBM_ThermalCavity PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(LBM_ThermalCavity PRIVATE OpenMP::OpenMP_CXX)
+
 add_custom_target(orifice
   COMMAND LBM_OrificePlate
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -168,5 +189,10 @@ add_custom_target(orifice
 
 add_custom_target(serve-docs
   COMMAND python3 -m http.server 8765 -d ${CMAKE_SOURCE_DIR}/docs
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+add_custom_target(heated_cylinder
+  COMMAND LBM_HeatedCylinder
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )

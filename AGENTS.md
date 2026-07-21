@@ -702,6 +702,7 @@ Three tiers, easiest first:
 - **New entry point: `src/heated_cylinder.cpp`** (Nusselt validation) + natural
   convection cavity (Ra=10^3 to 10^6 benchmark).
 - **Memory overhead:** 2x (`f` + `g` vectors). For 800x300: ~16 MB extra. Negligible.
+- **Status: In progress (2026-07-18).**
 
 ### UPGRADE 5: 3D LBM Architecture
 
@@ -795,3 +796,81 @@ Three tiers, easiest first:
 9. Limitations & Next Steps
 
 Infrastructure already generalized: `pinn/export/export_web_data.py` CASES dict, `pinn/data/temporal_loader.py` multi-Re loading, `pinn/cases/cavity/train_temporal.py` multi-Re training, `docs/assets/js/flow-viewer.js` filePrefix + cmap options.
+
+## Active Simulation Checklist (post-solver-upgrade)
+
+The solver changed significantly: Mei/Filippova-Hanel bounce-back (default on),
+Van Driest LES damping, thermal DDF, IBM, wall functions. All existing cases must
+be re-run to confirm validation still holds, and new thermal/IBM cases must be
+produced. Check off as completed. Use `--use-les` where tau < 0.55.
+
+### A. Re-validate existing cases with Mei bounce-back (Cd/St vs literature)
+
+- [ ] **Cylinder Re=100** -- `./build/LBM_Engine 100` (expect Cd~1.53, was 1.77 Bouzidi)
+- [ ] **Cylinder Re=200** -- `./build/LBM_Engine 200` (expect Cd~1.37, Cl amp~0.37)
+- [ ] **Square cylinder Re=200** -- `./build/LBM_SquareCylinder 200` (Cd~1.16, ERCOFTAC)
+- [ ] **Flat plate AoA=0 Re=1000** -- `./build/LBM_FlatPlate 1000 0` (Cd~0.026, Blasius)
+- [ ] **Flat plate AoA=10 Re=1000** -- `./build/LBM_FlatPlate 1000 10` (Cl~1.1)
+- [ ] **Cavity Re=100** -- `./build/LBM_Cavity 100` (Ghia u-profile)
+- [ ] **Cavity Re=400** -- `./build/LBM_Cavity 400`
+- [ ] **Step Re=100** -- `./build/LBM_Step 100` (Armaly Xr/H)
+- [ ] **Orifice 1p1h Re=100** -- `./build/LBM_OrificePlate 100 1p1h` (ISO 5167 K)
+- [ ] **Periodic hills Re=100** -- `./build/LBM_PeriodicHills 100` (LES benchmark)
+- [ ] **Cylinder near wall Re=100 gap=20** -- `./build/LBM_CylinderNearWall 100 20`
+- [ ] **Side-by-side Re=100 S/D=3** -- `./build/LBM_SideBySide 100 3`
+- [ ] **Rotating cylinder Re=100 w=1.0** -- `./build/LBM_RotatingCylinder 100 1.0`
+- [ ] **Urban canyon side AR=0.5** -- `./build/LBM_UrbanCanyon --mode side --ar 0.5`
+- [ ] **Downwash Re=100** -- `./build/LBM_Downwash 100`
+
+### B. Van Driest damping sanity (LES cases, confirm no regression)
+
+- [ ] **Cylinder Re=1000 fine grid (NX=2400 NY=900)** -- `./build/LBM_Engine 1000 40000 --use-les` (stable, Cd within 30% lit)
+- [ ] **Periodic hills Re=1000** -- `./build/LBM_PeriodicHills 1000` (LES, check y+ damping)
+- [ ] **Urban topdown horizontal Re=100 (LES)** -- `./build/LBM_UrbanCanyon --mode topdown --horizontal --use-les`
+
+### C. New thermal LBM cases (Upgrade 4)
+
+- [ ] **Heated cylinder Re=100 T_wall=1.5** -- `./build/LBM_HeatedCylinder 100 1.5 40000` (Nu vs Eshghy 1970)
+- [ ] **Heated cylinder Re=200 T_wall=1.5** -- `./build/LBM_HeatedCylinder 200 1.5 40000`
+- [ ] **Heated cylinder + buoyancy Re=100** -- `./build/LBM_HeatedCylinder 100 1.5 40000 --buoyancy` (mixed conv)
+- [x] **Natural convection cavity Ra=1e4** -- `./build/LBM_ThermalCavity 1e4` (entry point created, runs stable; Nu~5.3 vs lit 2.24 -- BC/stencil needs refinement, see note G)
+- [ ] **Natural convection cavity Ra=1e5** -- Ra sweep for benchmark
+- [ ] **Natural convection cavity Ra=1e6** -- highest Ra (D2Q9 MRT stability check)
+
+### D. New IBM cases (Upgrade 1 Tier 3)
+
+- [ ] **NACA 2412 AoA=0 Re=1000** -- `./build/LBM_AirfoilIBM 1000 0 40000` (Cl~0, Cd~0.01)
+- [ ] **NACA 2412 AoA=5 Re=1000** -- `./build/LBM_AirfoilIBM 1000 5 40000` (Cl~0.55, thin-airfoil)
+- [ ] **NACA 2412 AoA=10 Re=1000** -- `./build/LBM_AirfoilIBM 1000 10 40000` (Cl~1.1)
+- [ ] **NACA 0012 AoA=0 Re=500** -- symmetric, baseline
+- [ ] **NACA 0012 AoA=8 Re=500** -- symmetric, Cl~0.88 (validation)
+
+### E. Wall function validation (Upgrade 2, after WFB integration)
+
+- [ ] **Channel flow Re_tau=180** -- NEW entry point `LBM_Channel` (log-law profile)
+- [ ] **Flat plate turbulent Re=1e5** -- `LBM_FlatPlate 100000 0 --use-wf` (Cf vs Blasius)
+- [ ] **Cylinder Re=1000 coarse grid (NX=400)** -- WFB vs resolved-y+ compare
+
+### F. Post-processing / visualization updates
+
+- [ ] **Cp contours** for cylinder Re=100: `python3 scripts/postprocess.py output/cylinder/re100 --cp`
+- [ ] **Temperature contours** for heated cylinder: `scripts/postprocess.py output/heated_cylinder_re100_tw150 --field temperature` (add temperature field key)
+- [ ] **Regenerate all case PNGs** with new Mei BB (existing outputs stale)
+- [ ] **Update docs/** case pages with new Cd values (Mei BB shifted Cd ~15% lower)
+- [ ] **Add heated_cylinder.html** + airfoil_ibm.html case pages
+
+### G. Notes
+
+- Mei BB lowers Cd vs Bouzidi (~1.53 vs 1.77 at Re=100). Update validation tables
+  to reflect the new (more accurate) values; keep Bouzidi result as "legacy".
+- Thermal Nu on coarse grid reads high (~145 vs lit ~5-10 at Re=100); finer grid
+  or grid-convergence study needed for publication-grade numbers.
+- IBM airfoil uses Eulerian obstacle mask for streaming skip + Lagrangian force
+  for no-slip; confirm Cl slope matches 2*pi*alpha at small AoA.
+- WFB (wall_functions.hpp) is infrastructure-only; integrate into streaming loop
+  (`apply_wall_function_bb`) before running Section E.
+- Natural convection cavity (LBM_ThermalCavity) runs stable but Nu_avg~5.3 at
+  Ra=1e4 vs benchmark 2.24 (de Vahl Davis 1983): the equilibrium-Dirichlet thermal
+  BC + 1-cell gradient stencil overestimates the wall heat flux. Needs either a
+  finer grid (L>300) or a proper ghost-node/central-difference Nu stencil. Flow
+  field (plume + recirculation) develops correctly; magnitude is the open issue.

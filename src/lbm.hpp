@@ -1,6 +1,9 @@
 #pragma once
 #include "lbm_types.hpp"
 #include "geometry.hpp"
+#include "thermal.hpp"
+#include "ibm.hpp"
+#include "wall_functions.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -350,8 +353,54 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
         }
     }
 
+    // --- Thermal collision (Upgrade 4: Double Distribution Function) ---
+    if (sys.use_thermal) {
+        // Compute Boussinesq buoyancy force from temperature field and apply to
+        // momentum distributions (Guo forcing scheme: implicit velocity correction)
+        double rho_0 = 1.0;  // reference density (lattice units)
+        #pragma omp parallel for collapse(2)
+        for (int y = 0; y < NY; ++y) {
+            for (int x = 0; x < NX; ++x) {
+                int node_idx = node_index(x, y);
+                if (sys.obstacle[node_idx]) continue;
+                double* f_node = &sys.f[node_idx * 9];
+                double* g_node = &sys.g_thermal[node_idx * 9];
+                double rho, u, v;
+                compute_macros(f_node, rho, u, v);
+                double T;
+                compute_temperature(g_node, T);
+
+                // Thermal collision: relax g_i toward thermal equilibrium
+                thermal_collide(g_node, T, u, v, sys.omega_k);
+
+                // Boussinesq buoyancy: F = -rho_0 * beta * (T - T_ref) * g
+                if (sys.beta > 0.0 && sys.g_buoyancy != 0.0) {
+                    double fx_buoy, fy_buoy;
+                    boussinesq_force(T, sys.T_ref, rho_0, sys.beta,
+                                    0.0, sys.g_buoyancy, fx_buoy, fy_buoy);
+                    // Guo forcing: add to momentum distributions
+                    // f_i += w_i * [3 * (e_i - u) + 9 * (e_i.u) * e_i] . F * dt
+                    for (int i = 0; i < 9; ++i) {
+                        double edotu = cx[i] * u + cy[i] * v;
+                        double feq = compute_equilibrium(i, rho, u, v);
+                        double Fdot = cx[i] * fx_buoy + cy[i] * fy_buoy;
+                        double correction = weights[i] * (
+                            3.0 * Fdot +
+                            9.0 * edotu * (cx[i] * fx_buoy + cy[i] * fy_buoy)
+                        );
+                        // Apply as body force (explicit, second-order)
+                        f_node[i] += correction;
+                    }
+                }
+            }
+        }
+    }
+
     // --- Zero f_next (fast memset) ---
     std::fill(sys.f_next.begin(), sys.f_next.end(), 0.0);
+    if (sys.use_thermal) {
+        std::fill(sys.g_thermal_next.begin(), sys.g_thermal_next.end(), 0.0);
+    }
 
     // --- Streaming (g_case hoisted outside direction loop) ---
     bool use_interp_global = sys.bb_geom.is_valid();
@@ -436,6 +485,47 @@ inline void execute_time_step(LBMCapabilities& sys, double tau, double u_inflow)
 
     // Swap buffers
     sys.f.swap(sys.f_next);
+
+    // --- Thermal streaming (Upgrade 4: DDF) ---
+    if (sys.use_thermal) {
+        // Thermal streaming uses same pattern as momentum but with adiabatic
+        // bounce-back at solid boundaries (zero heat flux)
+        #pragma omp parallel for collapse(2)
+        for (int y = 0; y < NY; ++y) {
+            for (int x = 0; x < NX; ++x) {
+                int node_idx = node_index(x, y);
+                if (sys.obstacle[node_idx]) continue;
+                double* g_node = &sys.g_thermal[node_idx * 9];
+                for (int i = 0; i < 9; ++i) {
+                    int next_x = x + cx[i];
+                    int next_y = y + cy[i];
+                    // Handle periodic / outflow wrapping (same as momentum)
+                    if (g_case == CaseType::RIBS || g_case == CaseType::PERIODIC_HILLS) {
+                        if (next_x < 0) next_x += NX;
+                        if (next_x >= NX) next_x -= NX;
+                        if (next_y < 0) next_y += NY;
+                        if (next_y >= NY) next_y -= NY;
+                    } else {
+                        if (next_y < 0) next_y += NY;
+                        if (next_y >= NY) next_y -= NY;
+                    }
+                    if (next_x < 0 || next_x >= NX || next_y < 0 || next_y >= NY) {
+                        // Outflow / wall: adiabatic bounce-back for temperature
+                        sys.g_thermal_next[node_idx * 9 + bounce_back[i]] = g_node[i];
+                    } else {
+                        int target_node = node_index(next_x, next_y);
+                        if (sys.obstacle[target_node]) {
+                            // Adiabatic wall: bounce-back on g_i
+                            sys.g_thermal_next[node_idx * 9 + bounce_back[i]] = g_node[i];
+                        } else {
+                            sys.g_thermal_next[target_node * 9 + i] = g_node[i];
+                        }
+                    }
+                }
+            }
+        }
+        sys.g_thermal.swap(sys.g_thermal_next);
+    }
 
     // --- Boundary conditions ---
     if (g_case == CaseType::CAVITY) {
@@ -606,6 +696,122 @@ inline void save_json_frame(const LBMCapabilities& sys, int step, const std::str
         out << obst_arr[i];
     }
 
+    out << "]}";
+    out.close();
+}
+
+// ------------------------------------------------------------------
+// Thermal frame output (Upgrade 4: includes temperature field)
+// Same as save_json_frame but adds "temperature" channel
+// ------------------------------------------------------------------
+inline void save_json_frame_thermal(LBMCapabilities& sys, int step,
+                                     const std::string& output_dir, double T_wall) {
+    int ds = std::max(1, NX / 100);                // downsample factor
+    int nx_ds = (NX + ds - 1) / ds;                // ceil division
+    int ny_ds = (NY + ds - 1) / ds;
+
+    std::string dir = output_dir + "/frames";
+    std::filesystem::create_directories(dir);
+
+    std::string filename = dir + "/frame_" + std::to_string(step) + ".json";
+    std::ofstream out(filename);
+    out.precision(6);
+    out << std::fixed;
+
+    int n_ds = nx_ds * ny_ds;
+    std::vector<double> vel_arr(n_ds, 0.0);
+    std::vector<double> u_arr(n_ds, 0.0);
+    std::vector<double> v_arr(n_ds, 0.0);
+    std::vector<double> rho_arr(n_ds, 0.0);
+    std::vector<double> omega_arr(n_ds, 0.0);
+    std::vector<double> temp_arr(n_ds, 0.0);
+    std::vector<int> obst_arr(n_ds, 0);
+    int idx2 = 0;
+    for (int y = 0; y < NY; y += ds) {
+        for (int x = 0; x < NX; x += ds) {
+            int idx = node_index(x, y);
+            if (sys.obstacle[idx]) {
+                obst_arr[idx2] = 1;
+                temp_arr[idx2] = T_wall;  // wall temperature
+                ++idx2;
+                continue;
+            }
+            double rho, u, v;
+            compute_macros(&sys.f[idx * 9], rho, u, v);
+            double T;
+            compute_temperature(&sys.g_thermal[idx * 9], T);
+            if (rho < 1e-12 || std::isnan(rho)) { rho = 1.0; u = 0.0; v = 0.0; }
+            if (std::isnan(u)) u = 0.0;
+            if (std::isnan(v)) v = 0.0;
+            if (std::isnan(T)) T = 1.0;
+            double vel = std::sqrt(u * u + v * v);
+            if (std::isnan(vel)) vel = 0.0;
+            vel_arr[idx2] = vel;
+            u_arr[idx2] = u;
+            v_arr[idx2] = v;
+            rho_arr[idx2] = rho;
+            temp_arr[idx2] = T;
+            ++idx2;
+        }
+    }
+
+    // Compute vorticity (same as momentum frame)
+    for (int j = 0; j < ny_ds; ++j) {
+        for (int i = 0; i < nx_ds; ++i) {
+            int idx = j * nx_ds + i;
+            if (obst_arr[idx]) continue;
+            int il = std::max(0, i - 1);
+            int ir = std::min(nx_ds - 1, i + 1);
+            int jd = std::max(0, j - 1);
+            int ju = std::min(ny_ds - 1, j + 1);
+            double dv_dx = (v_arr[j * nx_ds + ir] - v_arr[j * nx_ds + il])
+                           / (2.0 * static_cast<double>((ir - il) * ds));
+            double du_dy = (u_arr[ju * nx_ds + i] - u_arr[jd * nx_ds + i])
+                           / (2.0 * static_cast<double>((ju - jd) * ds));
+            omega_arr[idx] = dv_dx - du_dy;
+        }
+    }
+
+    out << "{\"nx\":" << nx_ds << ",\"ny\":" << ny_ds << ",\"velocity\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << vel_arr[i];
+    }
+    out << "],\"u\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << u_arr[i];
+    }
+    out << "],\"v\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << v_arr[i];
+    }
+    out << "],\"rho\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << rho_arr[i];
+    }
+    out << "],\"p\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << (rho_arr[i] / 3.0);
+    }
+    out << "],\"omega\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << omega_arr[i];
+    }
+    out << "],\"temperature\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << temp_arr[i];
+    }
+    out << "],\"obstacle\":[";
+    for (int i = 0; i < n_ds; ++i) {
+        if (i > 0) out << ",";
+        out << obst_arr[i];
+    }
     out << "]}";
     out.close();
 }

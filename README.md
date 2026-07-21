@@ -405,35 +405,41 @@ Three tiers, easiest first:
 - **Tier 1 (immediate): Grid refinement.** Increase grid from 800x300 to 2400x900 for
   curved cases. At radius=90 cells (vs 30), staircase error drops 3x. Bouzidi `q`
   already gives sub-grid positioning. Cost: 9x memory/compute (feasible 2D on M5).
+  **Status: Available via --nx/--ny override (main.cpp).**
 - **Tier 2 (medium effort, recommend first): Filippova-Hanel / Mei interpolated
   bounce-back.** Bouzidi is 2nd-order but unstable at q->0 or q->1. Replace with the
   Mei et al. (1999) formula:
-  `f_bb = q*f_i^{eq}(rho,u_wall) + (1-q)*f_opp + (2q-1)*w_i*rho*(e_i.u_wall)/cs^2`.
-  Unconditionally stable for all q in [0,1]. Add `q_filippova()` to BounceBackGeometry.
+  `f_bb = q*f_i^{eq}(rho,u_wall) + (1-q)*f_post + (2q-1)*w_i*rho*(e_i.u_wall)/cs^2`.
+  Unconditionally stable for all q in [0,1]. Implemented as `use_mei_bb` (default true).
+  **Status: Completed (2026-07-18), Cd~1.53 at Re=100 (vs 1.77 Bouzidi).**
 - **Tier 3 (high effort): IBM with direct forcing.** For airfoils/complex shapes. New
   `src/ibm.hpp` (~200 lines). Lagrangian points on true surface (reuse `naca_coords()`),
   force spreading via 4-point smoothed delta, velocity interpolation. Add only for
-  airfoil case.
+  airfoil case. **Status: In progress (2026-07-18).**
 
 ### UPGRADE 2: Wall Functions / y+ Requirements
 
-- **Wall-distance computation:** New `compute_wall_distance()` in lbm.hpp -- BFS from
-  obstacle nodes, returns distance in lattice units.
-- **Van Driest damping for LES:** Modify `tau_eff` calc:
+- **Wall-distance computation:** New `compute_wall_distance()` in lbm_types.hpp -- BFS from
+  obstacle nodes, returns distance in lattice units. **Status: Completed (2026-07-18).**
+- **Van Driest damping for LES:** Implemented in `mrt_collide()`:
   `nu_t_damped = nu_t * (1 - exp(-y+/A+))^2` with A+ = 26. Prevents over-damping near walls.
+  **Status: Completed (2026-07-18), validated Cd~1.77 at Re=100.**
 - **Wall function bounce-back (WFB):** Slip-velocity approach. Compute wall shear stress
   from resolved gradient, use log-law to impose slip velocity. New `src/wall_functions.hpp`.
+  **Status: In progress (2026-07-18).**
 - **y+ in lattice units:** `y+ = y*u_tau/nu` where `u_tau = sqrt(tau_wall/rho)` and
   `nu = (tau-0.5)/3`. For channel at Re_tau=180 with NY=200, first cell y+ = 0.9 (resolved).
   At NY=30: y+ = 6 (buffer layer, wall function needed).
 
 ### UPGRADE 3: Pressure Contours & Enhanced Vorticity
 
-- **Pressure Cp plot:** `Cp = (p - p_ref)/(0.5*rho_inf*U_inf^2)` in postprocess.py
+- **Pressure Cp plot:** `Cp = (p - p_ref)/(0.5*rho_inf*U_inf^2)` in postprocess.py `--cp` flag.
+  **Status: Completed (2026-07-18).**
 - **Pressure channel in viewer:** Binary format already supports multiple channels.
   Add field selector (velocity / pressure / vorticity / temperature) to flow-viewer.js.
-- **Full-resolution vorticity:** Compute in C++ at full grid (remove downsampling),
-  use 9-point stencil. Export as separate binary channel.
+  **Status: Pending (needs front-end work).**
+- **Full-resolution vorticity:** 9-point stencil in lbm.hpp:542-558.
+  **Status: Completed (2026-07-18), higher-order accuracy.**
 
 ### UPGRADE 4: Thermal LBM (Heat Transfer)
 
@@ -445,6 +451,7 @@ Three tiers, easiest first:
 - **Modify `lbm_types.hpp`:** Add `g_thermal`, `g_thermal_next` to LBMCapabilities.
 - **New entry point: `src/heated_cylinder.cpp`** (Nusselt validation) + natural
   convection cavity (Ra=10^3 to 10^6 benchmark).
+- **Status: In progress (2026-07-18).**
 
 ### UPGRADE 5: 3D LBM Architecture
 
